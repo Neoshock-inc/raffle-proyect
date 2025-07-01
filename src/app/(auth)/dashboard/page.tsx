@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { getDashboardMetrics } from '../services/metricsService';
 import DashboardMetricCard from '../components/DashboardMetricCard';
-import DashboardTables from '../components/DashboardTables';
 import { DollarSign, Hash, Trophy, PieChart } from 'lucide-react';
 import PaymentMethodGaugeMini from '../components/PaymentMethodGauge';
 
@@ -65,8 +64,32 @@ export default function DashboardPage() {
                 </div>
             )}
 
-            {/* Tables */}
-            <DashboardTables />
+            {/* Dashboard Visualizations */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                {/* Visualización de Facturas */}
+                <div className="bg-white rounded-lg shadow p-6 h-80 flex items-center justify-center text-gray-500">
+                    {/* IDEA: Gráfico de barras con total de facturas por día o por estado */}
+                    Gráfico de barras: Facturas por día/estado
+                </div>
+
+                {/* Visualización de Números Bendecidos */}
+                <div className="bg-white rounded-lg shadow p-6 h-80 flex items-center justify-center text-gray-500">
+                    {/* IDEA: Tabla o gráfico de dispersión de números bendecidos con filtro por premio menor */}
+                    Tabla o gráfico de dispersión: Números bendecidos
+                </div>
+
+                {/* Visualización de Ganadores */}
+                <div className="bg-white rounded-lg shadow p-6 h-80 flex items-center justify-center text-gray-500">
+                    {/* IDEA: Gráfico de pastel con distribución de ganadores por sorteo */}
+                    Gráfico de pastel: Ganadores por sorteo
+                </div>
+
+                {/* Visualización de Rifas Entrantes */}
+                <div className="bg-white rounded-lg shadow p-6 h-80 flex items-center justify-center text-gray-500">
+                    {/* IDEA: Timeline o gráfico de columnas: entradas recientes a rifas */}
+                    Gráfico de columnas: Entradas recientes a rifas
+                </div>
+            </div>
         </div>
     )
 }

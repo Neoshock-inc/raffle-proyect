@@ -7,8 +7,11 @@ import Link from 'next/link'
 import { authService } from './services/authService'
 import { Menu } from '@headlessui/react'
 import { Toaster } from 'sonner'
-import { LayoutDashboard, Users, ChevronLeft, ChevronRight, DollarSign } from 'lucide-react'
+import { LayoutDashboard, Users, ChevronLeft, ChevronRight, DollarSign, Hash, Trophy } from 'lucide-react'
 import { isUserReferred } from './services/referralAuthService'
+import { useUserFeatures } from './hooks/useUserFeatures'
+import { iconMap } from './utils/iconMap'
+
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
     const [userEmail, setUserEmail] = useState<string | null>(null)
@@ -17,35 +20,36 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     const pathname = usePathname()
     const [isReferred, setIsReferred] = useState<boolean | null>(null)
     const [loading, setLoading] = useState(true) // <-- estado loading
+    const { features, loading: featuresLoading } = useUserFeatures()
 
-
-    const navigation = isReferred
-        ? [
-            { name: 'Mis Ventas', href: '/dashboard/mis-ventas', icon: DollarSign }
-        ]
-        : [
-            { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-            { name: 'Referidos', href: '/dashboard/referidos', icon: Users }
-        ]
+    const navigation = features.map((f) => {
+        const iconKey = typeof f.icon === 'string' && f.icon in iconMap ? f.icon : ''
+        return {
+            name: f.label,
+            href: f.route,
+            icon: iconMap[f.icon] ?? LayoutDashboard
+        }
+    });
 
     useEffect(() => {
         authService.getUser()
             .then(async (user) => {
                 if (!user) {
                     router.push('/login')
-                } else {
-                    setUserEmail(user.email ?? null)
-                    const referred = await isUserReferred(user.id)
-                    setIsReferred(referred)
-
-                    if (referred) {
-                        router.push('/dashboard/mis-ventas')
-                    }
+                    return
                 }
+
+                setUserEmail(user.email ?? null)
             })
             .catch(() => router.push('/login'))
-            .finally(() => setLoading(false))  // <-- ya terminó de cargar
+            .finally(() => setLoading(false))
     }, [])
+
+    useEffect(() => {
+        if (!featuresLoading && features.length === 1) {
+            router.push(features[0].route)
+        }
+    }, [features, featuresLoading])
 
     const handleLogout = async () => {
         try {
@@ -56,10 +60,28 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         }
     }
 
-    if (loading || isReferred === null) {
+    if (loading || featuresLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 Cargando...
+            </div>
+        )
+    }
+
+    if (!features || features.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 text-center px-4">
+                <Image src="/images/main_logo.jpeg" alt="Logo" width={80} height={80} />
+                <h1 className="text-2xl font-semibold mt-4 text-gray-800">Sin acceso</h1>
+                <p className="text-gray-600 mt-2 max-w-sm">
+                    Tu cuenta no tiene módulos habilitados aún. Por favor contacta al administrador para obtener acceso.
+                </p>
+                <button
+                    onClick={handleLogout}
+                    className="mt-6 px-4 py-2 text-white bg-[#800000] rounded-lg hover:bg-red-700 transition"
+                >
+                    Cerrar sesión
+                </button>
             </div>
         )
     }

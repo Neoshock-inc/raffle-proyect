@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { createNewRaffleEntriesFromOrder } from '../services/rafflesService';
+import { raffleService } from '../services/rafflesService';
 
 interface RaffleEntryModalProps {
     isOpen: boolean;
@@ -34,7 +34,7 @@ export default function RaffleEntryModal({ isOpen, onClose, onSuccess }: RaffleE
 
         setLoading(true);
         try {
-            const result = await createNewRaffleEntriesFromOrder(orderNumber, Number(quantity));
+            const result = await raffleService.createNewRaffleEntriesFromOrder(orderNumber, Number(quantity));
             console.log('Resultado de la operación:', result);
 
             if (result.success) {
