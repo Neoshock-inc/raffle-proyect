@@ -1,52 +1,57 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useCallback } from 'react'
 import { FileText } from 'lucide-react'
-import { getInvoicesList } from '../../services/invoicesService'
 import classNames from 'classnames'
+import { useInvoices } from '../../hooks/useInvoices'
+import { InvoiceFormModal } from './InvoiceFormModal'
+import { Invoice } from '@/app/types/invoices'
 
 const ITEMS_PER_PAGE = 10
 
 export default function FacturasPage() {
-    const [invoices, setInvoices] = useState<any[]>([])
-    const [filteredInvoices, setFilteredInvoices] = useState<any[]>([])
-    const [paginatedInvoices, setPaginatedInvoices] = useState<any[]>([])
+    const [showModal, setShowModal] = useState(false)
+    const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null)
     const [search, setSearch] = useState('')
-    const [loading, setLoading] = useState(true)
-    const [currentPage, setCurrentPage] = useState(1)
+    const {
+        paginatedInvoices,
+        filteredInvoices,
+        pagination,
+        setPage,
+        loading,
+        create,
+        update,
+    } = useInvoices(search)
 
-    useEffect(() => {
-        async function loadInvoices() {
-            try {
-                setLoading(true)
-                const data = await getInvoicesList()
-                setInvoices(data)
-                setFilteredInvoices(data)
-            } catch (error) {
-                console.error('Error al cargar facturas:', error)
-            } finally {
-                setLoading(false)
-            }
-        }
-        loadInvoices()
+    const handleNewInvoice = useCallback(() => {
+        setEditingInvoice(null)
+        setShowModal(true)
     }, [])
 
-    useEffect(() => {
-        const term = search.toLowerCase()
-        const filtered = invoices.filter((inv: any) =>
-            `${inv.order_number}`.includes(term) ||
-            `${inv.full_name}`.toLowerCase().includes(term) ||
-            `${inv.phone}`.includes(term)
-        )
-        setFilteredInvoices(filtered)
-        setCurrentPage(1)
-    }, [search, invoices])
+    const handleEditInvoice = useCallback((invoice: Invoice) => {
+        setEditingInvoice(invoice)
+        setShowModal(true)
+    }, [])
 
-    useEffect(() => {
-        const start = (currentPage - 1) * ITEMS_PER_PAGE
-        const end = start + ITEMS_PER_PAGE
-        setPaginatedInvoices(filteredInvoices.slice(start, end))
-    }, [currentPage, filteredInvoices])
+    const handleCloseModal = useCallback(() => {
+        setShowModal(false)
+        setEditingInvoice(null)
+    }, [])
+
+    const handleSaveInvoice = useCallback(async (data: any) => {
+        try {
+            if (editingInvoice?.id) {
+                await update({ ...data, id: editingInvoice.id })
+            } else {
+                await create(data)
+            }
+            setShowModal(false)
+            setEditingInvoice(null)
+        } catch (error) {
+            console.error('Error saving invoice:', error)
+            // Aquí podrías mostrar un toast de error
+        }
+    }, [editingInvoice, create, update])
 
     return (
         <div className="space-y-6">
@@ -61,6 +66,12 @@ export default function FacturasPage() {
                         <p className="text-gray-600">Listado de facturas generadas por los usuarios</p>
                     </div>
                 </div>
+                <button
+                    onClick={handleNewInvoice}
+                    className="px-4 py-2 bg-[#800000] text-white rounded hover:bg-[#990000] transition"
+                >
+                    Nueva factura
+                </button>
             </div>
 
             {/* Buscador */}
@@ -84,13 +95,14 @@ export default function FacturasPage() {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cantidad</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
                                 [...Array(5)].map((_, i) => (
                                     <tr key={i} className="animate-pulse">
-                                        {[...Array(6)].map((__, j) => (
+                                        {[...Array(7)].map((__, j) => (
                                             <td key={j} className="px-6 py-4">
                                                 <div className="h-4 bg-gray-200 rounded w-2/3" />
                                             </td>
@@ -108,20 +120,28 @@ export default function FacturasPage() {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             <span className={classNames(
                                                 'inline-flex px-2 py-1 text-xs font-semibold rounded-full',
-                                                inv.status === 'paid'
+                                                inv.status === 'completed'
                                                     ? 'bg-green-100 text-green-800'
                                                     : inv.status === 'pending'
                                                         ? 'bg-yellow-100 text-yellow-800'
                                                         : 'bg-red-100 text-red-800'
                                             )}>
-                                                {inv.status === 'paid' ? 'Pagado' : inv.status === 'pending' ? 'Pendiente' : 'Fallido'}
+                                                {inv.status === 'completed' ? 'Pagado' : inv.status === 'pending' ? 'Pendiente' : 'Fallido'}
                                             </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                                            <button
+                                                onClick={() => handleEditInvoice(inv)}
+                                                className="text-[#800000] hover:underline text-sm"
+                                            >
+                                                Editar
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
                                         No se encontraron resultados
                                     </td>
                                 </tr>
@@ -135,24 +155,29 @@ export default function FacturasPage() {
             {filteredInvoices.length > ITEMS_PER_PAGE && (
                 <div className="flex justify-end items-center space-x-2 mt-2">
                     <button
-                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="px-3 py-1 text-sm border rounded hover:bg-gray-100 disabled:opacity-50"
+                        onClick={() => setPage(Math.max(pagination.page - 1, 1))}
+                        disabled={pagination.page === 1}
+                        className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                     >
                         Anterior
                     </button>
-                    <span className="text-sm">
-                        Página {currentPage} de {Math.ceil(filteredInvoices.length / ITEMS_PER_PAGE)}
-                    </span>
+                    <span className="px-2">Página {pagination.page} de {pagination.totalPages}</span>
                     <button
-                        onClick={() => setCurrentPage((p) => p + 1)}
-                        disabled={currentPage >= Math.ceil(filteredInvoices.length / ITEMS_PER_PAGE)}
-                        className="px-3 py-1 text-sm border rounded hover:bg-gray-100 disabled:opacity-50"
+                        onClick={() => setPage(Math.min(pagination.page + 1, pagination.totalPages))}
+                        disabled={pagination.page >= pagination.totalPages}
+                        className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                     >
                         Siguiente
                     </button>
                 </div>
             )}
+
+            <InvoiceFormModal
+                isOpen={showModal}
+                onClose={handleCloseModal}
+                onSave={handleSaveInvoice}
+                initialData={editingInvoice || undefined}
+            />
         </div>
     )
 }

@@ -1,18 +1,55 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRaffles } from '../../hooks/useRaffles'
-import { Ticket } from 'lucide-react'
+import { Plus, Ticket, Edit, Trash, Eye } from 'lucide-react'
 import classNames from 'classnames'
-import type { Raffle } from '../../types/raffle'
+import type { CreateRaffleData, Raffle, UpdateRaffleData } from '../../types/raffle'
+import RaffleFormModal from './RaffleFormModal'
+import { useRouter } from 'next/navigation'
 
 export default function RafflesPage() {
     const [search, setSearch] = useState('')
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [editingRaffle, setEditingRaffle] = useState<Raffle | undefined>(undefined)
 
-    // Usar filtros en el hook para que la búsqueda se haga en el servidor
-    const { raffles, loading, pagination, changePage, refetch } = useRaffles({
+    const router = useRouter()
+
+    const {
+        raffles,
+        loading,
+        pagination,
+        changePage,
+        createRaffle,
+        updateRaffle,
+        deleteRaffle,
+    } = useRaffles({
         filters: search ? { search } : {}
     })
+
+    const handleCreate = async (data: CreateRaffleData) => {
+        await createRaffle(data)
+        setIsModalOpen(false)
+    }
+
+    const handleUpdate = async (data: UpdateRaffleData) => {
+        if (!editingRaffle) return
+        await updateRaffle(data)
+        setEditingRaffle(undefined)
+        setIsModalOpen(false)
+    }
+
+
+    const handleDelete = async (id: string) => {
+        if (window.confirm('¿Estás seguro de que deseas eliminar esta rifa?')) {
+            await deleteRaffle(id)
+        }
+    }
+
+    const handleEdit = (raffle: any) => {
+        setEditingRaffle(raffle)
+        setIsModalOpen(true)
+    }
 
     return (
         <div className="space-y-6">
@@ -27,6 +64,16 @@ export default function RafflesPage() {
                         <p className="text-gray-600">Listado de rifas creadas</p>
                     </div>
                 </div>
+                <button
+                    onClick={() => {
+                        setEditingRaffle(undefined)
+                        setIsModalOpen(true)
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-[#800000] text-white rounded hover:bg-[#6b0000] transition"
+                >
+                    <Plus className="w-4 h-4" />
+                    Crear rifa
+                </button>
             </div>
 
             {/* Buscador */}
@@ -49,13 +96,14 @@ export default function RafflesPage() {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Números</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha sorteo</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
                                 [...Array(5)].map((_, i) => (
                                     <tr key={i} className="animate-pulse">
-                                        {[...Array(5)].map((__, j) => (
+                                        {[...Array(6)].map((__, j) => (
                                             <td key={j} className="px-6 py-4">
                                                 <div className="h-4 bg-gray-200 rounded w-2/3" />
                                             </td>
@@ -65,11 +113,11 @@ export default function RafflesPage() {
                             ) : raffles.length > 0 ? (
                                 raffles.map((raffle) => (
                                     <tr key={raffle.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{raffle.title}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${raffle.price.toFixed(2)}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{raffle.total_numbers}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(raffle.draw_date).toLocaleDateString()}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                        <td className="px-6 py-4 text-sm text-gray-900">{raffle.title}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-900">${raffle.price.toFixed(2)}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-900">{raffle.total_numbers}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-900">{new Date(raffle.draw_date).toLocaleDateString()}</td>
+                                        <td className="px-6 py-4 text-sm">
                                             <span
                                                 className={classNames(
                                                     'inline-flex px-2 py-1 text-xs font-semibold rounded-full',
@@ -85,11 +133,22 @@ export default function RafflesPage() {
                                                 {raffle.status}
                                             </span>
                                         </td>
+                                        <td className="px-6 py-4 text-sm text-gray-700 space-x-2">
+                                            <button onClick={() => router.push(`/dashboard/raffles/${raffle.id}`)} title="Ver detalles">
+                                                <Eye className="w-4 h-4" />
+                                            </button>
+                                            <button onClick={() => handleEdit(raffle)} title="Editar">
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                            <button onClick={() => handleDelete(raffle.id)} title="Eliminar">
+                                                <Trash className="w-4 h-4 text-red-500" />
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                                         {search ? 'No se encontraron rifas con ese criterio de búsqueda' : 'No se encontraron rifas'}
                                     </td>
                                 </tr>
@@ -126,6 +185,17 @@ export default function RafflesPage() {
                     </div>
                 </div>
             )}
+
+            {/* Modal de creación / edición */}
+            <RaffleFormModal
+                isOpen={isModalOpen}
+                onClose={() => {
+                    setIsModalOpen(false)
+                    setEditingRaffle(undefined)
+                }}
+                onSubmit={editingRaffle ? (data) => handleUpdate({ ...data, id: editingRaffle.id }) : handleCreate}
+                initialData={editingRaffle}
+            />
         </div>
     )
 }

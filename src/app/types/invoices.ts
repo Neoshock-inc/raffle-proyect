@@ -28,7 +28,7 @@ export interface InvoiceCreationData {
     status: PaymentStatus;
     city: string;
     address: string;
-    paymentMethod: string;
+    paymentMethod: PaymentMethod;
     amount: number;
     totalPrice: number;
     participantId?: string;
@@ -42,4 +42,15 @@ export enum PaymentStatus {
     COMPLETED = 'completed',
     FAILED = 'failed',
     REFUNDED = 'refunded'
+}
+
+// Metodos de pago disponibles
+export enum PaymentMethod {
+    CASH = 'cash',
+    BANK_TRANSFER = 'bank_transfer',
+    CREDIT_CARD = 'credit_card',
+    PAYPAL = 'paypal',
+    CRYPTO = 'crypto',
+    PAYPHONE = 'payphone',
+    OTHER = 'other'
 }
