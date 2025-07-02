@@ -52,5 +52,6 @@ export enum PaymentMethod {
     PAYPAL = 'paypal',
     CRYPTO = 'crypto',
     PAYPHONE = 'payphone',
-    OTHER = 'other'
+    OTHER = 'other',
+    STRIPE = 'stripe', // Agregado para Stripe
 }

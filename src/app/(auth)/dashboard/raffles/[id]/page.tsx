@@ -2,7 +2,13 @@
 
 import RaffleDetailPage from './RaffleDetailPageClient'
 
-export default function RaffleDetailPageWrapper({ params }: { params: { id: string } }) {
-    const { id } = params
+type Props = {
+    params: Promise<{
+        id: string
+    }>
+}
+
+export default async function RaffleDetailPageWrapper({ params }: Props) {
+    const { id } = await params
     return <RaffleDetailPage id={id} />
 }

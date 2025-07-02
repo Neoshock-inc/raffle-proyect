@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Suspense } from 'react';
 import { generateOrderNumber, createInvoiceWithParticipant } from '../services/invoiceService';
-import { PaymentStatus } from '../types/invoices';
+import { PaymentMethod, PaymentStatus } from '../types/invoices';
 
 interface PurchaseData {
     amount: number;
@@ -296,7 +296,7 @@ function CheckoutPageContent() {
                 phone: formData.phone,
                 country: formData.country,
                 status: PaymentStatus.PENDING,
-                paymentMethod: 'STRIPE',
+                paymentMethod: PaymentMethod.STRIPE,
                 province: formData.province,
                 city: formData.city,
                 address: formData.address,
@@ -385,7 +385,7 @@ function CheckoutPageContent() {
                 phone: formData.phone,
                 country: formData.country,
                 status: PaymentStatus.PENDING,
-                paymentMethod: 'TRANSFER',
+                paymentMethod: PaymentMethod.BANK_TRANSFER,
                 province: formData.province,
                 city: formData.city,
                 address: formData.address,

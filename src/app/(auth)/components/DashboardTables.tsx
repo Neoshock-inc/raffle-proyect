@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { getInvoicesList } from '../services/invoicesService';
 import { getBlessedNumbers } from '../services/blessedService';
 import { getWinners } from '../services/winnersService';
-import { getRaffleEntries } from '../services/rafflesService';
 import DataTable from './DataTable';
 import RaffleEntryModal from './RaffleEntryModal';
 
@@ -23,21 +22,6 @@ export default function DashboardTables() {
         setIsModalOpen(false);
     };
 
-    const handleSuccess = () => {
-        getRaffleEntries().then(setRafflesEntries).catch(console.error);
-    };
-
-    const fetchData = () => {
-        getInvoicesList().then(setInvoices).catch(console.error);
-        getBlessedNumbers().then(setBlessed).catch(console.error);
-        getWinners().then(setWinners).catch(console.error);
-        getRaffleEntries().then(setRafflesEntries).catch(console.error);
-    };
-
-    useEffect(() => {
-        fetchData();
-
-    }, []);
 
     return (
         <>
@@ -110,13 +94,6 @@ export default function DashboardTables() {
                     }}
                 />
             </div>
-
-            {/* Modal para registrar nuevos números */}
-            <RaffleEntryModal
-                isOpen={isModalOpen}
-                onClose={handleCloseModal}
-                onSuccess={handleSuccess}
-            />
         </>
     );
 }
