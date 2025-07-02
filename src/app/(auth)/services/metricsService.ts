@@ -117,40 +117,27 @@ export async function getSalesByDay(days: number = 30) {
     }
 }
 
-// Función para obtener ganadores por sorteo
-export async function getWinnersBySorteo() {
-    try {
-        // Primero obtenemos los sorteos activos
-        const { data: raffles, error: rafflesError } = await supabase
-            .from('raffles')
-            .select('id, title, prize_amount');
+// Función para obtener ventas por método de pago
+export async function getSalesByPaymentMethod() {
+    const { data, error } = await supabase
+        .from('invoices')
+        .select('payment_method, total_price');
 
-        if (rafflesError) throw rafflesError;
+    if (error) throw error;
 
-        // Luego obtenemos los ganadores por sorteo
-        const winnersData = await Promise.all(
-            raffles.map(async (raffle) => {
-                const { data: winners, error } = await supabase
-                    .from('raffle_entries')
-                    .select('id')
-                    .eq('raffle_id', raffle.id)
-                    .eq('is_winner', true);
+    const grouped: { [key: string]: number } = {};
 
-                if (error) throw error;
-
-                return {
-                    sorteo: raffle.title,
-                    ganadores: winners.length,
-                    premio: `$${raffle.prize_amount || 0}`
-                };
-            })
-        );
-
-        return winnersData.filter(item => item.ganadores > 0);
-    } catch (error) {
-        console.error('Error obteniendo ganadores por sorteo:', error);
-        throw error;
+    for (const row of data) {
+        const method = row.payment_method || 'desconocido';
+        const total = parseFloat(row.total_price) || 0;
+        grouped[method] = (grouped[method] || 0) + total;
     }
+
+    console.log('Ventas por método de pago:', grouped);
+    return Object.entries(grouped).map(([payment_method, total]) => ({
+        payment_method,
+        total: parseFloat(total.toFixed(2)),
+    }));
 }
 
 // Función para obtener entradas recientes a rifas (últimas 24 horas)
@@ -239,6 +226,7 @@ export async function getSalesByProvince() {
             return acc;
         }, {});
 
+        console.log('Ventas por provincia:', salesByProvince);
         return Object.values(salesByProvince)
             .filter(item => item.ventas > 0)
             .sort((a, b) => b.ventas - a.ventas);
@@ -247,20 +235,19 @@ export async function getSalesByProvince() {
         throw error;
     }
 }
-
-// Función combinada para obtener todos los datos del dashboard
+// Función para obtener todos los datos del dashboard
 export async function getAllDashboardData() {
     try {
         const [
             metrics,
             salesByDay,
-            winnersBySorteo,
+            salesByPaymentMethod, // ✅ debe venir aquí
             recentEntries,
             salesByProvince
         ] = await Promise.all([
             getDashboardMetrics(),
             getSalesByDay(),
-            getWinnersBySorteo(),
+            getSalesByPaymentMethod(), // ✅ aquí mismo
             getRecentEntries(),
             getSalesByProvince()
         ]);
@@ -268,7 +255,7 @@ export async function getAllDashboardData() {
         return {
             metrics,
             salesByDay,
-            winnersBySorteo,
+            salesByPaymentMethod, // ✅ asignado bien
             recentEntries,
             salesByProvince
         };
