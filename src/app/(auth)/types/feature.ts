@@ -6,6 +6,8 @@ export interface Feature {
   label: string
   route: string
   icon: string
+  parent_id?: string | null
+  order?: number
 }
 
 export interface NavigationItem {

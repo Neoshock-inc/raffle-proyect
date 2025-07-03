@@ -1,25 +1,17 @@
-// src/services/featureService.ts
-
 import { createClient } from '@supabase/supabase-js'
 import { Feature } from '../types/feature'
 
 interface SupabaseUserRole {
-    role: {
-        role_features: {
-            feature: {
-                id: string
-                code: string
-                label: string
-                route: string
-                icon: string
-            } | null
-        }[]
-    } | null
+  role: {
+    role_features: {
+      feature: Feature | null
+    }[]
+  } | null
 }
 
 const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
 export const featureService = {
@@ -30,7 +22,7 @@ export const featureService = {
         role:role_id (
           role_features (
             feature:feature_id (
-              id, code, label, route, icon
+              id, code, label, route, icon, parent_id, order
             )
           )
         )
@@ -53,8 +45,10 @@ export const featureService = {
       }
     }
 
+    // Elimina duplicados por código
     const uniqueFeatures = Array.from(new Map(features.map(f => [f.code, f])).values())
-    return uniqueFeatures
+
+    // Ordena por `order` (de menor a mayor)
+    return uniqueFeatures.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
   }
 }
-

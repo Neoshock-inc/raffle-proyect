@@ -7,8 +7,7 @@ import Link from 'next/link'
 import { authService } from './services/authService'
 import { Menu } from '@headlessui/react'
 import { Toaster } from 'sonner'
-import { LayoutDashboard, Users, ChevronLeft, ChevronRight, DollarSign, Hash, Trophy } from 'lucide-react'
-import { isUserReferred } from './services/referralAuthService'
+import { LayoutDashboard, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useUserFeatures } from './hooks/useUserFeatures'
 import { iconMap } from './utils/iconMap'
 
@@ -20,16 +19,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     const pathname = usePathname()
     const [isReferred, setIsReferred] = useState<boolean | null>(null)
     const [loading, setLoading] = useState(true) // <-- estado loading
-    const { features, loading: featuresLoading } = useUserFeatures()
-
-    const navigation = features.map((f) => {
-        const iconKey = typeof f.icon === 'string' && f.icon in iconMap ? f.icon : ''
-        return {
-            name: f.label,
-            href: f.route,
-            icon: iconMap[f.icon] ?? LayoutDashboard
-        }
-    });
+    const { menuGroups, loading: featuresLoading } = useUserFeatures();
 
     useEffect(() => {
         authService.getUser()
@@ -46,10 +36,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     }, [])
 
     useEffect(() => {
-        if (!featuresLoading && features.length === 1) {
-            router.push(features[0].route)
+        if (!featuresLoading) {
+            const allFeatures = menuGroups.flatMap(group => [group.parent, ...group.children])
+            if (allFeatures.length === 1) {
+                router.push(allFeatures[0].route)
+            }
         }
-    }, [features, featuresLoading])
+    }, [menuGroups, featuresLoading])
+
 
     const handleLogout = async () => {
         try {
@@ -68,7 +62,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         )
     }
 
-    if (!features || features.length === 0) {
+    const allFeatures = menuGroups.flatMap(group => [group.parent, ...group.children])
+
+    if (allFeatures.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 text-center px-4">
                 <Image src="/images/main_logo.jpeg" alt="Logo" width={80} height={80} />
@@ -122,25 +118,39 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                 {/* Navigation */}
                 <nav className="flex-1 px-4 py-6">
                     <ul className="space-y-2">
-                        {navigation.map((item) => {
-                            const Icon = item.icon
-                            const isActive = pathname === item.href
+                        {menuGroups.map(({ parent, children }) => {
+                            const ParentIcon = iconMap[parent.icon] ?? LayoutDashboard
+                            const isParentActive = pathname === parent.route || children.some(child => pathname === child.route)
+
                             return (
-                                <li key={item.name} className="group relative">
+                                <li key={parent.id}>
                                     <Link
-                                        href={item.href}
-                                        className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-[#800000] text-white' : 'text-gray-700 hover:bg-gray-100'
-                                            }`}
+                                        href={parent.route}
+                                        className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isParentActive ? 'bg-[#800000] text-white' : 'text-gray-700 hover:bg-gray-100'}`}
                                     >
-                                        <Icon className="h-5 w-5 flex-shrink-0" />
-                                        {sidebarOpen ? (
-                                            <span className="ml-3">{item.name}</span>
-                                        ) : (
-                                            <span className="absolute left-full ml-2 whitespace-nowrap bg-black text-white text-xs rounded px-2 py-1 shadow-lg z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                {item.name}
-                                            </span>
-                                        )}
+                                        <ParentIcon className="h-5 w-5 flex-shrink-0" />
+                                        {sidebarOpen && <span className="ml-3">{parent.label}</span>}
                                     </Link>
+
+                                    {children.length > 0 && (
+                                        <ul className="mt-1 pl-6 space-y-1">
+                                            {children.map((child) => {
+                                                const ChildIcon = iconMap[child.icon] ?? LayoutDashboard
+                                                const isChildActive = pathname === child.route
+                                                return (
+                                                    <li key={child.id}>
+                                                        <Link
+                                                            href={child.route}
+                                                            className={`flex items-center px-3 py-1.5 rounded-lg text-sm transition-colors ${isChildActive ? 'bg-[#800000] text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                                                        >
+                                                            <ChildIcon className="h-4 w-4 flex-shrink-0" />
+                                                            {sidebarOpen && <span className="ml-2">{child.label}</span>}
+                                                        </Link>
+                                                    </li>
+                                                )
+                                            })}
+                                        </ul>
+                                    )}
                                 </li>
                             )
                         })}
@@ -151,10 +161,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             {/* Main Content */}
             <div className="flex-1 flex flex-col">
                 {/* Header */}
-                <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+                <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-3.5">
                     <div className="flex justify-between items-center">
                         <h1 className="text-xl font-semibold text-gray-800">
-                            {navigation.find(nav => nav.href === pathname)?.name || 'Dashboard'}
+                            {
+                                menuGroups
+                                    .flatMap(g => [g.parent, ...g.children])
+                                    .find(f => f.route === pathname)?.label || 'Dashboard'
+                            }
                         </h1>
 
                         {userEmail && (

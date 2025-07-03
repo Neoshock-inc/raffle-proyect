@@ -13,6 +13,7 @@
     "@stripe/stripe-js": "^7.3.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
+    "@tailwindcss/cli": "^4.1.11",
     "@types/jsonwebtoken": "^9.0.9",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.510.0",
@@ -40,7 +41,7 @@
     "@types/stripe": "^8.0.416",
     "eslint": "^9",
     "eslint-config-next": "15.3.2",
-    "tailwindcss": "^4",
+    "tailwindcss": "^4.1.11",
     "typescript": "^5"
   }
 }
