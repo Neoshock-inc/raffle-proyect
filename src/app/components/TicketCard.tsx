@@ -98,7 +98,7 @@ export function TicketCard({ option, referralCode, colorScheme = 0 }: TicketCard
             <div className="absolute inset-0 rounded-3xl border-4 border-white/10" />
 
             {/* Top Badge */}
-            <div className={`absolute -top-2 left-1/2 -translate-x-1/2 ${styles.badgeColor} text-white text-sm font-bold px-2 py-1 rounded-full shadow-lg border border-white/20`}>
+            <div className={`absolute -top-2 left-1/2 -translate-x-1/2 ${styles.badgeColor} text-white text-sm font-bold px-1 py-1 rounded-full shadow-lg border border-white/20`}>
                 {badge}
             </div>
 

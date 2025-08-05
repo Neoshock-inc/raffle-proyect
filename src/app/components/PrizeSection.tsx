@@ -11,7 +11,7 @@ interface PrizeSectionProps {
 export function PrizeSection({ imageUrls, offerStartDate, offerEndDate }: PrizeSectionProps) {
   return (
     <>
-      <div className="w-full mb-6">
+      <div className="w-full">
         <div className="w-full">
           <ImageCarousel images={imageUrls} />
         </div>
@@ -25,10 +25,6 @@ export function PrizeSection({ imageUrls, offerStartDate, offerEndDate }: PrizeS
           className="mx-auto max-w-md"
         />
       </div>
-
-      <section className="text-center mb-3">
-        <p>Participa comprando uno o más boletos. <strong>¡Mientras más compres, más chances tienes!</strong></p>
-      </section>
     </>
   );
 }

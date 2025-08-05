@@ -179,13 +179,17 @@ export default function HomeContent() {
         isUsingPackages={ticketOptions.length > 0}
       />
 
+      <section className="text-center mb-3">
+        <p>Participa comprando uno o más boletos. <strong>¡Mientras más compres, más chances tienes!</strong></p>
+      </section>
+
       <main className="flex flex-col items-center p-4 max-w-4xl mx-auto">
         <h3 className="text-2xl font-bold mb-4 text-center">
           ¿Estás listo para llevarte todos estos premios?
         </h3>
 
         {/* Youtube video Section */}
-        <section className="w-full px-4 py-8 flex justify-center bg-gray-50">
+        <section className="w-full px-4 py-1 flex justify-center bg-gray-50">
           <div className="w-full max-w-2xl aspect-video rounded-lg overflow-hidden shadow-lg">
             <iframe
               src="https://www.youtube.com/embed/Jc4-t2fOWHU"
@@ -219,6 +223,17 @@ export default function HomeContent() {
           setCustomAmount={setCustomAmount}
           onCustomBuy={handleCustomBuyWithToken}
         />
+
+        {/* Testimonial Section */}
+        <section className="text-center mt-3">
+          <h3 className="text-xl font-bold mb-2">Testimonios</h3>
+          <p className="text-gray-600">
+            "¡Participar en este sorteo fue una experiencia increíble! No puedo esperar a ver si gano."
+          </p>
+          <p className="text-gray-600">
+            "Los premios son fantásticos y el proceso de compra fue muy fácil."
+          </p>
+        </section>
 
         <TicketSearchSection
           searchEmail={searchEmail}
