@@ -3,13 +3,13 @@
 :root {
   --background: #FFFBEB;
   --foreground: #171717;
-  --font-sans: 'Poppins', sans-serif;
+  --font-sans: var(--font-oswald);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: 'Poppins', sans-serif;
+  --font-sans: var(--font-oswald);
   --font-mono: var(--font-geist-mono);
 }
 
@@ -18,5 +18,3 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
-
-

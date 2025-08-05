@@ -13,12 +13,12 @@ interface TicketCardProps {
 // Esquemas de colores oscuros
 const colorSchemes = [
     {
-        // Slate Dark
-        gradient: 'from-slate-800 to-slate-900',
-        badgeColor: 'bg-slate-700',
-        textColor: 'text-slate-100',
-        buttonColor: 'bg-slate-600 hover:bg-slate-500 text-white',
-        accentColor: 'bg-slate-600'
+        // Emerald 400
+        gradient: 'from-emerald-800 to-emerald-900',
+        badgeColor: 'bg-emerald-700',
+        textColor: 'text-emerald-100',
+        buttonColor: 'bg-emerald-600 hover:bg-emerald-500 text-white',
+        accentColor: 'bg-emerald-600'
     },
     {
         // Blue Dark
