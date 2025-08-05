@@ -189,8 +189,8 @@ export default function HomeContent() {
         </h3>
 
         {/* Youtube video Section */}
-        <section className="w-full px-4 py-1 flex justify-center bg-gray-50">
-          <div className="w-full max-w-2xl aspect-video rounded-lg overflow-hidden shadow-lg">
+        <section className="w-full px-1 py-1 flex justify-center bg-gray-50">
+          <div className="w-full max-w-1xl aspect-video rounded-lg overflow-hidden shadow-lg">
             <iframe
               src="https://www.youtube.com/embed/Jc4-t2fOWHU"
               title="YouTube video"
