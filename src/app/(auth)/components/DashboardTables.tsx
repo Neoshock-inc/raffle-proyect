@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { getInvoicesList } from '../services/invoicesService';
 import { getBlessedNumbers } from '../services/blessedService';
-import { getWinners } from '../services/winnersService';
 import DataTable from './DataTable';
 import RaffleEntryModal from './RaffleEntryModal';
 

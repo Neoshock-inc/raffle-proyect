@@ -25,7 +25,7 @@ export const useCustomTicketPurchase = (referralCode: string | null, soldTickets
         }
 
         try {
-            const token = await createPurchaseToken(customAmount);
+            const token = await createPurchaseToken(customAmount, 1.50);
             const checkoutUrl = referralCode
                 ? `/checkout?token=${token}&ref=${encodeURIComponent(referralCode)}`
                 : `/checkout?token=${token}`;
