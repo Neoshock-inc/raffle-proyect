@@ -4,6 +4,7 @@ import { Feature } from '../types/feature'
 interface SupabaseUserRole {
   role: {
     role_features: {
+      is_enabled: boolean | null
       feature: Feature | null
     }[]
   } | null
@@ -21,13 +22,13 @@ export const featureService = {
       .select(`
         role:role_id (
           role_features (
+            is_enabled,
             feature:feature_id (
               id, code, label, route, icon, parent_id, order
             )
           )
         )
-      `)
-      .eq('user_id', userId)
+      `).eq('user_id', userId)
 
     if (result.error) throw result.error
 
@@ -38,7 +39,7 @@ export const featureService = {
       const role = userRole.role
       if (role?.role_features) {
         for (const rf of role.role_features) {
-          if (rf?.feature) {
+          if (rf?.feature && rf.is_enabled) {
             features.push(rf.feature)
           }
         }

@@ -6,7 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key';
 
 export async function POST(request: NextRequest) {
     try {
-        const { amount } = await request.json();
+        const { amount, finalPrice } = await request.json();
 
         // Validaciones en el backend
         if (!amount || amount <= 0) {
@@ -23,15 +23,31 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Obtener datos actuales del sorteo
+        // Validar que se proporcione el precio final
+        if (!finalPrice || finalPrice <= 0) {
+            return NextResponse.json(
+                { error: 'Precio inválido' },
+                { status: 400 }
+            );
+        }
+
+        // Obtener datos actuales del sorteo para validación
         const raffle = await getActiveRaffle();
-        const price = amount * raffle.price;
+
+        // Validación adicional: el precio no puede ser mayor que el precio base
+        const basePrice = amount * raffle.price;
+        if (finalPrice > basePrice) {
+            return NextResponse.json(
+                { error: 'Precio inválido detectado' },
+                { status: 400 }
+            );
+        }
 
         // Crear token JWT con los datos
         const token = jwt.sign(
             {
                 amount,
-                price,
+                price: finalPrice, // Usar el precio final ya calculado con descuentos
                 raffleId: raffle.id,
                 createdAt: Date.now(),
             },

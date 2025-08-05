@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Proyecto Colorado",
-  description: "Participa y gana premios en el Proyecto Colorado",
+  title: "Gana con el TRIX",
+  description: "Apuesta y gana con el TRIX",
 };
 
 export default function RootLayout({

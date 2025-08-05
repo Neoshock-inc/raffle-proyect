@@ -86,29 +86,19 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="min-h-screen flex bg-gray-100">
             {/* Sidebar */}
             <div className={`${sidebarOpen ? 'w-64' : 'w-18'} overflow-hidden bg-white shadow-lg transition-all duration-300 flex flex-col`}>
-                {/* Logo + Toggle */}
-                <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                    {sidebarOpen ? (
-                        <Image
-                            src="/images/logo-secondary.png"
-                            alt="Logo"
-                            width={200}
-                            height={300}
-                            className="object-contain"
-                        />
-                    ) : (
-                        <Image
-                            src="/images/main_logo.jpeg"
-                            alt="Logo"
-                            width={32}
-                            height={32}
-                            className="object-contain"
-                        />
-                    )}
 
+                {/* Logo + Toggle */}
+                <div className="p-4 border-b border-gray-200 flex flex-col items-center gap-2">
+                    <Image
+                        src="/images/main_logo.jpeg"
+                        alt="Logo"
+                        width={sidebarOpen ? 120 : 40}
+                        height={40}
+                        className="object-contain transition-all"
+                    />
                     <button
                         onClick={() => setSidebarOpen(!sidebarOpen)}
-                        className="ml-2 p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                         title={sidebarOpen ? 'Contraer menú' : 'Expandir menú'}
                     >
                         {sidebarOpen ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}

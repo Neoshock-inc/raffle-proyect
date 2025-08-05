@@ -1,8 +1,8 @@
 // components/Footer.tsx
 export function Footer() {
     return (
-        <footer className="w-full bg-[#800000] py-4 text-center text-white">
-            <p className="text-sm">© 2023 GPC. Todos los derechos reservados.</p>
+        <footer className="w-full bg-foreground py-4 text-center text-white">
+            <p className="text-sm">© 2025 TRIX. Todos los derechos reservados.</p>
             <p className="text-sm">
                 <a href="/privacy-policy" className="underline hover:text-gray-200">
                     Política de Privacidad

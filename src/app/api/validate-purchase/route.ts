@@ -64,12 +64,29 @@ export async function POST(request: NextRequest) {
                 );
             }
 
-            // Verificar que el precio sigue siendo correcto
-            const currentPrice = tokenData.amount * raffle.price;
-            if (Math.abs(currentPrice - tokenData.price) > 0.01) {
+            // NO VALIDAR EL PRECIO AQUÍ - El precio ya fue validado cuando se creó el token
+            // y puede incluir descuentos/ofertas especiales que no podemos recalcular fácilmente
+            // Solo verificamos que los valores básicos sean razonables
+            if (tokenData.amount <= 0 || tokenData.amount > 10000) {
                 return NextResponse.json(
-                    { error: 'El precio ha cambiado. Por favor, genera un nuevo token.' },
-                    { status: 409 }
+                    { error: 'Cantidad inválida en el token' },
+                    { status: 400 }
+                );
+            }
+
+            if (tokenData.price <= 0) {
+                return NextResponse.json(
+                    { error: 'Precio inválido en el token' },
+                    { status: 400 }
+                );
+            }
+
+            // Validación opcional: el precio no puede ser mayor que el precio base máximo
+            const maxPossiblePrice = tokenData.amount * raffle.price;
+            if (tokenData.price > maxPossiblePrice) {
+                return NextResponse.json(
+                    { error: 'Precio del token excede el máximo permitido' },
+                    { status: 400 }
                 );
             }
 

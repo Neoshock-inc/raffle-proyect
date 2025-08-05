@@ -1,3 +1,4 @@
+// HomeContent.tsx - Solo las partes que cambian
 'use client';
 import { useState } from "react";
 
@@ -7,6 +8,7 @@ import { useTicketSearch } from "./hooks/useTicketSearch";
 import { useReferralCode } from "./hooks/useReferralCode";
 import { useProgressAnimation } from "./hooks/useProgressAnimation";
 import { useCustomTicketPurchase } from "./hooks/useCustomTicketPurchase";
+import { useTicketPackages } from "./hooks/useTicketPackages"; // NUEVO HOOK
 
 // Componentes
 import { Header } from "./components/Header";
@@ -25,7 +27,7 @@ import { TicketSearchModal } from "./components/TicketSearchModal";
 // Tipos y servicios
 import { TicketOption } from "./types/tickets";
 
-const MARKETING_BOOST_PERCENTAGE = 48;
+const MARKETING_BOOST_PERCENTAGE = 56;
 
 export default function HomeContent() {
   // Estados para modales
@@ -35,8 +37,8 @@ export default function HomeContent() {
   const {
     soldTickets,
     blessedNumbers,
-    loading,
-    error,
+    loading: raffleLoading,
+    error: raffleError,
     raffle,
     handleNumberClaimed
   } = useRaffleData();
@@ -54,12 +56,21 @@ export default function HomeContent() {
 
   const referralCode = useReferralCode();
 
+  // NUEVO: Hook para manejar los paquetes de tickets
+  const {
+    ticketPackages,
+    ticketOptions,
+    loading: packagesLoading,
+    error: packagesError,
+    refetch: refetchPackages
+  } = useTicketPackages();
+
   // Cálculo del porcentaje de venta
   const soldPercentage = raffle && raffle.total_numbers > 0
     ? Math.min(((soldTickets / raffle.total_numbers) * 100) + MARKETING_BOOST_PERCENTAGE, 100)
     : 0;
 
-  const animatedPercentage = useProgressAnimation(soldPercentage, loading);
+  const animatedPercentage = useProgressAnimation(soldPercentage, raffleLoading);
 
   const {
     customAmount,
@@ -73,22 +84,25 @@ export default function HomeContent() {
 
   // Configuración de datos
   const imageUrls = [
-    "/images/1.png",
-    "/images/2.png",
-    "/images/3.png",
-    "/images/4.png",
-    "/images/5.png",
-    "/images/6.png",
+    "/images/7.png",
   ];
 
-  const baseAmounts = [20, 30, 40, 50, 75, 100];
+  const offerStart = new Date(); // Comienza ahora
+  const offerEnd = new Date(Date.now() + 24 * 60 * 60 * 1000); // Termina en 24 horas
 
-  const ticketOptions: TicketOption[] = raffle
+  // FALLBACK: Si no hay paquetes de la DB, usar el sistema anterior
+  const baseAmounts = [20, 30, 40, 50, 75, 100];
+  const fallbackTicketOptions: TicketOption[] = raffle
     ? baseAmounts.map((amount) => ({
-      amount,
-      price: amount * raffle.price,
-    }))
+        amount,
+        price: amount * raffle.price,
+      }))
     : [];
+
+  // Determinar qué opciones usar
+  const finalTicketOptions = ticketOptions.length > 0 ? ticketOptions : fallbackTicketOptions;
+  const loading = raffleLoading || packagesLoading;
+  const error = raffleError || packagesError;
 
   if (loading) {
     return (
@@ -118,12 +132,22 @@ export default function HomeContent() {
         <main className="flex flex-col items-center p-4 max-w-4xl mx-auto">
           <div className="w-full text-center text-red-500">
             <p>{error}</p>
-            <button
-              className="mt-4 px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition"
-              onClick={() => window.location.reload()}
-            >
-              Reintentar
-            </button>
+            <div className="space-y-2 mt-4">
+              <button
+                className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition mr-2"
+                onClick={() => window.location.reload()}
+              >
+                Reintentar
+              </button>
+              {packagesError && (
+                <button
+                  className="px-4 py-2 bg-blue-200 rounded-md hover:bg-blue-300 transition"
+                  onClick={refetchPackages}
+                >
+                  Recargar Paquetes
+                </button>
+              )}
+            </div>
           </div>
         </main>
       </>
@@ -133,10 +157,28 @@ export default function HomeContent() {
   return (
     <>
       <Header />
-
+      <PrizeSection
+        imageUrls={imageUrls}
+        offerStartDate={offerStart}
+        offerEndDate={offerEnd} 
+      />
+      
+      {/* Mostrar información de debug en desarrollo */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="text-center mb-4 p-2 bg-yellow-100 rounded">
+          <small className="text-gray-600">
+            Debug: {ticketPackages.length} paquetes de DB, {fallbackTicketOptions.length} fallback
+          </small>
+        </div>
+      )}
+      
+      <TicketsGrid
+        ticketOptions={finalTicketOptions}
+        referralCode={referralCode}
+        isUsingPackages={ticketOptions.length > 0}
+      />
+      
       <main className="flex flex-col items-center p-4 max-w-4xl mx-auto">
-        <PrizeSection imageUrls={imageUrls} />
-
         <ProgressBar
           soldPercentage={soldPercentage}
           animatedPercentage={animatedPercentage}
@@ -144,18 +186,13 @@ export default function HomeContent() {
           totalNumbers={raffle?.total_numbers || 0}
         />
 
-        <BlessedNumbersSection
+        {/* <BlessedNumbersSection
           blessedNumbers={blessedNumbers}
           onNumberClaimed={handleNumberClaimed}
-        />
+        /> */}
 
         <InstructionsSection
           onVideoClick={() => setIsVideoModalOpen(true)}
-        />
-
-        <TicketsGrid
-          ticketOptions={ticketOptions}
-          referralCode={referralCode}
         />
 
         <CustomTicketSection

@@ -5,14 +5,14 @@ export interface PurchaseToken {
     expiresAt: Date;
 }
 
-export const createPurchaseToken = async (amount: number): Promise<string> => {
+export const createPurchaseToken = async (amount: number, finalPrice: number): Promise<string> => {
     try {
         const response = await fetch('/api/purchase-token', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ amount }),
+            body: JSON.stringify({ amount, finalPrice }),
         });
 
         if (!response.ok) {

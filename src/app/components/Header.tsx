@@ -3,14 +3,10 @@ import Image from 'next/image';
 
 export function Header() {
   return (
-    <header className="w-full bg-[#800000] text-center">
-      <Image
-        src="/images/logo-secondary.png"
-        alt="Logo"
-        width={1200}
-        height={300}
-        className="mx-auto mb-2"
-      />
+    <header className="w-full bg-foreground text-center">
+      <div className="max-w-4xl mx-auto p-6">
+        <h1 className="text-4xl font-bold text-white">Gana con el TRIX</h1>
+      </div>
     </header>
   );
 }

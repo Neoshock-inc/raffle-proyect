@@ -1,0 +1,25 @@
+@keyframes move-stripes {
+    0% {
+        background-position: 0 0;
+    }
+
+    20% {
+        background-position: 0 100%;
+    }
+
+    100% {
+        background-position: 0 0;
+    }
+}
+
+.progress-bar-stripes {
+    background-image: repeating-linear-gradient(45deg,
+            rgba(255, 255, 255, 0.15) 0,
+            rgba(255, 255, 255, 0.15) 5px,
+            transparent 5px,
+            transparent 10px);
+    background-size: auto 100%;
+    animation: move-stripes 0.75s linear infinite;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+}
