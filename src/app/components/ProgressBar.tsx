@@ -14,7 +14,11 @@ export function ProgressBar({
     totalNumbers
 }: ProgressBarProps) {
     return (
-        <section className="w-full mb-5">
+        <section className="w-full mb-5 mt-1">
+            {/* Título de la sección */}
+            <h2 className="text-2xl font-bold mb-4 text-center">Si Pero Las Cantidades Son Limitadas</h2>
+
+            {/* Información del progreso */}
             <div className="flex justify-between text-sm font-medium text-gray-700 mb-1">
                 <div>Progreso de la venta</div>
                 <div>{Math.round(soldPercentage)}%</div>
@@ -26,7 +30,7 @@ export function ProgressBar({
                     className="absolute top-0 left-0 h-full rounded-full transition-all duration-500 ease-out"
                     style={{
                         width: `${Math.max(animatedPercentage, 0.5)}%`,
-                        backgroundColor: 'var(--color-amber-700)',
+                        backgroundColor: 'var(--color-green-700)',
                     }}
                 />
 

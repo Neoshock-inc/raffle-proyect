@@ -84,6 +84,7 @@ export default function HomeContent() {
 
   // Configuración de datos
   const imageUrls = [
+    "/images/8.jpeg",
     "/images/7.png",
   ];
 
@@ -94,9 +95,9 @@ export default function HomeContent() {
   const baseAmounts = [20, 30, 40, 50, 75, 100];
   const fallbackTicketOptions: TicketOption[] = raffle
     ? baseAmounts.map((amount) => ({
-        amount,
-        price: amount * raffle.price,
-      }))
+      amount,
+      price: amount * raffle.price,
+    }))
     : [];
 
   // Determinar qué opciones usar
@@ -160,9 +161,9 @@ export default function HomeContent() {
       <PrizeSection
         imageUrls={imageUrls}
         offerStartDate={offerStart}
-        offerEndDate={offerEnd} 
+        offerEndDate={offerEnd}
       />
-      
+
       {/* Mostrar información de debug en desarrollo */}
       {process.env.NODE_ENV === 'development' && (
         <div className="text-center mb-4 p-2 bg-yellow-100 rounded">
@@ -171,14 +172,32 @@ export default function HomeContent() {
           </small>
         </div>
       )}
-      
+
       <TicketsGrid
         ticketOptions={finalTicketOptions}
         referralCode={referralCode}
         isUsingPackages={ticketOptions.length > 0}
       />
-      
+
       <main className="flex flex-col items-center p-4 max-w-4xl mx-auto">
+        <h3 className="text-2xl font-bold mb-4 text-center">
+          ¿Estás listo para llevarte todos estos premios?
+        </h3>
+
+        {/* Youtube video Section */}
+        <section className="w-full px-4 py-8 flex justify-center bg-gray-50">
+          <div className="w-full max-w-2xl aspect-video rounded-lg overflow-hidden shadow-lg">
+            <iframe
+              src="https://www.youtube.com/embed/Jc4-t2fOWHU"
+              title="YouTube video"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full"
+            />
+          </div>
+        </section>
+
         <ProgressBar
           soldPercentage={soldPercentage}
           animatedPercentage={animatedPercentage}
@@ -191,9 +210,9 @@ export default function HomeContent() {
           onNumberClaimed={handleNumberClaimed}
         /> */}
 
-        <InstructionsSection
+        {/* <InstructionsSection
           onVideoClick={() => setIsVideoModalOpen(true)}
-        />
+        /> */}
 
         <CustomTicketSection
           customAmount={customAmount}

@@ -30,7 +30,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
             <h3 className="text-xl font-semibold mb-4">Selecciona tu método de pago</h3>
 
             <div className="space-y-4">
-                <label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
+                {/* <label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
                     <input
                         type="radio"
                         name="payment"
@@ -44,7 +44,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                         <span className="font-medium">Pagar con tarjeta</span>
                         <p className="text-sm text-gray-500">Pago seguro con Stripe</p>
                     </div>
-                </label>
+                </label> */}
 
                 <label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
                     <input
@@ -118,15 +118,15 @@ const BankTransferInfo: React.FC<{ orderNumber: string }> = ({ orderNumber }) =>
         <p className="font-medium mb-2">Detalles de transferencia:</p>
         <p className="mb-1"><span className="font-semibold">Banco:</span> Banco Pichincha</p>
         <p className="mb-1"><span className="font-semibold">Tipo de cuenta:</span> Cuenta de ahorro transaccional</p>
-        <p className="mb-1"><span className="font-semibold">N° de cuenta:</span> 2206048998</p>
-        <p className="mb-1"><span className="font-semibold">Titular:</span> Franklin Daniel Peñafiel Morales</p>
-        <p className="mb-1"><span className="font-semibold">RUC/CI:</span> 1722338621</p>
+        <p className="mb-1"><span className="font-semibold">N° de cuenta:</span> 2205210743</p>
+        <p className="mb-1"><span className="font-semibold">Titular:</span> Irini Meza</p>
+        <p className="mb-1"><span className="font-semibold">RUC/CI:</span> 0918736034</p>
 
         <div className="mt-4 text-gray-700">
             <p className="font-semibold text-red-600">IMPORTANTE:</p>
             <p>NO PROCEDAS SI NO ESTÁS SEGURO de que quieres realizar la compra.</p>
             <p className="mt-2">
-                Realiza tu pago directamente con transferencia o depósito a nuestra cuenta bancaria. 
+                Realiza tu pago directamente con transferencia o depósito a nuestra cuenta bancaria.
                 Usa el número del pedido ({orderNumber}) como referencia de pago.
             </p>
             <p className="mt-2">

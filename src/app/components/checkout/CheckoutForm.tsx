@@ -8,6 +8,7 @@ import { useTokenValidation } from '@/app/hooks/useTokenValidation';
 import { generateOrderNumber } from '@/app/services/invoiceService';
 import { ExpirationWarning } from './ui/ExpirationWarning';
 import { TokenExpiredModal } from './ui/TokenExpiredModal';
+import { Header } from '../../components/Header';
 
 interface CheckoutFormProps {
     token: string | null;
@@ -133,9 +134,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ token, reffer }) => 
                 onGoHome={() => window.location.href = '/'}
             />
 
-            <header className="w-full bg-[#800000] py-4 text-center">
-                <h1 className="text-white text-7xl font-extrabold tracking-wide">GPC</h1>
-            </header>
+            <Header />
 
             <div className="max-w-6xl mx-auto px-4 py-8">
                 <div className="mb-8">

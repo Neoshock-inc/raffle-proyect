@@ -25,7 +25,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                 <div className="flex justify-between items-start mb-4">
                     <div>
                         <p className="font-medium">
-                            Números Mazda 6 Full - Yamaha MT03 2025 | Actividad #1
+                            Combo ganador gana con el TRIX, Boletos
                         </p>
                         <p className="text-gray-500 text-sm">x {purchaseData.amount}</p>
                     </div>
