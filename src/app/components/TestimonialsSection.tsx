@@ -79,20 +79,20 @@ export function TestimonialsSection() {
         },
         {
             id: 4,
-            name: "Susan K.",
+            name: "Jeferson A.",
             verified: true,
             date: "4/8/2025",
             rating: 5,
-            comment: "¡Amor, amor, amor mi premio! He sido fanática de los sorteos desde muy joven. Mis abuelos eran de Alemania y siempre me hablaron de la suerte. ¡Esperando el próximo sorteo!",
+            comment: "¡Me encantó! El premio es espectacular y el proceso de compra muy sencillo. Definitivamente participaré en más sorteos.",
             image: "/images/testimonials/IMG_8580.jpeg"
         },
         {
             id: 5,
-            name: "Ashley N.",
+            name: "Roberto C.",
             verified: true,
             date: "4/8/2025",
             rating: 5,
-            comment: "Son tan suaves, los amo. La calidad es excelente y el servicio al cliente increíble.",
+            comment: "¡Increíble! Gané el carro de mis sueños. El proceso fue súper fácil y transparente. Recomiendo 100% participar.",
             image: "/images/testimonials/IMG_8581.jpeg"
         },
         {
@@ -103,11 +103,10 @@ export function TestimonialsSection() {
             rating: 5,
             comment: "Tengo una moto negra para cada día de la semana, ¡y ahora también para los respaldos! Calidad premium.",
             image: "/images/testimonials/IMG_8582.jpeg",
-            prize: "Yamaha MT03"
         },
         {
             id: 9,
-            name: "Sarah L.",
+            name: "Leonardo S.",
             verified: true,
             date: "4/8/2025",
             rating: 5,

@@ -194,7 +194,7 @@ export default function HomeContent() {
         <section className="w-full px-1 py-1 flex justify-center bg-gray-50">
           <div className="w-full max-w-1xl aspect-video rounded-lg overflow-hidden shadow-lg">
             <iframe
-              src="https://www.youtube.com/embed/Jc4-t2fOWHU"
+              src="https://www.youtube.com/embed/aDfbfRZHcpE"
               title="YouTube video"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
