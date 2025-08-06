@@ -81,7 +81,7 @@ function generateInvoiceHtml(invoice: Invoice): string {
               <table width="100%">
                 <tr>
                   <td style="padding: 8px 0; width: 40%;"><strong>Concepto:</strong></td>
-                  <td style="padding: 8px 0;"> Compra total de ${invoice.amount} Números Mazda 6 Full - Yamaha MT03 2025</td>
+                  <td style="padding: 8px 0;"> Compra total de ${invoice.amount} Números, Combo ganador gana con el TRIX, Boletos</td>
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; width: 40%;"><strong>Total:</strong></td>
