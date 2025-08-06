@@ -25,6 +25,9 @@ export function PrizeSection({ imageUrls, offerStartDate, offerEndDate }: PrizeS
           className="mx-auto max-w-md"
         />
       </div>
+
+      {/* Titulo - Compra Tus Boletos Ahora */}
+      <h2 className="text-2xl font-bold text-center mb-4">🚀 Compra Tus Boletos Ahora 🚀</h2>
     </>
   );
 }
