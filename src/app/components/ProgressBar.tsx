@@ -15,8 +15,6 @@ export function ProgressBar({
 }: ProgressBarProps) {
     return (
         <section className="w-full mb-5 mt-1">
-            {/* Título de la sección */}
-            <h2 className="text-2xl font-bold mb-4 text-center">Si Pero Las Cantidades Son Limitadas</h2>
 
             {/* Información del progreso */}
             <div className="flex justify-between text-sm font-medium text-gray-700 mb-1">

@@ -26,6 +26,7 @@ import { TicketSearchModal } from "./components/TicketSearchModal";
 
 // Tipos y servicios
 import { TicketOption } from "./types/tickets";
+import { TestimonialsSection } from "./components/TestimonialsSection";
 
 const MARKETING_BOOST_PERCENTAGE = 0;
 
@@ -179,14 +180,15 @@ export default function HomeContent() {
         isUsingPackages={ticketOptions.length > 0}
       />
 
-      <section className="text-center mb-3">
+      <section className="text-center">
         <p>Participa comprando uno o más boletos. <strong>¡Mientras más compres, más chances tienes!</strong></p>
       </section>
 
       <main className="flex flex-col items-center p-4 max-w-4xl mx-auto">
-        <h3 className="text-2xl font-bold mb-4 text-center">
+        <h3 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-sky-400 to-blue-700 drop-shadow-[2px_2px_4px_rgba(0,0,0,0.25)] text-center mb-4">
           ¿Estás listo para llevarte todos estos premios?
         </h3>
+
 
         {/* Youtube video Section */}
         <section className="w-full px-1 py-1 flex justify-center bg-gray-50">
@@ -201,6 +203,11 @@ export default function HomeContent() {
             />
           </div>
         </section>
+
+        {/* Título de la sección */}
+        <h2 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-700 drop-shadow-[2px_2px_5px_rgba(0,0,0,0.3)] text-center mb-4">
+          ¡Sí, pero las cantidades son limitadas!
+        </h2>
 
         <ProgressBar
           soldPercentage={soldPercentage}
@@ -224,16 +231,8 @@ export default function HomeContent() {
           onCustomBuy={handleCustomBuyWithToken}
         />
 
-        {/* Testimonial Section */}
-        <section className="text-center mt-3">
-          <h3 className="text-xl font-bold mb-2">Testimonios</h3>
-          <p className="text-gray-600">
-            "¡Participar en este sorteo fue una experiencia increíble! No puedo esperar a ver si gano."
-          </p>
-          <p className="text-gray-600">
-            "Los premios son fantásticos y el proceso de compra fue muy fácil."
-          </p>
-        </section>
+        {/* Componente de Testimonios */}
+        <TestimonialsSection />
 
         <TicketSearchSection
           searchEmail={searchEmail}
