@@ -31,7 +31,7 @@ export default function TransferSuccessClient() {
             `Voy a realizar la transferencia y enviar el comprobante. Por favor, confirmar recepción.`
         );
 
-        const phoneNumber = '593964224199';
+        const phoneNumber = '593983313707';
 
         const timeout = setTimeout(() => {
             window.location.href = `https://wa.me/${phoneNumber}?text=${message}`;
