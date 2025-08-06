@@ -27,7 +27,7 @@ export function PrizeSection({ imageUrls, offerStartDate, offerEndDate }: PrizeS
       </div>
 
       {/* Titulo - Compra Tus Boletos Ahora */}
-      <h2 className="text-2xl font-bold text-center mb-4">🚀 Compra Tus Boletos Ahora 🚀</h2>
+      <h2 className="text-2xl font-bold text-center mb-4">Compra Tus Boletos Ahora 🚀</h2>
     </>
   );
 }
