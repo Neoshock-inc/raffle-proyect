@@ -27,7 +27,7 @@ import { TicketSearchModal } from "./components/TicketSearchModal";
 // Tipos y servicios
 import { TicketOption } from "./types/tickets";
 
-const MARKETING_BOOST_PERCENTAGE = 56;
+const MARKETING_BOOST_PERCENTAGE = 0;
 
 export default function HomeContent() {
   // Estados para modales
@@ -84,12 +84,12 @@ export default function HomeContent() {
 
   // Configuración de datos
   const imageUrls = [
-    "/images/8.jpeg",
-    "/images/7.png",
+    "/images/1.png",
+    "/images/2.png",
   ];
-
-  const offerStart = new Date(); // Comienza ahora
-  const offerEnd = new Date(Date.now() + 24 * 60 * 60 * 1000); // Termina en 24 horas
+  // Fechas de inicio 5 de agosto del 2025 a las 9 pm
+  const offerStart = new Date('2025-08-05T21:00:00');
+  const offerEnd = new Date('2025-08-06T21:00:00');
 
   // FALLBACK: Si no hay paquetes de la DB, usar el sistema anterior
   const baseAmounts = [20, 30, 40, 50, 75, 100];

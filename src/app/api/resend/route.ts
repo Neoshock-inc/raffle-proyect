@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const { error } = await resend.emails.send({
-      from: 'Facturación Rifa <noreply@proyectocolorado.com>',
+      from: 'Facturación Rifa <noreply@aarontrix.com>',
       to: invoice.email,
       subject: `Factura emitida - Orden #${invoice.order_number}`,
       html: generateInvoiceHtml(invoice),
@@ -52,8 +52,8 @@ function generateInvoiceHtml(invoice: Invoice): string {
   return `
     <div style="font-family: sans-serif; color: #333; max-width: 700px; margin: auto; border: 1px solid #eee; padding: 0; width: 100%;">
       <!-- Header -->
-      <div style="background-color: #800000; color: white; padding: 15px; text-align: center;">
-        <img src="https://www.proyectocolorado.com/_next/image?url=%2Fimages%2Flogo-secondary.png&w=3840&q=75" alt="Logo" style="max-width: 450px;" />
+      <div style="background-color: #fa8d3b; color: white; padding: 15px; text-align: center;">
+        <img src="https://tjixndnrvzswvzszpshm.supabase.co/storage/v1/object/public/raffle-media//main_logo.jpeg" alt="Gana por el TRIX Logo" style="max-width: 450px;" />
       </div>
 
       <!-- Body -->
@@ -62,7 +62,7 @@ function generateInvoiceHtml(invoice: Invoice): string {
         <table width="100%" style="margin-bottom: 20px;">
           <tr>
             <td style="text-align: left;">
-              <h2 style="margin: 0; color: #800000; font-size: 24px;">Factura emitida</h2>
+              <h2 style="margin: 0; color: #fa8d3b; font-size: 24px;">Factura emitida</h2>
             </td>
             <td style="text-align: right;">
               <img src="${barcodeUrl}" alt="Código de barras" style="max-width: 120px; height: auto;" />
@@ -72,7 +72,7 @@ function generateInvoiceHtml(invoice: Invoice): string {
 
         <p>Hola <strong>${invoice.full_name}</strong>,</p>
         <p>Tu factura con número de orden 
-          <strong style="color: #800000;">${invoice.order_number}</strong> ha sido generada.
+          <strong style="color: #fa8d3b;">${invoice.order_number}</strong> ha sido generada.
         </p>
 
         <table width="100%" style="margin-top: 30px; font-size: 14px;">
@@ -109,17 +109,17 @@ function generateInvoiceHtml(invoice: Invoice): string {
 
         <!-- Botón "Ver mis números" -->
         <div style="margin-top: 30px; text-align: center;">
-          <a href="https://www.proyectocolorado.com/success?email=${encodeURIComponent(invoice.email)}" 
-             style="display: inline-block; background-color: #800000; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">
+          <a href="https://www.aarontrix.com/success?email=${encodeURIComponent(invoice.email)}" 
+             style="display: inline-block; background-color: #fa8d3b; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">
             Ver mis números
           </a>
         </div>
       </div>
 
       <!-- Footer -->
-      <div style="background-color: #800000; color: white; padding: 15px; text-align: center; font-size: 12px;">
-        Proyecto Colorado © ${new Date().getFullYear()}<br/>
-        www.proyectocolorado.com | contacto@proyectocolorado.com
+      <div style="background-color: #fa8d3b; color: white; padding: 15px; text-align: center; font-size: 12px;">
+        Gana por el TRIX © ${new Date().getFullYear()}<br/>
+        www.aarontrix.com | contacto@aarontrix.com
       </div>
     </div>
   `;
@@ -128,9 +128,9 @@ function generateInvoiceHtml(invoice: Invoice): string {
 export async function GET() {
   try {
     const { error } = await resend.emails.send({
-      from: 'Facturación Rifa <team@proyectocolorado.com>',
+      from: 'Raffle Main Test <noreply@aarontrix.com>',
       to: 'pideun@gmail.com',
-      subject: 'Correo de prueba desde Resend',
+      subject: 'Funciona el endpoint GET',
       html: '<h1>Hello World</h1><p>Este es un correo de prueba enviado desde el endpoint GET.</p>',
     });
 

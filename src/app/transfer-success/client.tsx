@@ -15,11 +15,11 @@ export default function TransferSuccessClient() {
         const price = searchParams.get('price') ?? '0';
         const orderNumber = searchParams.get('orderNumber') ?? '';
 
-        const productDetails = `Números Mazda 6 Full - Yamaha MT03 2025 | Actividad #1`;
+        const productDetails = `Combo ganador gana con el TRIX, Boletos`;
         const totalAmount = parseFloat(price);
 
         const message = encodeURIComponent(
-            `*¡Nuevo pedido de GPC!*\n\n` +
+            `*¡Nuevo pedido de EL TRIX!*\n\n` +
             `Número de pedido: *${orderNumber}*\n` +
             `Cliente: ${name} ${lastName}\n` +
             `Email: ${email}\n` +
@@ -31,7 +31,7 @@ export default function TransferSuccessClient() {
             `Voy a realizar la transferencia y enviar el comprobante. Por favor, confirmar recepción.`
         );
 
-        const phoneNumber = '593992319300';
+        const phoneNumber = '593964224199';
 
         const timeout = setTimeout(() => {
             window.location.href = `https://wa.me/${phoneNumber}?text=${message}`;

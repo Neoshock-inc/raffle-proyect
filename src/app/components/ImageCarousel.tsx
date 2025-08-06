@@ -22,13 +22,13 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images }) => {
         {images.map((src, index) => (
           <div
             key={index}
-            className="w-full h-[150px] sm:h-[300px] md:h-[400px] lg:h-[500px] relative"
+            className="w-full h-[350px] sm:h-[300px] md:h-[400px] lg:h-[700px] relative"
           >
             <Image
               src={src}
               alt={`Imagen ${index + 1}`}
               fill
-              className="object-cover w-full h-full"
+              className="object-cover w-full h-full object-center "
               priority
             />
           </div>
