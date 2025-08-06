@@ -52,8 +52,8 @@ function generateInvoiceHtml(invoice: Invoice): string {
   return `
     <div style="font-family: sans-serif; color: #333; max-width: 700px; margin: auto; border: 1px solid #eee; padding: 0; width: 100%;">
       <!-- Header -->
-      <div style="background-color: #fa8d3b; color: white; padding: 15px; text-align: center;">
-        <img src="https://tjixndnrvzswvzszpshm.supabase.co/storage/v1/object/public/raffle-media//main_logo.jpeg" alt="Gana por el TRIX Logo" style="max-width: 450px;" />
+      <div style="background-color: #ece7e3; color: white; padding: 15px; text-align: center;">
+        <img src="https://tjixndnrvzswvzszpshm.supabase.co/storage/v1/object/public/raffle-media//logo.jpeg" alt="Gana por el TRIX Logo" style="max-width: 150px;" />
       </div>
 
       <!-- Body -->
