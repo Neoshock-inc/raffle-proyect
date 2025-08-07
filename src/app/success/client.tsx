@@ -51,11 +51,8 @@ export default function SuccessClient() {
                         Un representante se pondrá en contacto contigo dentro de las próximas <strong>48 horas</strong> para coordinar la entrega del premio.
                     </p>
                 </>
-            ) : (
-                <p className="text-gray-500 mb-6 text-center">
-                    No has ganado esta vez, pero gracias por participar. ¡Suerte para la próxima! 🍀
-                </p>
-            )}
+            ) : null
+            }
             {/* Mostrar todos los números asignados */}
             <div className="mb-6 w-full max-w-lg">
                 <h2 className="text-lg font-semibold mb-2 text-center">Tus números asignados:</h2>
