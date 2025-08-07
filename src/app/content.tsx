@@ -88,9 +88,10 @@ export default function HomeContent() {
     "/images/1.png",
     "/images/2.png",
   ];
-  // Fechas de inicio 5 de agosto del 2025 a las 9 pm
-  const offerStart = new Date('2025-08-05T21:00:00');
-  const offerEnd = new Date('2025-08-06T21:00:00');
+
+  // Fechas de inicio 6 de agosto del 2025 a las 9 pm hasta las 2 am
+  const offerStart = new Date('2025-08-06T22:00:00');
+  const offerEnd = new Date('2025-08-07T02:00:00');
 
   // FALLBACK: Si no hay paquetes de la DB, usar el sistema anterior
   const baseAmounts = [20, 30, 40, 50, 75, 100];
