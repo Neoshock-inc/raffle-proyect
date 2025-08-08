@@ -10,6 +10,7 @@ interface PaymentMethodsProps {
     setIsOfLegalAge: (value: boolean) => void;
     orderNumber: string;
     onStripePayment: () => void;
+    onPayPhonePayment: () => void; // Nueva prop para PayPhone
     onTransferPayment: () => void;
     purchaseData: any;
 }
@@ -22,6 +23,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
     setIsOfLegalAge,
     orderNumber,
     onStripePayment,
+    onPayPhonePayment, // Nueva prop
     onTransferPayment,
     purchaseData
 }) => {
@@ -30,6 +32,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
             <h3 className="text-xl font-semibold mb-4">Selecciona tu método de pago</h3>
 
             <div className="space-y-4">
+                {/* Stripe - Comentado temporalmente */}
                 {/* <label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
                     <input
                         type="radio"
@@ -43,6 +46,26 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                     <div>
                         <span className="font-medium">Pagar con tarjeta</span>
                         <p className="text-sm text-gray-500">Pago seguro con Stripe</p>
+                    </div>
+                </label> */}
+
+                {/* PayPhone - Nueva opción */}
+                {/* <label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
+                    <input
+                        type="radio"
+                        name="payment"
+                        value="payphone"
+                        checked={method === 'payphone'}
+                        onChange={() => setMethod('payphone')}
+                        disabled={isProcessing}
+                        className="h-5 w-5 text-green-600"
+                    />
+                    <div className="flex items-center">
+                        <PayPhoneIcon className="mr-2" />
+                        <div>
+                            <span className="font-medium">Pagar con PayPhone</span>
+                            <p className="text-sm text-gray-500">Pago rápido y seguro desde tu celular</p>
+                        </div>
                     </div>
                 </label> */}
 
@@ -82,7 +105,8 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
             )}
 
             <div className="mt-6">
-                {method === 'stripe' && (
+                {/* Stripe - Comentado temporalmente */}
+                {/* {method === 'stripe' && (
                     <button
                         onClick={onStripePayment}
                         disabled={isProcessing || !purchaseData}
@@ -90,12 +114,29 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                     >
                         {isProcessing ? <LoadingSpinner /> : 'Pagar con tarjeta'}
                     </button>
+                )} */}
+
+                {method === 'payphone' && (
+                    <button
+                        onClick={onPayPhonePayment}
+                        disabled={isProcessing || !purchaseData || !isOfLegalAge}
+                        className="w-full bg-[#FF6B35] hover:bg-[#E55A2B] disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3 rounded-md font-semibold transition flex items-center justify-center gap-2"
+                    >
+                        {isProcessing ? (
+                            <LoadingSpinner />
+                        ) : (
+                            <>
+                                <PayPhoneIcon />
+                                Pagar con PayPhone
+                            </>
+                        )}
+                    </button>
                 )}
 
                 {method === 'transfer' && (
                     <button
                         onClick={onTransferPayment}
-                        disabled={isProcessing || !purchaseData}
+                        disabled={isProcessing || !purchaseData || !isOfLegalAge}
                         className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3 rounded-md font-semibold transition flex items-center justify-center gap-2"
                     >
                         {isProcessing ? (
@@ -134,6 +175,24 @@ const BankTransferInfo: React.FC<{ orderNumber: string }> = ({ orderNumber }) =>
             </p>
         </div>
     </div>
+);
+
+const PayPhoneIcon: React.FC<{ className?: string }> = ({ className = "" }) => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+    >
+        <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+        <line x1="12" y1="18" x2="12.01" y2="18" />
+    </svg>
 );
 
 const WhatsAppIcon: React.FC = () => (

@@ -97,6 +97,122 @@ export const usePaymentMethods = (
         }
     };
 
+    const handlePayPhonePayment = async (): Promise<void> => {
+        const validation = validateCheckoutForm(formData, isOfLegalAge);
+        if (!validation.isValid) {
+            alert(validation.error);
+            return;
+        }
+
+        const isValid = await checkTokenValidity();
+        if (!isValid) {
+            setTokenExpired(true);
+            alert('Tu sesión ha expirado. Por favor, renueva la sesión.');
+            return;
+        }
+
+        if (!token || !purchaseData) {
+            alert('Error: Token de compra no válido. Por favor, regresa a la página anterior.');
+            return;
+        }
+
+        setIsProcessing(true);
+
+        try {
+            // Crear la factura primero
+            await createInvoiceWithParticipant({
+                orderNumber: orderNumber,
+                fullName: `${formData.name} ${formData.lastName}`,
+                email: formData.email,
+                phone: formData.phone,
+                country: formData.country,
+                status: PaymentStatus.PENDING,
+                paymentMethod: PaymentMethod.PAYPHONE,
+                province: formData.province,
+                city: formData.city,
+                address: formData.address,
+                amount: purchaseData.amount,
+                totalPrice: purchaseData.price,
+                referral_code: reffer || undefined
+            });
+
+            // Crear link de pago en PayPhone
+            const res = await fetch('/api/payphone/create-link', {
+                method: 'POST',
+                body: JSON.stringify({
+                    orderNumber,
+                    amount: purchaseData.amount,
+                    price: purchaseData.price,
+                    name: `${formData.name} ${formData.lastName}`,
+                    email: formData.email,
+                    phone: formData.phone,
+                    country: formData.country,
+                    province: formData.province,
+                    city: formData.city,
+                    address: formData.address
+                }),
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            const data = await res.json();
+
+            if (data.paymentLink) {
+                // Limpiar comillas dobles si existen
+                const cleanLink = data.paymentLink.trim().replace(/^"|"$/g, '');
+
+                // Guardar info como antes ...
+                const paymentInfo = {
+                    linkId: data.linkId,
+                    clientTransactionId: data.clientTransactionId,
+                    orderNumber: orderNumber,
+                    expirationDate: data.expirationDate || '',
+                    paymentLink: cleanLink
+                };
+
+                (window as any).__payphonePaymentInfo = paymentInfo;
+
+                try {
+                    localStorage.setItem('payphone_link_id', data.linkId);
+                    localStorage.setItem('payphone_client_transaction_id', data.clientTransactionId);
+                    localStorage.setItem('payphone_order_number', orderNumber);
+                    localStorage.setItem('payphone_expiration', data.expirationDate || '');
+                } catch (e) {
+                    console.warn('localStorage no disponible, usando almacenamiento en memoria');
+                }
+
+                // Abrir el link limpio en ventana nueva
+                const paymentWindow = window.open(
+                    cleanLink,
+                    'payphone_payment',
+                    'width=800,height=600,scrollbars=yes,resizable=yes'
+                );
+
+                if (!paymentWindow) {
+                    console.warn('Popup bloqueado, redirigiendo en la misma ventana');
+                    window.location.href = cleanLink;
+                } else {
+                    // Opcional: monitor ventana
+                    const checkClosed = setInterval(() => {
+                        if (paymentWindow.closed) {
+                            clearInterval(checkClosed);
+                            console.log('Ventana de pago cerrada');
+                        }
+                    }, 1000);
+                }
+            }
+            else {
+                throw new Error(data.error || 'No se pudo crear el link de pago PayPhone');
+            }
+
+        } catch (error: any) {
+            console.error('Error en el pago con PayPhone:', error);
+            alert(`Hubo un error al procesar tu pago con PayPhone: ${error.message || 'Error desconocido'}`);
+            await generateNewOrderNumber();
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
     const handleTransferPayment = async (): Promise<void> => {
         const validation = validateCheckoutForm(formData, isOfLegalAge);
         if (!validation.isValid) {
@@ -165,6 +281,7 @@ export const usePaymentMethods = (
         setMethod,
         isProcessing,
         handleStripePayment,
+        handlePayPhonePayment,
         handleTransferPayment
     };
 };

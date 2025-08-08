@@ -54,6 +54,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ token, reffer }) => 
         setMethod,
         isProcessing,
         handleStripePayment,
+        handlePayPhonePayment,
         handleTransferPayment
     } = usePaymentMethods(
         orderNumber,
@@ -167,6 +168,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ token, reffer }) => 
                             setIsOfLegalAge={setIsOfLegalAge}
                             orderNumber={orderNumber}
                             onStripePayment={handleStripePayment}
+                            onPayPhonePayment={handlePayPhonePayment}
                             onTransferPayment={handleTransferPayment}
                             purchaseData={purchaseData}
                         />

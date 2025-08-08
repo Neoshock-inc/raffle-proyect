@@ -84,17 +84,25 @@ export function CountdownTimer({ startDate, endDate, className = '' }: Countdown
 
     return (
         <div className={`text-center p-4 rounded-lg ${isActive
-                ? 'bg-red-50 border-red-300'
-                : 'bg-blue-50 border-blue-300'
+            ? 'bg-red-50 border-red-300'
+            : 'bg-blue-50 border-blue-300'
             } ${className}`}>
             <h3 className="text-2xl font-bold mb-2 leading-none">
                 {isActive ? (
-                    <span className="text-red-600">Tres Ganadores de 100$ <br /> en Efectivo Cuando El Reloj Llegue a Cero</span>
+                    <>
+                        <span className="text-red-600">
+                            ¡Premio de <strong>$2000</strong> si la rifa termina en{' '}
+                            <strong>
+                                {timeLeft.days * 24 + timeLeft.hours} horas
+                            </strong>!
+                            <br />
+                            En efectivo cuando el reloj llegue a cero
+                        </span>
+                    </>
                 ) : (
                     <span className="text-blue-600">🚀 Oferta Especial Próxima</span>
                 )}
             </h3>
-
             <p className="text-sm mb-3 text-gray-600">
                 {isActive ? 'Tiempo restante:' : 'Comienza en:'}
             </p>
