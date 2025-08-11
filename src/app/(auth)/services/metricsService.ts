@@ -53,11 +53,11 @@ export async function getDashboardMetrics() {
             : 0;
 
         const transferSales = completedInvoices
-            .filter((i) => i.payment_method === 'TRANSFER')
+            .filter((i) => i.payment_method === 'bank_transfer')
             .reduce((sum, inv) => sum + parseFloat(inv.total_price), 0);
 
         const stripeSales = completedInvoices
-            .filter((i) => i.payment_method === 'STRIPE')
+            .filter((i) => i.payment_method === 'stripe')
             .reduce((sum, inv) => sum + parseFloat(inv.total_price), 0);
 
         const totalMethodSales = transferSales + stripeSales;

@@ -52,8 +52,8 @@ export async function getParticipantsWithStats(): Promise<ParticipantWithStats[]
             const entries = participant.raffle_entries || []
             const invoices = participant.invoices || []
 
-            const pendingInvoices = invoices.filter((inv: any) => inv.status === 'PENDING')
-            const paidInvoices = invoices.filter((inv: any) => inv.status === 'PAID')
+            const pendingInvoices = invoices.filter((inv: any) => inv.status === 'pending')
+            const paidInvoices = invoices.filter((inv: any) => inv.status === 'completed')
 
             return {
                 id: participant.id,
