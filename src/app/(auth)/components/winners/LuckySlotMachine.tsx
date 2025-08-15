@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { X, Play, Trophy, RefreshCw } from 'lucide-react'
+import { X, Play, Trophy, RefreshCw, Calendar } from 'lucide-react'
 
 interface LuckySlotMachineProps {
     isOpen: boolean
@@ -14,11 +14,14 @@ interface LuckySlotMachineProps {
         phone?: string
         city?: string
         province?: string
+        purchased_at?: string // Fecha de compra desde la BD
     }>
     onWinnerSelected: (winner: any) => void
     raffleTitle: string
     loading: boolean
 }
+
+type DateRange = 'today' | 'week' | 'all'
 
 export function LuckySlotMachine({
     isOpen,
@@ -33,10 +36,41 @@ export function LuckySlotMachine({
     const [showResult, setShowResult] = useState(false)
     const [currentNumbers, setCurrentNumbers] = useState<string[]>(['', '', '', ''])
     const [finalNumber, setFinalNumber] = useState('')
+    const [dateRange, setDateRange] = useState<DateRange>('today')
     const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-    // Filtrar solo entradas que no sean ganadoras
-    const availableEntries = entries.filter(entry => !entry.is_winner)
+    // Función para filtrar entradas por fecha
+    const getFilteredEntries = () => {
+        const now = new Date()
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        const weekAgo = new Date(today)
+        weekAgo.setDate(weekAgo.getDate() - 7)
+        console.log(entries[0])
+        return entries.filter(entry => {
+            // Solo entradas que no sean ganadoras
+            if (entry.is_winner) return false
+            // Si no hay fecha, incluir en 'all'
+            const entryDate = entry.purchased_at
+            if (!entryDate && dateRange === 'all') return true
+            if (!entryDate) return false
+
+            const purchaseDate = new Date(entryDate)
+            const purchaseDateOnly = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth(), purchaseDate.getDate())
+
+            switch (dateRange) {
+                case 'today':
+                    return purchaseDateOnly.getTime() === today.getTime()
+                case 'week':
+                    return purchaseDateOnly >= weekAgo && purchaseDateOnly <= today
+                case 'all':
+                    return true
+                default:
+                    return false
+            }
+        })
+    }
+
+    const availableEntries = getFilteredEntries()
 
     // Función para generar un número aleatorio de 4 dígitos
     const generateRandomNumber = () => {
@@ -56,7 +90,7 @@ export function LuckySlotMachine({
         const randomIndex = Math.floor(Math.random() * availableEntries.length)
         const winner = availableEntries[randomIndex]
         const winnerNumber = winner.number.padStart(4, '0')
-        
+
         setFinalNumber(winnerNumber)
 
         let phase = 0 // 0: spinning all, 1-4: stopping each digit
@@ -77,7 +111,7 @@ export function LuckySlotMachine({
             } else {
                 // Comenzar a detener dígitos uno por uno
                 const digitToStop = Math.floor((spinCount - maxSpins) / 8) // Cada 8 iteraciones detiene un dígito
-                
+
                 setCurrentNumbers(prev => prev.map((num, index) => {
                     if (index <= digitToStop) {
                         return winnerNumber[index]
@@ -120,6 +154,32 @@ export function LuckySlotMachine({
         }
     }
 
+    const getDateRangeLabel = () => {
+        switch (dateRange) {
+            case 'today':
+                return '📅 Hoy'
+            case 'week':
+                return '📊 Última Semana'
+            case 'all':
+                return '🗂️ Todos'
+            default:
+                return ''
+        }
+    }
+
+    const getDateRangeDescription = () => {
+        switch (dateRange) {
+            case 'today':
+                return 'Solo participantes que compraron hoy'
+            case 'week':
+                return 'Participantes de los últimos 7 días'
+            case 'all':
+                return 'Todos los participantes históricos'
+            default:
+                return ''
+        }
+    }
+
     useEffect(() => {
         return () => {
             if (intervalRef.current) {
@@ -133,6 +193,11 @@ export function LuckySlotMachine({
             setCurrentNumbers(['', '', '', ''])
         }
     }, [isOpen])
+
+    // Reset cuando cambia el rango de fechas
+    useEffect(() => {
+        resetSlots()
+    }, [dateRange])
 
     if (!isOpen) return null
 
@@ -163,6 +228,61 @@ export function LuckySlotMachine({
                         </div>
                     </div>
 
+                    {/* Date Range Selector */}
+                    <div className="bg-gray-50 border-b px-6 py-4">
+                        <div className="flex items-center gap-4">
+                            <Calendar className="h-5 w-5 text-gray-600" />
+                            <span className="text-sm font-medium text-gray-700">Rango de fechas:</span>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setDateRange('today')}
+                                    disabled={isSpinning}
+                                    className={`
+                                        px-4 py-2 rounded-lg text-sm font-medium transition-all
+                                        ${dateRange === 'today'
+                                            ? 'bg-blue-600 text-white shadow-md'
+                                            : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                                        }
+                                        disabled:opacity-50
+                                    `}
+                                >
+                                    📅 Hoy
+                                </button>
+                                <button
+                                    onClick={() => setDateRange('week')}
+                                    disabled={isSpinning}
+                                    className={`
+                                        px-4 py-2 rounded-lg text-sm font-medium transition-all
+                                        ${dateRange === 'week'
+                                            ? 'bg-blue-600 text-white shadow-md'
+                                            : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                                        }
+                                        disabled:opacity-50
+                                    `}
+                                >
+                                    📊 Última Semana
+                                </button>
+                                <button
+                                    onClick={() => setDateRange('all')}
+                                    disabled={isSpinning}
+                                    className={`
+                                        px-4 py-2 rounded-lg text-sm font-medium transition-all
+                                        ${dateRange === 'all'
+                                            ? 'bg-blue-600 text-white shadow-md'
+                                            : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                                        }
+                                        disabled:opacity-50
+                                    `}
+                                >
+                                    🗂️ Todos
+                                </button>
+                            </div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2 ml-9">
+                            {getDateRangeDescription()}
+                        </p>
+                    </div>
+
                     {/* Content */}
                     <div className="p-6 overflow-y-auto flex-1">
                         {availableEntries.length === 0 ? (
@@ -171,19 +291,27 @@ export function LuckySlotMachine({
                                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                                     No hay números disponibles
                                 </h3>
-                                <p className="text-gray-600">
-                                    Todos los números ya han sido seleccionados como ganadores o no hay números pagados.
+                                <p className="text-gray-600 mb-4">
+                                    No hay participantes para el rango de fechas seleccionado: <span className="font-semibold">{getDateRangeLabel()}</span>
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                    {getDateRangeDescription()}
                                 </p>
                             </div>
                         ) : (
                             <div className="text-center">
                                 {/* Info */}
                                 <div className="mb-6">
-                                    <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                                        Números Disponibles: {availableEntries.length}
-                                    </h4>
+                                    <div className="flex items-center justify-center gap-2 mb-2">
+                                        <h4 className="text-lg font-semibold text-gray-900">
+                                            Números Disponibles: {availableEntries.length}
+                                        </h4>
+                                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
+                                            {getDateRangeLabel()}
+                                        </span>
+                                    </div>
                                     <p className="text-gray-600">
-                                        Haz clic en "Jugar" para seleccionar un ganador aleatoriamente
+                                        {getDateRangeDescription()} - Haz clic en "Jugar" para seleccionar un ganador
                                     </p>
                                 </div>
 
@@ -209,13 +337,13 @@ export function LuckySlotMachine({
                                                     </div>
                                                 ))}
                                             </div>
-                                            
+
                                             {/* Status Display */}
                                             <div className="text-center">
                                                 <div className={`
                                                     text-lg font-semibold px-4 py-2 rounded-full inline-block
-                                                    ${isSpinning 
-                                                        ? 'bg-yellow-400 text-yellow-900 animate-pulse' 
+                                                    ${isSpinning
+                                                        ? 'bg-yellow-400 text-yellow-900 animate-pulse'
                                                         : 'bg-gray-200 text-gray-700'
                                                     }
                                                 `}>
@@ -241,8 +369,8 @@ export function LuckySlotMachine({
                                         className={`
                                             flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-lg
                                             transition-all duration-200 transform
-                                            ${isSpinning 
-                                                ? 'bg-gray-400 cursor-not-allowed' 
+                                            ${isSpinning
+                                                ? 'bg-gray-400 cursor-not-allowed'
                                                 : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 hover:scale-105 shadow-lg'
                                             }
                                             text-white disabled:opacity-50
@@ -280,6 +408,14 @@ export function LuckySlotMachine({
                                             <div className="text-lg text-gray-700 mb-3">
                                                 📧 {selectedWinner.participant_email}
                                             </div>
+
+                                            {/* Date info */}
+                                            {(selectedWinner.created_at || selectedWinner.purchase_date) && (
+                                                <div className="text-sm text-blue-600 mb-3">
+                                                    📅 Fecha de compra: {new Date(selectedWinner.created_at || selectedWinner.purchase_date).toLocaleDateString('es-ES')}
+                                                </div>
+                                            )}
+
                                             {selectedWinner.full_name && selectedWinner.full_name !== selectedWinner.participant_name && (
                                                 <div className="text-sm text-gray-600 mb-2">
                                                     📄 Nombre en factura: {selectedWinner.full_name}

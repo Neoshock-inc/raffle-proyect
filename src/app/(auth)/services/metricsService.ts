@@ -117,26 +117,14 @@ export async function getSalesByDay(days: number = 30) {
     }
 }
 
-// Función para obtener ventas por método de pago
 export async function getSalesByPaymentMethod() {
-    const { data, error } = await supabase
-        .from('invoices')
-        .select('payment_method, total_price');
+    const { data, error } = await supabase.rpc('get_sales_by_payment_method');
 
     if (error) throw error;
 
-    const grouped: { [key: string]: number } = {};
-
-    for (const row of data) {
-        const method = row.payment_method || 'desconocido';
-        const total = parseFloat(row.total_price) || 0;
-        grouped[method] = (grouped[method] || 0) + total;
-    }
-
-    console.log('Ventas por método de pago:', grouped);
-    return Object.entries(grouped).map(([payment_method, total]) => ({
-        payment_method,
-        total: parseFloat(total.toFixed(2)),
+    return data.map((row: { payment_method: any; total: string; }) => ({
+        payment_method: row.payment_method,
+        total: parseFloat(row.total).toFixed(2)
     }));
 }
 

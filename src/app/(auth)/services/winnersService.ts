@@ -250,6 +250,7 @@ export async function getRaffleEntries(raffleId: string) {
                 number,
                 participant_id,
                 is_winner,
+                purchased_at,
                 participants(
                     name, 
                     email,
@@ -281,6 +282,7 @@ export async function getRaffleEntries(raffleId: string) {
         number: entry.number,
         participant_id: entry.participant_id,
         is_winner: entry.is_winner,
+        purchased_at: entry.purchased_at, // ← AGREGAR ESTA LÍNEA
         participant_name: entry.participants?.name || '',
         participant_email: entry.participants?.email || '',
         full_name: entry.participants?.invoices?.[0]?.full_name || '',
