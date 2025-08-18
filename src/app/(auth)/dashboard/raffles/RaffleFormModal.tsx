@@ -222,7 +222,7 @@ export default function RaffleFormModal({ isOpen, onClose, onSubmit, initialData
           </button>
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 rounded bg-[#800000] text-white hover:bg-[#6a0000]"
+            className="px-4 py-2 rounded bg-sky-700 text-white hover:bg-[#6a0000]"
           >
             Guardar
           </button>

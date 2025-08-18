@@ -56,7 +56,7 @@ export default function RafflesPage() {
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                    <div className="bg-[#800000] text-white p-2 rounded-full">
+                    <div className="bg-sky-700 text-white p-2 rounded-full">
                         <Ticket className="h-5 w-5" />
                     </div>
                     <div>
@@ -69,7 +69,7 @@ export default function RafflesPage() {
                         setEditingRaffle(undefined)
                         setIsModalOpen(true)
                     }}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#800000] text-white rounded hover:bg-[#6b0000] transition"
+                    className="flex items-center gap-2 px-4 py-2 bg-sky-700 text-white rounded hover:bg-[#6b0000] transition"
                 >
                     <Plus className="w-4 h-4" />
                     Crear rifa
@@ -82,7 +82,7 @@ export default function RafflesPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar por título o estado"
-                className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#800000] focus:border-[#800000] transition"
+                className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700 transition"
             />
 
             {/* Tabla */}

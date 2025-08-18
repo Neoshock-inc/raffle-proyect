@@ -111,7 +111,7 @@ export default function ReferidosPage() {
                 </div>
                 <button
                     onClick={handleCreate}
-                    className="flex items-center px-4 py-2 bg-[#800000] text-white rounded-lg hover:bg-[#600000] transition-colors"
+                    className="flex items-center px-4 py-2 bg-sky-700 text-white rounded-lg hover:bg-[#600000] transition-colors"
                 >
                     <Plus className="h-4 w-4 mr-2" />
                     Nuevo Referido
@@ -261,7 +261,7 @@ export default function ReferidosPage() {
                         <div className="text-gray-500">No hay referidos registrados</div>
                         <button
                             onClick={handleCreate}
-                            className="mt-4 text-[#800000] hover:text-[#600000] font-medium"
+                            className="mt-4 text-sky-700 hover:text-[#600000] font-medium"
                         >
                             Crear tu primer referido
                         </button>

@@ -91,7 +91,7 @@ export default function MisVentasPage() {
                     />
                     <button
                         onClick={copyToClipboard}
-                        className="bg-[#800000] text-white px-3 py-1 rounded hover:bg-[#a00000] transition text-sm"
+                        className="bg-sky-700 text-white px-3 py-1 rounded hover:bg-[#a00000] transition text-sm"
                     >
                         Copiar
                     </button>

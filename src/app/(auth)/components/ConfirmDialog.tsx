@@ -33,7 +33,7 @@ export function ConfirmDialog({
 
     const confirmButtonClass = variant === 'danger'
         ? 'bg-red-600 hover:bg-red-700 text-white'
-        : 'bg-[#800000] hover:bg-[#900000] text-white'
+        : 'bg-sky-700 hover:bg-[#900000] text-white'
 
     return (
         <div

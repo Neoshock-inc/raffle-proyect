@@ -60,7 +60,7 @@ export const ParticipantForm: React.FC<ParticipantFormProps> = ({
                             type="text"
                             value={formData.name}
                             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#800000] focus:border-[#800000]"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-sky-700 focus:border-sky-700"
                             required
                         />
                     </div>
@@ -74,7 +74,7 @@ export const ParticipantForm: React.FC<ParticipantFormProps> = ({
                             type="email"
                             value={formData.email}
                             onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#800000] focus:border-[#800000]"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-sky-700 focus:border-sky-700"
                             required
                         />
                     </div>
@@ -90,7 +90,7 @@ export const ParticipantForm: React.FC<ParticipantFormProps> = ({
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-4 py-2 bg-[#800000] text-white rounded-md hover:bg-[#900000] disabled:opacity-50"
+                            className="px-4 py-2 bg-sky-700 text-white rounded-md hover:bg-[#900000] disabled:opacity-50"
                         >
                             {loading ? 'Guardando...' : (participant ? 'Actualizar' : 'Crear')}
                         </button>

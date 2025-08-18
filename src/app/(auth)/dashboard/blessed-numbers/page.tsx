@@ -116,7 +116,7 @@ export default function BlessedNumbersPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="bg-[#800000] text-white p-2 rounded-full">
+                    <div className="bg-sky-700 text-white p-2 rounded-full">
                         <Sparkles className="h-5 w-5" />
                     </div>
                     <div>
@@ -138,7 +138,7 @@ export default function BlessedNumbersPage() {
                     <button
                         onClick={() => setCreateFormOpen(true)}
                         disabled={!activeRaffle || creating}
-                        className="flex items-center gap-2 px-4 py-2 bg-[#800000] text-white rounded-md hover:bg-[#900000] disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 bg-sky-700 text-white rounded-md hover:bg-[#900000] disabled:opacity-50"
                     >
                         <Plus className="h-4 w-4" />
                         Crear Números
@@ -174,7 +174,7 @@ export default function BlessedNumbersPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar por número, nombre o email"
-                className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#800000] focus:border-[#800000] transition"
+                className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700 transition"
             />
 
             {/* Table */}
@@ -232,7 +232,7 @@ export default function BlessedNumbersPage() {
                                                 type="checkbox"
                                                 checked={item.is_claimed}
                                                 onChange={() => handleToggleClaimed(item.id)}
-                                                className="h-4 w-4 text-[#800000] border-gray-300 rounded focus:ring-[#800000]"
+                                                className="h-4 w-4 text-sky-700 border-gray-300 rounded focus:ring-sky-700"
                                             />
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -312,7 +312,7 @@ export default function BlessedNumbersPage() {
                                         ...prev,
                                         quantity: parseInt(e.target.value) || 1
                                     }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#800000] focus:border-[#800000]"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-sky-700 focus:border-sky-700"
                                 />
                             </div>
 
@@ -325,7 +325,7 @@ export default function BlessedNumbersPage() {
                                         ...prev,
                                         is_minor_prize: e.target.checked
                                     }))}
-                                    className="h-4 w-4 text-[#800000] border-gray-300 rounded focus:ring-[#800000]"
+                                    className="h-4 w-4 text-sky-700 border-gray-300 rounded focus:ring-sky-700"
                                 />
                                 <label htmlFor="is_minor_prize" className="ml-2 text-sm text-gray-700">
                                     ¿Son premios menores?
@@ -351,7 +351,7 @@ export default function BlessedNumbersPage() {
                             <button
                                 onClick={handleCreateNew}
                                 disabled={creating || !createFormData.quantity || createFormData.quantity < 1}
-                                className="px-4 py-2 bg-[#800000] text-white rounded-md hover:bg-[#900000] disabled:opacity-50"
+                                className="px-4 py-2 bg-sky-700 text-white rounded-md hover:bg-[#900000] disabled:opacity-50"
                             >
                                 {creating ? 'Creando...' : `Crear ${createFormData.quantity} números`}
                             </button>
@@ -378,7 +378,7 @@ export default function BlessedNumbersPage() {
                                         ...prev,
                                         participantId: e.target.value
                                     }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#800000] focus:border-[#800000]"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-sky-700 focus:border-sky-700"
                                 >
                                     <option value="">Sin asignar</option>
                                     {participants.map((participant) => (
@@ -399,7 +399,7 @@ export default function BlessedNumbersPage() {
                             </button>
                             <button
                                 onClick={handleAssignSubmit}
-                                className="px-4 py-2 bg-[#800000] text-white rounded-md hover:bg-[#900000]"
+                                className="px-4 py-2 bg-sky-700 text-white rounded-md hover:bg-[#900000]"
                             >
                                 Asignar
                             </button>

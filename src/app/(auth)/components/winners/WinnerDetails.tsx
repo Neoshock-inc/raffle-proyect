@@ -37,7 +37,7 @@ export function WinnerDetails({ isOpen, onClose, winner }: WinnerDetailsProps) {
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                 <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
                     {/* Header */}
-                    <div className="bg-[#800000] text-white px-6 py-4">
+                    <div className="bg-sky-700 text-white px-6 py-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <Trophy className="h-6 w-6" />
@@ -75,7 +75,7 @@ export function WinnerDetails({ isOpen, onClose, winner }: WinnerDetailsProps) {
                                     </div>
                                     <div>
                                         <span className="text-sm text-gray-600">Número Ganador:</span>
-                                        <p className="font-bold text-lg text-[#800000]">{winner.number}</p>
+                                        <p className="font-bold text-lg text-sky-700">{winner.number}</p>
                                     </div>
                                     <div>
                                         <span className="text-sm text-gray-600">Fecha de Compra:</span>

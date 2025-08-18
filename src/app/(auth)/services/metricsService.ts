@@ -128,16 +128,16 @@ export async function getSalesByPaymentMethod() {
     }));
 }
 
-// Función para obtener entradas recientes a rifas (últimas 24 horas)
+// Función para obtener entradas recientes a rifas (última semana)
 export async function getRecentEntries() {
     try {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
+        const lastWeek = new Date();
+        lastWeek.setDate(lastWeek.getDate() - 7);
 
         const { data, error } = await supabase
             .from('raffle_entries')
             .select('purchased_at')
-            .gte('purchased_at', yesterday.toISOString())
+            .gte('purchased_at', lastWeek.toISOString())
             .order('purchased_at', { ascending: true });
 
         if (error) throw error;

@@ -235,61 +235,69 @@ export async function removeWinner(entryId: string): Promise<void> {
     if (error) throw error
 }
 
-// Obtener todas las entradas de una rifa para la ruleta (con paginación automática)
+// Obtener hasta 10.000 entradas de una rifa para la ruleta (con paginación automática)
 export async function getRaffleEntries(raffleId: string) {
-    const allEntries: any[] = []
-    let from = 0
-    const pageSize = 1000
-    let hasMore = true
+  const allEntries: any[] = []
+  let from = 0
+  const pageSize = 2000 // más grande para menos vueltas
+  let hasMore = true
 
-    while (hasMore) {
-        const { data, error } = await supabase
-            .from('raffle_entries')
-            .select(`
-                id,
-                number,
-                participant_id,
-                is_winner,
-                purchased_at,
-                participants(
-                    name, 
-                    email,
-                    invoices(full_name, phone, city, province)
-                )
-            `)
-            .eq('raffle_id', raffleId)
-            .eq('payment_status', 'paid')
-            .order('number', { ascending: true })
-            .range(from, from + pageSize - 1)
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from('raffle_entries')
+      .select(`
+        id,
+        number,
+        participant_id,
+        is_winner,
+        purchased_at,
+        participants(
+          name, 
+          email,
+          invoices(full_name, phone, city, province)
+        )
+      `)
+      .eq('raffle_id', raffleId)
+      .eq('payment_status', 'paid')
+      .order('number', { ascending: true })
+      .range(from, from + pageSize - 1)
 
-        if (error) throw error
+    if (error) throw error
 
-        if (data && data.length > 0) {
-            allEntries.push(...data)
+    if (data && data.length > 0) {
+      allEntries.push(...data)
 
-            // Si recibimos menos registros que el tamaño de página, no hay más datos
-            hasMore = data.length === pageSize
-            from += pageSize
-        } else {
-            hasMore = false
-        }
+      // Si llegamos a 10k, dejamos de pedir más
+      if (allEntries.length >= 10000) {
+        console.warn('Se alcanzó el límite de 10,000 entradas (se truncó el resultado)')
+        break
+      }
+
+      hasMore = data.length === pageSize
+      from += pageSize
+    } else {
+      hasMore = false
     }
+  }
 
-    console.log(`Total Raffle Entries loaded: ${allEntries.length}`)
+  console.log(`Total Raffle Entries loaded: ${allEntries.length}`)
 
-    return allEntries.map((entry: any) => ({
-        id: entry.id,
-        number: entry.number,
-        participant_id: entry.participant_id,
-        is_winner: entry.is_winner,
-        purchased_at: entry.purchased_at, // ← AGREGAR ESTA LÍNEA
-        participant_name: entry.participants?.name || '',
-        participant_email: entry.participants?.email || '',
-        full_name: entry.participants?.invoices?.[0]?.full_name || '',
-        phone: entry.participants?.invoices?.[0]?.phone || '',
-        city: entry.participants?.invoices?.[0]?.city || '',
-        province: entry.participants?.invoices?.[0]?.province || ''
-    }))
+  // ⚠️ Si hay más de 10k, solo nos quedamos con los primeros 10k
+  const trimmed = allEntries.slice(0, 10000)
+
+  return trimmed.map((entry: any) => ({
+    id: entry.id,
+    number: entry.number,
+    participant_id: entry.participant_id,
+    is_winner: entry.is_winner,
+    purchased_at: entry.purchased_at,
+    participant_name: entry.participants?.name || '',
+    participant_email: entry.participants?.email || '',
+    full_name: entry.participants?.invoices?.[0]?.full_name || '',
+    phone: entry.participants?.invoices?.[0]?.phone || '',
+    city: entry.participants?.invoices?.[0]?.city || '',
+    province: entry.participants?.invoices?.[0]?.province || ''
+  }))
 }
 
 // Obtener lista de rifas disponibles

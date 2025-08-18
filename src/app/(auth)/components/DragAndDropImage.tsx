@@ -70,7 +70,7 @@ export default function DragAndDropImage({ label, value, onChange, onUpload, raf
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={handleClick}
-                className={`cursor-pointer border-2 border-dashed rounded p-6 text-center transition ${isDragging ? 'border-[#800000] bg-gray-50' : 'border-gray-300 bg-white'
+                className={`cursor-pointer border-2 border-dashed rounded p-6 text-center transition ${isDragging ? 'border-sky-700 bg-gray-50' : 'border-gray-300 bg-white'
                     }`}
             >
                 {value ? (

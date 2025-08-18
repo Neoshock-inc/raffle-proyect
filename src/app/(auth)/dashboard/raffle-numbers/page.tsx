@@ -54,7 +54,7 @@ export default function EntradasRifaPage() {
             {/* Header con ícono */}
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                    <div className="bg-[#800000] text-white p-2 rounded-full">
+                    <div className="bg-sky-700 text-white p-2 rounded-full">
                         <Ticket className="h-5 w-5" />
                     </div>
                     <div>
@@ -64,7 +64,7 @@ export default function EntradasRifaPage() {
                 </div>
                 <button
                     onClick={() => setIsModalOpen(true)}
-                    className="flex items-center px-4 py-2 bg-[#800000] text-white rounded-lg hover:bg-[#600000] transition-colors"
+                    className="flex items-center px-4 py-2 bg-sky-700 text-white rounded-lg hover:bg-[#600000] transition-colors"
                 >
                     <Plus className="h-4 w-4 mr-2" />
                     Nueva Entrada
@@ -77,7 +77,7 @@ export default function EntradasRifaPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar por número o fecha"
-                className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#800000] focus:border-[#800000] transition"
+                className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700 transition"
             />
 
             {/* Tabla */}

@@ -403,7 +403,7 @@ export function InvoiceFormModal({ isOpen, onClose, onSave, initialData }: Props
                             <button
                                 type="submit"
                                 onClick={handleSubmit}
-                                className="px-6 py-2 bg-[#800000] text-white rounded-md hover:bg-[#990000] transition-colors font-medium shadow-md"
+                                className="px-6 py-2 bg-sky-700 text-white rounded-md hover:bg-[#990000] transition-colors font-medium shadow-md"
                             >
                                 {initialData?.id ? 'Actualizar Factura' : 'Crear Factura'}
                             </button>

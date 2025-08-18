@@ -58,7 +58,7 @@ export default function FacturasPage() {
             {/* Header con ícono */}
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                    <div className="bg-[#800000] text-white p-2 rounded-full">
+                    <div className="bg-sky-700 text-white p-2 rounded-full">
                         <FileText className="h-5 w-5" />
                     </div>
                     <div>
@@ -68,7 +68,7 @@ export default function FacturasPage() {
                 </div>
                 <button
                     onClick={handleNewInvoice}
-                    className="px-4 py-2 bg-[#800000] text-white rounded hover:bg-[#990000] transition"
+                    className="px-4 py-2 bg-sky-700 text-white rounded hover:bg-[#990000] transition"
                 >
                     Nueva factura
                 </button>
@@ -80,7 +80,7 @@ export default function FacturasPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar por número, nombre o teléfono"
-                className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#800000] focus:border-[#800000] transition"
+                className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700 transition"
             />
 
             {/* Tabla */}
@@ -132,7 +132,7 @@ export default function FacturasPage() {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                                             <button
                                                 onClick={() => handleEditInvoice(inv)}
-                                                className="text-[#800000] hover:underline text-sm"
+                                                className="text-sky-700 hover:underline text-sm"
                                             >
                                                 Editar
                                             </button>

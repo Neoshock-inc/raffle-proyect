@@ -182,7 +182,7 @@ export default function ReferidoModal({ isOpen, onClose, referido, onSuccess }: 
                                         id="name"
                                         value={formData.name}
                                         onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                                        className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#800000] sm:text-sm ${errors.name ? 'border-red-300' : ''
+                                        className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-700 sm:text-sm ${errors.name ? 'border-red-300' : ''
                                             }`}
                                         placeholder="Nombre del referido"
                                     />
@@ -200,7 +200,7 @@ export default function ReferidoModal({ isOpen, onClose, referido, onSuccess }: 
                                         id="email"
                                         value={formData.email}
                                         onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                                        className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#800000] sm:text-sm ${errors.email ? 'border-red-300' : ''
+                                        className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-700 sm:text-sm ${errors.email ? 'border-red-300' : ''
                                             }`}
                                         placeholder="email@ejemplo.com"
                                     />
@@ -219,7 +219,7 @@ export default function ReferidoModal({ isOpen, onClose, referido, onSuccess }: 
                                         id="phone"
                                         value={formData.phone}
                                         onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#800000] sm:text-sm"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-700 sm:text-sm"
                                         placeholder="+593 99 999 9999"
                                     />
                                 </div>
@@ -238,14 +238,14 @@ export default function ReferidoModal({ isOpen, onClose, referido, onSuccess }: 
                                                 ...prev,
                                                 referral_code: e.target.value.toUpperCase()
                                             }))}
-                                            className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#800000] sm:text-sm ${errors.referral_code ? 'border-red-300' : ''
+                                            className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-700 sm:text-sm ${errors.referral_code ? 'border-red-300' : ''
                                                 }`}
                                             placeholder="CODIGO2025"
                                         />
                                         <button
                                             type="button"
                                             onClick={generateReferralCode}
-                                            className="inline-flex items-center px-4 py-2 border border-[#800000] text-[#800000] font-medium text-sm bg-white rounded-r-md hover:bg-[#f3eaea] focus:outline-none focus:ring-2 focus:ring-[#800000]"
+                                            className="inline-flex items-center px-4 py-2 border border-sky-700 text-sky-700 font-medium text-sm bg-white rounded-r-md hover:bg-[#f3eaea] focus:outline-none focus:ring-2 focus:ring-sky-700"
                                         >
                                             Generar
                                         </button>
@@ -274,7 +274,7 @@ export default function ReferidoModal({ isOpen, onClose, referido, onSuccess }: 
                                             ...prev,
                                             commission_rate: parseFloat(e.target.value) / 100
                                         }))}
-                                        className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#800000] sm:text-sm ${errors.commission_rate ? 'border-red-300' : ''
+                                        className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-700 sm:text-sm ${errors.commission_rate ? 'border-red-300' : ''
                                             }`}
                                     />
                                     {errors.commission_rate && (
@@ -289,7 +289,7 @@ export default function ReferidoModal({ isOpen, onClose, referido, onSuccess }: 
                                         id="is_active"
                                         checked={formData.is_active}
                                         onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-                                        className="h-4 w-4 text-[#800000] focus:ring-[#800000] border-gray-300 rounded"
+                                        className="h-4 w-4 text-sky-700 focus:ring-sky-700 border-gray-300 rounded"
                                     />
                                     <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
                                         Referido activo
@@ -302,7 +302,7 @@ export default function ReferidoModal({ isOpen, onClose, referido, onSuccess }: 
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#800000] text-base font-medium text-white hover:bg-[#600000] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#800000] sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-sky-700 text-base font-medium text-white hover:bg-[#600000] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-700 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? 'Guardando...' : (referido ? 'Actualizar' : 'Crear')}
                             </button>

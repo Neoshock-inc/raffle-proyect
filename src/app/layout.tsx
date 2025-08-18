@@ -20,8 +20,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Gana con el TRIX",
-  description: "Apuesta y gana con el TRIX",
+  title: "My Fortuna Cloud",
+  description: "A cloud-based platform for managing your raffles and participants",
 };
 
 export default function RootLayout({

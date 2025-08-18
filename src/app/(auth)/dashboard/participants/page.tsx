@@ -85,7 +85,7 @@ export default function ParticipantesPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="bg-[#800000] text-white p-2 rounded-full">
+                    <div className="bg-sky-700 text-white p-2 rounded-full">
                         <Users className="h-5 w-5" />
                     </div>
                     <div>
@@ -106,7 +106,7 @@ export default function ParticipantesPage() {
 
                     <button
                         onClick={handleCreateNew}
-                        className="flex items-center gap-2 px-4 py-2 bg-[#800000] text-white rounded-md hover:bg-[#900000]"
+                        className="flex items-center gap-2 px-4 py-2 bg-sky-700 text-white rounded-md hover:bg-[#900000]"
                     >
                         <Plus className="h-4 w-4" />
                         Nuevo Participante
@@ -186,7 +186,7 @@ export default function ParticipantesPage() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Buscar por nombre o email..."
-                    className="flex-1 max-w-md px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#800000] focus:border-[#800000] transition"
+                    className="flex-1 max-w-md px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700 transition"
                 />
             </div>
 

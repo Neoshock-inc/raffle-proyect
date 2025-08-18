@@ -135,7 +135,7 @@ export default function WinnersPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="bg-[#800000] text-white p-2 rounded-full">
+                    <div className="bg-sky-700 text-white p-2 rounded-full">
                         <Trophy className="h-5 w-5" />
                     </div>
                     <div>
@@ -242,7 +242,7 @@ export default function WinnersPage() {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Buscar por participante, email o número..."
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#800000] focus:border-[#800000]"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700"
                         />
                     </div>
 
@@ -255,7 +255,7 @@ export default function WinnersPage() {
                             title='Filtrar por Rifa'
                             value={raffleFilter}
                             onChange={(e) => setRaffleFilter(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#800000] focus:border-[#800000]"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700"
                         >
                             <option value="">Todas las rifas</option>
                             {raffles.map((raffle) => (
@@ -276,7 +276,7 @@ export default function WinnersPage() {
                                 title='Seleccionar Rifa para Ruleta'
                                 value={selectedRaffleForWheel}
                                 onChange={(e) => setSelectedRaffleForWheel(e.target.value)}
-                                className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#800000] focus:border-[#800000]"
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700"
                             >
                                 <option value="">Seleccionar rifa...</option>
                                 {raffles.map((raffle) => (
@@ -295,7 +295,7 @@ export default function WinnersPage() {
                         <button
                             onClick={handleOpenWheel}
                             disabled={loading || !selectedRaffleForWheel}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#800000] text-white rounded-md hover:bg-[#900000] disabled:opacity-50"
+                            className="flex items-center gap-2 px-4 py-2 bg-sky-700 text-white rounded-md hover:bg-[#900000] disabled:opacity-50"
                         >
                             <Shuffle className="h-4 w-4" />
                             Maquina de la Suerte

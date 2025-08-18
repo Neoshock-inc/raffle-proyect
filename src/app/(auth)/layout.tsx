@@ -74,7 +74,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                 </p>
                 <button
                     onClick={handleLogout}
-                    className="mt-6 px-4 py-2 text-white bg-[#800000] rounded-lg hover:bg-red-700 transition"
+                    className="mt-6 px-4 py-2 text-white bg-sky-700 rounded-lg hover:bg-red-700 transition"
                 >
                     Cerrar sesión
                 </button>
@@ -85,7 +85,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     return (
         <div className="min-h-screen flex bg-gray-100">
             {/* Sidebar */}
-            <div className={`${sidebarOpen ? 'w-64' : 'w-18'} overflow-hidden bg-white shadow-lg transition-all duration-300 flex flex-col`}>
+            <div className={`${sidebarOpen ? 'w-64' : 'w-18'} overflow-hidden bg-[#f7f7f7] shadow-lg transition-all duration-300 flex flex-col`}>
 
                 {/* Logo + Toggle */}
                 <div className="p-4 border-b border-gray-200 flex flex-col items-center gap-2">
@@ -116,7 +116,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                                 <li key={parent.id}>
                                     <Link
                                         href={parent.route}
-                                        className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isParentActive ? 'bg-[#800000] text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+                                        className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isParentActive ? 'bg-sky-700 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
                                     >
                                         <ParentIcon className="h-5 w-5 flex-shrink-0" />
                                         {sidebarOpen && <span className="ml-3">{parent.label}</span>}
@@ -131,7 +131,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                                                     <li key={child.id}>
                                                         <Link
                                                             href={child.route}
-                                                            className={`flex items-center px-3 py-1.5 rounded-lg text-sm transition-colors ${isChildActive ? 'bg-[#800000] text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                                                            className={`flex items-center px-3 py-1.5 rounded-lg text-sm transition-colors ${isChildActive ? 'bg-sky-700 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
                                                         >
                                                             <ChildIcon className="h-4 w-4 flex-shrink-0" />
                                                             {sidebarOpen && <span className="ml-2">{child.label}</span>}
@@ -151,7 +151,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             {/* Main Content */}
             <div className="flex-1 flex flex-col">
                 {/* Header */}
-                <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-3.5">
+                <header className="bg-[#f7f7f7] shadow-sm border-b border-gray-200 px-6 py-3.5">
                     <div className="flex justify-between items-center">
                         <h1 className="text-xl font-semibold text-gray-800">
                             {
@@ -164,7 +164,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                         {userEmail && (
                             <Menu as="div" className="relative inline-block text-left">
                                 <Menu.Button className="flex items-center text-gray-700 hover:text-gray-900 font-medium">
-                                    <div className="w-8 h-8 bg-[#800000] rounded-full flex items-center justify-center text-white text-sm font-medium mr-2">
+                                    <div className="w-8 h-8 bg-sky-700 rounded-full flex items-center justify-center text-white text-sm font-medium mr-2">
                                         {userEmail.charAt(0).toUpperCase()}
                                     </div>
                                     {userEmail}

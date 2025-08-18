@@ -98,7 +98,7 @@ export function ManualWinnerForm({
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                 <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
                     {/* Header */}
-                    <div className="bg-[#800000] text-white px-6 py-4">
+                    <div className="bg-sky-700 text-white px-6 py-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <Trophy className="h-6 w-6" />
@@ -127,7 +127,7 @@ export function ManualWinnerForm({
                                 title='Seleccionar Rifa'
                                 value={selectedRaffle}
                                 onChange={(e) => setSelectedRaffle(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#800000] focus:border-[#800000]"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700"
                                 required
                             >
                                 <option value="">Seleccione una rifa...</option>
@@ -154,7 +154,7 @@ export function ManualWinnerForm({
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         placeholder="Buscar por número o participante..."
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#800000] focus:border-[#800000]"
+                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700"
                                     />
                                 </div>
 
@@ -212,7 +212,7 @@ export function ManualWinnerForm({
                         {winnerNumber && (
                             <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
                                 <h4 className="font-medium text-yellow-800 mb-2">Número Ganador Seleccionado:</h4>
-                                <div className="text-2xl font-bold text-[#800000]">
+                                <div className="text-2xl font-bold text-sky-700">
                                     {winnerNumber}
                                 </div>
                             </div>
@@ -230,7 +230,7 @@ export function ManualWinnerForm({
                             <button
                                 type="submit"
                                 disabled={!selectedRaffle || !winnerNumber || loading}
-                                className="px-6 py-2 bg-[#800000] text-white rounded-md hover:bg-[#900000] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="px-6 py-2 bg-sky-700 text-white rounded-md hover:bg-[#900000] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
                                 {loading ? 'Procesando...' : 'Confirmar Ganador'}
                             </button>

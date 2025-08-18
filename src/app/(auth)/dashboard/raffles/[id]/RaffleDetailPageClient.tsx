@@ -52,7 +52,7 @@ function EditableInput({
             {textarea ? (
                 <textarea
                     className={`block w-full rounded border px-3 py-2 pr-10 text-gray-900 placeholder-gray-400 focus:outline-none transition ${isEditing
-                        ? 'border-[#800000] focus:ring-1 focus:ring-[#800000]'
+                        ? 'border-sky-700 focus:ring-1 focus:ring-sky-700'
                         : 'border-gray-300 bg-gray-100 cursor-not-allowed'
                         } resize vertical min-h-[80px]`}
                     placeholder={placeholder}
@@ -67,7 +67,7 @@ function EditableInput({
                     type={type}
                     placeholder={placeholder}
                     className={`block w-full rounded border px-3 py-2 pr-10 text-gray-900 placeholder-gray-400 focus:outline-none transition ${isEditing
-                        ? 'border-[#800000] focus:ring-1 focus:ring-[#800000]'
+                        ? 'border-sky-700 focus:ring-1 focus:ring-sky-700'
                         : 'border-gray-300 bg-gray-100 cursor-not-allowed'
                         }`}
                     value={internalValue}
@@ -83,7 +83,7 @@ function EditableInput({
                 <button
                     type="button"
                     onClick={() => setIsEditing(true)}
-                    className="absolute right-2 top-[38px] p-1 text-gray-500 hover:text-[#800000] focus:outline-none"
+                    className="absolute right-2 top-[38px] p-1 text-gray-500 hover:text-sky-700 focus:outline-none"
                     aria-label={`Editar ${label.toLowerCase()}`}
                     tabIndex={0}
                 >
@@ -126,7 +126,7 @@ export default function RaffleDetailPage({ id }: Props) {
             {/* Header */}
             <div className="flex justify-between items-center pb-8">
                 <div className="flex items-center gap-4">
-                    <div className="bg-[#800000] text-white p-3 rounded-full">
+                    <div className="bg-sky-700 text-white p-3 rounded-full">
                         <Ticket className="h-7 w-7" />
                     </div>
                     <h1 className="text-3xl font-bold text-gray-900">{raffle.title}</h1>
@@ -199,7 +199,7 @@ export default function RaffleDetailPage({ id }: Props) {
                             type="number"
                             placeholder="Precio del ticket"
 
-                            className="block w-full rounded border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-[#800000] focus:ring-1 focus:ring-[#800000] focus:outline-none"
+                            className="block w-full rounded border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-sky-700 focus:ring-1 focus:ring-sky-700 focus:outline-none"
                             value={raffle.price.toString()}
                             onChange={(e) => handleFieldChange('price', parseFloat(e.target.value))}
                         />
@@ -209,7 +209,7 @@ export default function RaffleDetailPage({ id }: Props) {
                         <input
                             type="date"
                             placeholder="Fecha del sorteo"
-                            className="block w-full rounded border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-[#800000] focus:ring-1 focus:ring-[#800000] focus:outline-none"
+                            className="block w-full rounded border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-sky-700 focus:ring-1 focus:ring-sky-700 focus:outline-none"
                             value={new Date(raffle.draw_date).toISOString().slice(0, 10)}
                             onChange={(e) => handleFieldChange('draw_date', new Date(e.target.value).toISOString())}
                         />
@@ -218,7 +218,7 @@ export default function RaffleDetailPage({ id }: Props) {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
                         <select
                             title="Selecciona una opción"
-                            className="block w-full rounded border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-[#800000] focus:ring-1 focus:ring-[#800000] focus:outline-none"
+                            className="block w-full rounded border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-sky-700 focus:ring-1 focus:ring-sky-700 focus:outline-none"
                             value={raffle.status}
                             onChange={(e) => handleFieldChange('status', e.target.value as RaffleStatus)}
                         >
@@ -263,7 +263,7 @@ export default function RaffleDetailPage({ id }: Props) {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Mostrar cuenta regresiva</label>
                         <select
                             title="Selecciona una opción"
-                            className="block w-full rounded border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-[#800000] focus:ring-1 focus:ring-[#800000] focus:outline-none"
+                            className="block w-full rounded border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-sky-700 focus:ring-1 focus:ring-sky-700 focus:outline-none"
                             value={raffle.show_countdown ? 'Sí' : 'No'}
                             onChange={(e) => handleFieldChange('show_countdown', e.target.value === 'Sí')}
                         >
