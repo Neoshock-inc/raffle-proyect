@@ -1,7 +1,6 @@
 import React from 'react';
 import { PersonalDataForm } from './PersonalDataForm';
 import { OrderSummary } from './OrderSummary';
-import { PaymentMethods } from './PaymentMethods';
 import { useCheckoutForm } from '@/app/hooks/useCheckoutForm';
 import { usePaymentMethods } from '@/app/hooks/usePaymentMethods';
 import { useTokenValidation } from '@/app/hooks/useTokenValidation';
@@ -9,6 +8,7 @@ import { generateOrderNumber } from '@/app/services/invoiceService';
 import { ExpirationWarning } from './ui/ExpirationWarning';
 import { TokenExpiredModal } from './ui/TokenExpiredModal';
 import { Header } from '../../components/Header';
+import { PaymentMethods } from './PaymentMethods';
 
 interface CheckoutFormProps {
     token: string | null;
@@ -55,7 +55,10 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ token, reffer }) => 
         isProcessing,
         handleStripePayment,
         handlePayPhonePayment,
-        handleTransferPayment
+        handleTransferPayment,
+        handlePayPalPayment,
+        handlePayPalApprove,
+        handlePayPalError
     } = usePaymentMethods(
         orderNumber,
         purchaseData,
@@ -171,6 +174,9 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ token, reffer }) => 
                             onPayPhonePayment={handlePayPhonePayment}
                             onTransferPayment={handleTransferPayment}
                             purchaseData={purchaseData}
+                            onPayPalPayment={handlePayPalPayment}
+                            onPayPalApprove={handlePayPalApprove}
+                            onPayPalError={handlePayPalError}
                         />
                     </div>
                 </div>

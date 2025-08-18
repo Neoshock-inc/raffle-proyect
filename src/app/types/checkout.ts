@@ -50,4 +50,4 @@ export interface PayPhoneTransactionData {
     callback_method?: 'GET' | 'POST';
 }
 
-export type PaymentMethodType = 'stripe' | 'payphone' | 'transfer' | null;
+export type PaymentMethodType = 'stripe' | 'payphone' | 'transfer' | 'paypal' | null;

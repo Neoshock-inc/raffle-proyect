@@ -277,3 +277,191 @@ export const generateOrderNumber = async (): Promise<string> => {
 
     return data as string;
 };
+
+export interface GenerateNumbersParams {
+    name: string;
+    email: string;
+    amount: number;
+    orderNumber?: string; // Para identificar la transacción
+}
+
+export interface GenerateNumbersResponse {
+    success: boolean;
+    assigned?: number[];
+    total_assigned?: number;
+    raffle_id?: string;
+    error?: string;
+    details?: string;
+}
+
+/**
+ * Genera números de rifa para un participante después de una compra validada
+ * @param params Parámetros necesarios para generar los números
+ * @returns Respuesta con los números asignados o error
+ */
+export const generateRaffleNumbers = async (params: GenerateNumbersParams): Promise<GenerateNumbersResponse> => {
+    try {
+        const { name, email, amount, orderNumber } = params;
+
+        // 1. Obtener rifa activa
+        const { data: raffle, error: raffleError } = await supabase
+            .from('raffles')
+            .select('id, total_numbers')
+            .eq('is_active', true)
+            .single();
+
+        if (raffleError || !raffle) {
+            return {
+                success: false,
+                error: 'No hay una rifa activa disponible'
+            };
+        }
+
+        const raffleId = raffle.id;
+        const maxNumber = raffle.total_numbers || 99999;
+
+        // 2. Verificar o crear participante
+        const { data: existingParticipant } = await supabase
+            .from('participants')
+            .select('id')
+            .eq('email', email)
+            .single();
+
+        let participantId = existingParticipant?.id;
+
+        if (!participantId) {
+            const { data: newParticipant, error: participantError } = await supabase
+                .from('participants')
+                .insert({ name, email })
+                .select()
+                .single();
+
+            if (participantError || !newParticipant) {
+                return {
+                    success: false,
+                    error: 'Error al crear participante'
+                };
+            }
+
+            participantId = newParticipant.id;
+        }
+
+        // 3. Verificar disponibilidad de números
+        const { data: usedEntries, error: usedError } = await supabase
+            .from('raffle_entries')
+            .select('number')
+            .eq('raffle_id', raffleId);
+
+        if (usedError) {
+            console.error('Error al obtener números usados:', usedError);
+            return {
+                success: false,
+                error: 'Error al verificar números disponibles'
+            };
+        }
+
+        const usedCount = usedEntries?.length || 0;
+        const requestedAmount = parseInt(amount.toString());
+
+        if (isNaN(requestedAmount) || requestedAmount <= 0) {
+            return {
+                success: false,
+                error: 'Cantidad inválida'
+            };
+        }
+
+        if (maxNumber - usedCount < requestedAmount) {
+            return {
+                success: false,
+                error: `No hay suficientes números disponibles. Solicitados: ${requestedAmount}, Disponibles: ${maxNumber - usedCount}`
+            };
+        }
+
+        // 4. Llamar procedimiento almacenado para generar números
+        const { data: generated, error: rpcError } = await supabase.rpc('generate_raffle_numbers', {
+            in_participant_id: participantId,
+            in_raffle_id: raffleId,
+            in_amount: requestedAmount
+        });
+
+        if (rpcError || !generated || generated.length !== requestedAmount) {
+            console.error('Error al generar números:', rpcError);
+            return {
+                success: false,
+                error: 'Error al generar números',
+                details: rpcError?.message
+            };
+        }
+
+        // 5. Opcional: Actualizar con orderNumber si se proporciona
+        if (orderNumber) {
+            const { error: updateError } = await supabase
+                .from('raffle_entries')
+                .update({ order_number: orderNumber })
+                .eq('participant_id', participantId)
+                .eq('raffle_id', raffleId)
+                .in('number', generated.map((n: any) => n.generated_number));
+
+            if (updateError) {
+                console.warn('⚠️ No se pudo actualizar order_number:', updateError);
+            }
+        }
+
+        return {
+            success: true,
+            assigned: generated.map((n: any) => n.generated_number),
+            total_assigned: generated.length,
+            raffle_id: raffleId
+        };
+
+    } catch (error) {
+        console.error('Error general en generateRaffleNumbers:', error);
+        return {
+            success: false,
+            error: 'Error inesperado',
+            details: error instanceof Error ? error.message : String(error)
+        };
+    }
+};
+
+/**
+ * Verifica si ya existen números generados para un participante y rifa específica
+ * @param email Email del participante
+ * @param raffleId ID de la rifa (opcional, usa la rifa activa por defecto)
+ * @returns Lista de números ya asignados al participante
+ */
+export const getParticipantNumbers = async (email: string, raffleId?: string): Promise<number[]> => {
+    try {
+        let query = supabase
+            .from('raffle_entries')
+            .select('number')
+            .eq('participants.email', email);
+
+        if (raffleId) {
+            query = query.eq('raffle_id', raffleId);
+        } else {
+            // Obtener rifa activa
+            const { data: raffle } = await supabase
+                .from('raffles')
+                .select('id')
+                .eq('is_active', true)
+                .single();
+            
+            if (raffle) {
+                query = query.eq('raffle_id', raffle.id);
+            }
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+            console.error('Error al obtener números del participante:', error);
+            return [];
+        }
+
+        return data?.map(entry => entry.number) || [];
+    } catch (error) {
+        console.error('Error en getParticipantNumbers:', error);
+        return [];
+    }
+};

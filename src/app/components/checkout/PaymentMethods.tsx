@@ -1,6 +1,7 @@
 import { PaymentMethodType } from '@/app/types/checkout';
 import React from 'react';
 import { LoadingSpinner } from './ui/LoadingSpinner';
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 
 interface PaymentMethodsProps {
     method: PaymentMethodType;
@@ -10,8 +11,11 @@ interface PaymentMethodsProps {
     setIsOfLegalAge: (value: boolean) => void;
     orderNumber: string;
     onStripePayment: () => void;
-    onPayPhonePayment: () => void; // Nueva prop para PayPhone
+    onPayPhonePayment: () => void;
     onTransferPayment: () => void;
+    onPayPalPayment: () => Promise<{ success: boolean; error?: string; orderID?: string }>;
+    onPayPalApprove: (data: any) => Promise<{ success: boolean; error?: string }>;
+    onPayPalError: (error: any) => Promise<void>;
     purchaseData: any;
 }
 
@@ -23,16 +27,27 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
     setIsOfLegalAge,
     orderNumber,
     onStripePayment,
-    onPayPhonePayment, // Nueva prop
+    onPayPhonePayment,
     onTransferPayment,
+    onPayPalPayment,
+    onPayPalApprove,
+    onPayPalError,
     purchaseData
 }) => {
+    // Opciones iniciales de PayPal
+    const initialOptions = {
+        "client-id": process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "",
+        clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "",
+        currency: "USD",
+        intent: "capture",
+    };
+
     return (
         <div className="bg-white p-6 rounded-md shadow border">
             <h3 className="text-xl font-semibold mb-4">Selecciona tu método de pago</h3>
 
             <div className="space-y-4">
-                {/* Stripe - Comentado temporalmente */}
+                {/* Stripe */}
                 <label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
                     <input
                         type="radio"
@@ -49,7 +64,27 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                     </div>
                 </label>
 
-                {/* PayPhone - Nueva opción */}
+                {/* PayPal */}
+                <label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
+                    <input
+                        type="radio"
+                        name="payment"
+                        value="paypal"
+                        checked={method === 'paypal'}
+                        onChange={() => setMethod('paypal')}
+                        disabled={isProcessing}
+                        className="h-5 w-5 text-green-600"
+                    />
+                    <div className="flex items-center">
+                        <PayPalIcon className="mr-2" />
+                        <div>
+                            <span className="font-medium">Pagar con PayPal</span>
+                            <p className="text-sm text-gray-500">Pago seguro con PayPal</p>
+                        </div>
+                    </div>
+                </label>
+
+                {/* PayPhone */}
                 {/* <label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
                     <input
                         type="radio"
@@ -69,6 +104,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                     </div>
                 </label> */}
 
+                {/* Transferencia bancaria */}
                 <label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
                     <input
                         type="radio"
@@ -105,17 +141,55 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
             )}
 
             <div className="mt-6">
-                {/* Stripe - Comentado temporalmente */}
+                {/* Stripe */}
                 {method === 'stripe' && (
                     <button
                         onClick={onStripePayment}
-                        disabled={isProcessing || !purchaseData}
+                        disabled={isProcessing || !purchaseData || !isOfLegalAge}
                         className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3 rounded-md font-semibold transition"
                     >
                         {isProcessing ? <LoadingSpinner /> : 'Pagar con tarjeta'}
                     </button>
                 )}
 
+                {/* PayPal Buttons */}
+                {method === 'paypal' && purchaseData && isOfLegalAge && (
+                    <PayPalScriptProvider options={initialOptions}>
+                        <PayPalButtons
+                            disabled={isProcessing}
+                            createOrder={async (_, actions) => {
+                                const res = await onPayPalPayment();
+                                if (!res.success) {
+                                    alert(res.error);
+                                    throw new Error(res.error);
+                                }
+                                return actions.order.create({
+                                    intent: "CAPTURE",
+                                    purchase_units: [
+                                        {
+                                            amount: {
+                                                currency_code: "USD",
+                                                value: purchaseData.price.toString(),
+                                            }
+                                        }
+                                    ]
+                                });
+                            }}
+                            onApprove={async (_, actions) => {
+                                console.log('Pago aprobado:', actions.order);
+                                if (actions.order) {
+                                    await actions.order.capture();  // Aquí PayPal ya procesó tu cobro
+                                }
+                                await onPayPalApprove(null);      // Aquí se genera factura y redirección
+                            }}
+                            onError={async err => {
+                                await onPayPalError(err);
+                            }}
+                        />
+                    </PayPalScriptProvider>
+                )}
+
+                {/* PayPhone */}
                 {method === 'payphone' && (
                     <button
                         onClick={onPayPhonePayment}
@@ -133,6 +207,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                     </button>
                 )}
 
+                {/* Transferencia */}
                 {method === 'transfer' && (
                     <button
                         onClick={onTransferPayment}
@@ -175,6 +250,26 @@ const BankTransferInfo: React.FC<{ orderNumber: string }> = ({ orderNumber }) =>
             </p>
         </div>
     </div>
+);
+
+const PayPalIcon: React.FC<{ className?: string }> = ({ className = "" }) => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+    >
+        <path d="M7 21h10l2-12H5l2 12z" />
+        <path d="M12 2v7" />
+        <path d="M8 2v7" />
+        <path d="M16 2v7" />
+    </svg>
 );
 
 const PayPhoneIcon: React.FC<{ className?: string }> = ({ className = "" }) => (
