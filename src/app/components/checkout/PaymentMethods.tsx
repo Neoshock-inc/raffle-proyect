@@ -83,7 +83,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                         <PayPalIcon className="mr-2" />
                         <div>
                             <span className="font-medium">Pagar con Tarjeta</span>
-                            <p className="text-sm text-gray-500">Pago seguro</p>
+                            <p className="text-sm text-gray-500">Pago seguro con Tarjeta o PayPal</p>
                         </div>
                     </div>
                 </label>
