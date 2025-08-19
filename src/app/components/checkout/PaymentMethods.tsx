@@ -52,7 +52,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
 
             <div className="space-y-4">
                 {/* Stripe */}
-                <label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
+                {/* <label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
                     <input
                         type="radio"
                         name="payment"
@@ -66,7 +66,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                         <span className="font-medium">Pagar con tarjeta</span>
                         <p className="text-sm text-gray-500">Pago seguro con Stripe</p>
                     </div>
-                </label>
+                </label> */}
 
                 {/* PayPal */}
                 <label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
@@ -82,8 +82,8 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                     <div className="flex items-center">
                         <PayPalIcon className="mr-2" />
                         <div>
-                            <span className="font-medium">Pagar con PayPal</span>
-                            <p className="text-sm text-gray-500">Pago seguro con PayPal</p>
+                            <span className="font-medium">Pagar con Tarjeta</span>
+                            <p className="text-sm text-gray-500">Pago seguro</p>
                         </div>
                     </div>
                 </label>
