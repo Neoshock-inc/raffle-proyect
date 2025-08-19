@@ -34,12 +34,16 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
     onPayPalError,
     purchaseData
 }) => {
-    // Opciones iniciales de PayPal
+    // Opciones mejoradas de PayPal con configuraciones adicionales
     const initialOptions = {
         "client-id": process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "",
         clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "",
         currency: "USD",
         intent: "capture",
+        // Configuraciones adicionales para evitar problemas de opacidad
+        "enable-funding": "venmo,paylater,card", // Habilitar métodos de pago específicos
+        "disable-funding": "", // No deshabilitar ningún método por defecto
+        components: "buttons,marks,messages", // Componentes a cargar
     };
 
     return (
@@ -84,7 +88,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                     </div>
                 </label>
 
-                {/* PayPhone */}
+                {/* PayPhone - Comentado como estaba */}
                 {/* <label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
                     <input
                         type="radio"
@@ -152,41 +156,94 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                     </button>
                 )}
 
-                {/* PayPal Buttons */}
+                {/* PayPal Buttons - Mejorado */}
                 {method === 'paypal' && purchaseData && isOfLegalAge && (
-                    <PayPalScriptProvider options={initialOptions}>
-                        <PayPalButtons
-                            disabled={isProcessing}
-                            createOrder={async (_, actions) => {
-                                const res = await onPayPalPayment();
-                                if (!res.success) {
-                                    alert(res.error);
-                                    throw new Error(res.error);
-                                }
-                                return actions.order.create({
-                                    intent: "CAPTURE",
-                                    purchase_units: [
-                                        {
-                                            amount: {
-                                                currency_code: "USD",
-                                                value: purchaseData.price.toString(),
-                                            }
+                    <div
+                        className="paypal-container"
+                        style={{
+                            minHeight: '150px',
+                            position: 'relative',
+                            zIndex: 1,
+                        }}
+                    >
+                        <PayPalScriptProvider
+                            options={initialOptions}
+                            deferLoading={false}
+                        >
+                            <PayPalButtons
+                                disabled={isProcessing}
+                                forceReRender={[purchaseData.price]} // Forzar re-render cuando cambie el precio
+                                style={{
+                                    layout: 'vertical',
+                                    color: 'gold',
+                                    shape: 'rect',
+                                    label: 'paypal',
+                                    height: 45,
+                                    disableMaxWidth: false,
+                                }}
+                                createOrder={async (data, actions) => {
+                                    try {
+                                        // Primero crear la orden en tu backend
+                                        const res = await onPayPalPayment();
+                                        if (!res.success) {
+                                            throw new Error(res.error || 'Error creando la orden');
                                         }
-                                    ]
-                                });
-                            }}
-                            onApprove={async (_, actions) => {
-                                console.log('Pago aprobado:', actions.order);
-                                if (actions.order) {
-                                    await actions.order.capture();  // Aquí PayPal ya procesó tu cobro
-                                }
-                                await onPayPalApprove(null);      // Aquí se genera factura y redirección
-                            }}
-                            onError={async err => {
-                                await onPayPalError(err);
-                            }}
-                        />
-                    </PayPalScriptProvider>
+
+                                        // Luego crear la orden en PayPal
+                                        return actions.order.create({
+                                            intent: "CAPTURE",
+                                            purchase_units: [
+                                                {
+                                                    amount: {
+                                                        currency_code: "USD",
+                                                        value: purchaseData.price.toString(),
+                                                    },
+                                                    description: `Pedido #${orderNumber}`,
+                                                    reference_id: orderNumber,
+                                                }
+                                            ],
+                                            application_context: {
+                                                shipping_preference: "NO_SHIPPING"
+                                            }
+                                        });
+                                    } catch (error) {
+                                        console.error('Error en createOrder:', error);
+                                        alert('Error al crear la orden: ' + (error instanceof Error ? error.message : 'Error desconocido'));
+                                        throw error;
+                                    }
+                                }}
+                                onApprove={async (data, actions) => {
+                                    try {
+                                        console.log('Pago aprobado:', data);
+
+                                        if (actions.order) {
+                                            // Capturar el pago en PayPal
+                                            const details = await actions.order.capture();
+                                            console.log('Pago capturado:', details);
+                                        }
+
+                                        // Procesar en tu backend
+                                        const result = await onPayPalApprove(data);
+                                        if (!result.success) {
+                                            throw new Error(result.error || 'Error procesando el pago');
+                                        }
+
+                                    } catch (error) {
+                                        console.error('Error en onApprove:', error);
+                                        await onPayPalError(error);
+                                    }
+                                }}
+                                onError={async (err) => {
+                                    console.error('Error de PayPal:', err);
+                                    await onPayPalError(err);
+                                }}
+                                onCancel={(data) => {
+                                    console.log('Pago cancelado por el usuario:', data);
+                                    // Opcional: manejar cancelación
+                                }}
+                            />
+                        </PayPalScriptProvider>
+                    </div>
                 )}
 
                 {/* PayPhone */}

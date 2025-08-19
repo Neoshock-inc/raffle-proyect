@@ -18,3 +18,17 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+/* Asegurar que PayPal tenga la opacidad correcta */
+.paypal-buttons-container {
+    opacity: 1 !important;
+}
+
+.paypal-button {
+    opacity: 1 !important;
+}
+
+/* Si hay overlays que interfieren */
+.paypal-container * {
+    opacity: 1 !important;
+}
