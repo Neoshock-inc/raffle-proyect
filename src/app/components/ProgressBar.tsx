@@ -44,7 +44,7 @@ export function ProgressBar({
             <div className="text-xs mt-1">
                 <p className="mb-4 text-center">
                     Cuando la barra llegue al 100% daremos por finalizado y procederemos a realizar el sorteo entre todos los participantes.
-                    Se tomarán los 5 números de la primera y segunda suerte del programa <strong>LOTERIA NACIONAL</strong>.
+                    Se tomarán los 4 números de la primera y segunda suerte del programa <strong>LOTERIA NACIONAL</strong>.
                 </p>
             </div>
 
