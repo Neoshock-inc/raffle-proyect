@@ -33,41 +33,57 @@ export interface UpdateParticipantData {
 
 // Obtener todos los participantes con estadísticas
 export async function getParticipantsWithStats(): Promise<ParticipantWithStats[]> {
+  const limit = 1000
+  let from = 0
+  let to = limit - 1
+  let allData: any[] = []
+
+  while (true) {
     const { data, error } = await supabase
-        .from('participants')
-        .select(`
-      id,
-      email,
-      name,
-      created_at,
-      raffle_entries(id, number),
-      invoices(id, status, total_price, amount)
-    `)
-        .order('created_at', { ascending: false })
+      .from('participants')
+      .select(`
+        id,
+        email,
+        name,
+        created_at,
+        raffle_entries(id, number),
+        invoices(id, status, total_price, amount)
+      `)
+      .order('created_at', { ascending: false })
+      .range(from, to)
 
     if (error) throw error
+    if (!data || data.length === 0) break
 
-    return (
-        data?.map((participant: any) => {
-            const entries = participant.raffle_entries || []
-            const invoices = participant.invoices || []
+    allData = [...allData, ...data]
 
-            const pendingInvoices = invoices.filter((inv: any) => inv.status === 'pending')
-            const paidInvoices = invoices.filter((inv: any) => inv.status === 'completed')
+    if (data.length < limit) break // ya no hay más
+    from += limit
+    to += limit
+  }
 
-            return {
-                id: participant.id,
-                email: participant.email,
-                name: participant.name,
-                created_at: participant.created_at,
-                total_numbers: entries.length,
-                total_invoices: invoices.length,
-                pending_invoices: pendingInvoices.length,
-                paid_invoices: paidInvoices.length,
-                total_amount_spent: paidInvoices.reduce((sum: number, inv: any) => sum + (parseFloat(inv.total_price) || 0), 0)
-            }
-        }) ?? []
-    )
+  return allData.map((participant: any) => {
+    const entries = participant.raffle_entries || []
+    const invoices = participant.invoices || []
+
+    const pendingInvoices = invoices.filter((inv: any) => inv.status === 'pending')
+    const paidInvoices = invoices.filter((inv: any) => inv.status === 'completed')
+
+    return {
+      id: participant.id,
+      email: participant.email,
+      name: participant.name,
+      created_at: participant.created_at,
+      total_numbers: entries.length,
+      total_invoices: invoices.length,
+      pending_invoices: pendingInvoices.length,
+      paid_invoices: paidInvoices.length,
+      total_amount_spent: paidInvoices.reduce(
+        (sum: number, inv: any) => sum + (parseFloat(inv.total_price) || 0),
+        0
+      ),
+    }
+  })
 }
 
 // Obtener participantes básicos (sin estadísticas)
