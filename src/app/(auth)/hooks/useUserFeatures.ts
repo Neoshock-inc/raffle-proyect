@@ -1,3 +1,4 @@
+// src/hooks/useUserFeatures.ts - VERSIÓN ACTUALIZADA
 import { useEffect, useState } from 'react'
 import { featureService } from '../services/featureService'
 import { Feature } from '../types/feature'
@@ -8,7 +9,7 @@ interface MenuGroup {
     children: Feature[]
 }
 
-export const useUserFeatures = () => {
+export const useUserFeatures = (tenantId?: string | null) => {
     const [menuGroups, setMenuGroups] = useState<MenuGroup[]>([])
     const [loading, setLoading] = useState(true)
 
@@ -17,7 +18,8 @@ export const useUserFeatures = () => {
             const user = await authService.getUser()
             if (!user) return
 
-            const features = await featureService.getUserFeatures(user.id)
+            // Pasar el tenantId al servicio de features
+            const features = await featureService.getUserFeatures(user.id, tenantId)
 
             // Separar padres y submenús
             const parents = features
@@ -38,7 +40,7 @@ export const useUserFeatures = () => {
         }
 
         fetchFeatures()
-    }, [])
+    }, [tenantId]) // Recargar cuando cambie el tenant
 
     return { menuGroups, loading }
 }

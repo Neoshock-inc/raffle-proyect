@@ -1,3 +1,4 @@
+// src/services/featureService.ts - VERSIÓN ACTUALIZADA
 import { createClient } from '@supabase/supabase-js'
 import { Feature } from '../types/feature'
 
@@ -16,8 +17,8 @@ const supabase = createClient(
 )
 
 export const featureService = {
-  async getUserFeatures(userId: string): Promise<Feature[]> {
-    const result = await supabase
+  async getUserFeatures(userId: string, tenantId?: string | null): Promise<Feature[]> {
+    let query = supabase
       .from('user_roles')
       .select(`
         role:role_id (
@@ -29,6 +30,13 @@ export const featureService = {
           )
         )
       `).eq('user_id', userId)
+
+    // Si se especifica un tenant, filtrar por él
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId)
+    }
+
+    const result = await query
 
     if (result.error) throw result.error
 
