@@ -1,6 +1,8 @@
+// hooks/useTenantContext.ts
 import { useEffect, useState } from 'react'
 import { tenantService } from '../services/tenantService'
 import { authService } from '../services/authService'
+import { supabase } from '../lib/supabaseTenantClient'
 import { Tenant } from '../types/tenant'
 
 interface TenantContextData {
@@ -13,9 +15,16 @@ interface TenantContextData {
 
 export const useTenantContext = (): TenantContextData => {
   const [isAdmin, setIsAdmin] = useState(false)
-  const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null)
+  const [currentTenant, setCurrentTenantState] = useState<Tenant | null>(null)
   const [availableTenants, setAvailableTenants] = useState<Tenant[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Función para cambiar tenant que también actualiza el interceptor
+  const setCurrentTenant = (tenant: Tenant | null) => {
+    setCurrentTenantState(tenant)
+    // Actualizar el contexto en el cliente de Supabase
+    supabase.setTenantContext(tenant?.id || null, isAdmin)
+  }
 
   useEffect(() => {
     const initializeTenantContext = async () => {
@@ -39,6 +48,12 @@ export const useTenantContext = (): TenantContextData => {
           setCurrentTenant(userTenant)
           setAvailableTenants(userTenant ? [userTenant] : [])
         }
+
+        // Establecer el contexto inicial en el cliente de Supabase
+        supabase.setTenantContext(
+          adminStatus ? null : (await tenantService.getUserTenant(user.id))?.id || null,
+          adminStatus
+        )
       } catch (error) {
         console.error('Error initializing tenant context:', error)
       } finally {
@@ -48,6 +63,11 @@ export const useTenantContext = (): TenantContextData => {
 
     initializeTenantContext()
   }, [])
+
+  // Actualizar el interceptor cuando cambie isAdmin
+  useEffect(() => {
+    supabase.setTenantContext(currentTenant?.id || null, isAdmin)
+  }, [isAdmin, currentTenant])
 
   return {
     isAdmin,

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { getDashboardMetrics, getAllDashboardData } from '../services/metricsService';
-import { DollarSign, Hash, Trophy, PieChart, TrendingUp, Users, Calendar, MapPin } from 'lucide-react';
+import { useTenantContext } from '../hooks/useTenantContext';
+import { DollarSign, Hash, Trophy, PieChart, TrendingUp, Users, Calendar, MapPin, Building2 } from 'lucide-react';
 import PaymentMethodGaugeMini from '../components/PaymentMethodGauge';
 import SalesLineChart from '../components/SalesLineChart';
 import RecentEntriesColumnChart from '../components/RecentEntriesColumnChart';
@@ -10,6 +11,8 @@ import EcuadorMapChart from '../components/SalesByProvinceMap';
 import SalesByPaymentMethodBarChart from '../components/SalesByPaymentMethodBarChart';
 
 export default function DashboardPage() {
+    const { isAdmin, currentTenant, availableTenants, loading: tenantLoading, setCurrentTenant } = useTenantContext();
+    
     const [metrics, setMetrics] = useState<{
         totalSales: number
         totalNumbersSold: number
@@ -29,34 +32,109 @@ export default function DashboardPage() {
     } | null>(null);
 
     const [selectedChart, setSelectedChart] = useState('sales');
+    const [dataLoading, setDataLoading] = useState(false);
 
+    // Función para cargar los datos del dashboard
+    const loadDashboardData = async () => {
+        setDataLoading(true);
+        try {
+            // Ya no necesitamos pasar tenantId - el interceptor se encarga automáticamente
+            const [metricsData, dashboardData] = await Promise.all([
+                getDashboardMetrics(),
+                getAllDashboardData()
+            ]);
+            
+            setMetrics(metricsData);
+            setGraphsData({
+                salesByDay: dashboardData.salesByDay,
+                recentEntries: dashboardData.recentEntries,
+                salesByProvince: dashboardData.salesByProvince,
+                salesByPaymentMethod: dashboardData.salesByPaymentMethod
+            });
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+        } finally {
+            setDataLoading(false);
+        }
+    };
+
+    // Cargar datos cuando cambie el tenant o se inicialice el contexto
     useEffect(() => {
-        getDashboardMetrics().then(setMetrics).catch(console.error);
-        getAllDashboardData()
-            .then((data) => {
-                console.log('Dashboard data:', data);
-                setGraphsData({
-                    salesByDay: data.salesByDay,
-                    recentEntries: data.recentEntries,
-                    salesByProvince: data.salesByProvince,
-                    salesByPaymentMethod: data.salesByPaymentMethod
-                });
-            }
-            )
-            .catch(console.error);
+        if (!tenantLoading) {
+            loadDashboardData();
+        }
+    }, [currentTenant, tenantLoading]);
 
-    }, []);
+    // Handler para cambio de tenant (solo para admins)
+    const handleTenantChange = (tenantId: string) => {
+        if (!isAdmin) return;
+        
+        const selectedTenant = availableTenants.find(t => t.id === tenantId) || null;
+        setCurrentTenant(selectedTenant);
+    };
+
+    if (tenantLoading) {
+        return (
+            <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+                <div className="flex items-center justify-center h-64">
+                    <div className="space-y-2 text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                        <p className="text-gray-600">Cargando configuración de tenant...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-            {/* Header */}
+            {/* Header with Tenant Selector */}
             <div className="mb-6">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Analytics</h1>
-                <p className="text-gray-600">Visualización de métricas y estadísticas del sistema</p>
+                <div className="flex items-center justify-between mb-2">
+                    <h1 className="text-3xl font-bold text-gray-900">Dashboard Analytics</h1>
+                    
+                    {/* Tenant Selector - Solo para admins */}
+                    {isAdmin && (
+                        <div className="flex items-center space-x-2">
+                            <Building2 className="w-5 h-5 text-gray-500" />
+                            <select
+                                title='Seleccionar Tenant'
+                                value={currentTenant?.id || 'global'}
+                                onChange={(e) => handleTenantChange(e.target.value === 'global' ? '' : e.target.value)}
+                                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value="global">Vista Global (Todos los Tenants)</option>
+                                {availableTenants.map((tenant) => (
+                                    <option key={tenant.id} value={tenant.id}>
+                                        {tenant.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                </div>
+                
+                {/* Indicador de tenant actual */}
+                <div className="flex items-center space-x-2">
+                    <p className="text-gray-600">
+                        {isAdmin ? (
+                            currentTenant ? 
+                                `Visualización de métricas para: ${currentTenant.name}` :
+                                'Visualización global de métricas de todos los tenants'
+                        ) : (
+                            currentTenant ? 
+                                `Métricas de ${currentTenant.name}` :
+                                'Visualización de métricas del sistema'
+                        )}
+                    </p>
+                    {dataLoading && (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                    )}
+                </div>
             </div>
 
             {/* Metrics Cards */}
-            {metrics ? (
+            {metrics && !dataLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div className="bg-white rounded-lg shadow p-6">
                         <div className="flex items-center justify-between">
@@ -124,7 +202,7 @@ export default function DashboardPage() {
             <div className="flex flex-wrap gap-2 mb-6">
                 {[
                     { id: 'sales', label: 'Ventas Diarias', icon: TrendingUp },
-                    { id: 'payment', label: 'Métodos de Pago', icon: PieChart }, // ✅ este es el nuevo
+                    { id: 'payment', label: 'Métodos de Pago', icon: PieChart },
                     { id: 'entries', label: 'Entradas Recientes', icon: Calendar },
                     { id: 'map', label: 'Mapa de Ventas', icon: MapPin }
                 ].map(({ id, label, icon: Icon }) => (
@@ -151,7 +229,7 @@ export default function DashboardPage() {
                         <TrendingUp className="w-5 h-5 mr-2 text-blue-500" />
                         Ventas Diarias (Últimos 30 días)
                     </h3>
-                    {graphsData ? (
+                    {graphsData && !dataLoading ? (
                         <div className="h-80">
                             <SalesLineChart data={graphsData.salesByDay} />
                         </div>
@@ -172,7 +250,7 @@ export default function DashboardPage() {
                         <MapPin className="w-5 h-5 mr-2 text-red-500" />
                         Distribución de Ventas por Región
                     </h3>
-                    {graphsData ? (
+                    {graphsData && !dataLoading ? (
                         <div className="h-80">
                             <EcuadorMapChart salesList={graphsData.salesByProvince} />
                         </div>
@@ -187,15 +265,13 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Ventas por método de pago */}
-                <div
-                    className={`bg-white rounded-lg shadow p-6 h-96 transition-all ${selectedChart === 'payment' ? 'ring-2 ring-blue-500 shadow-lg' : ''
-                        }`}
-                >
+                <div className={`bg-white rounded-lg shadow p-6 h-96 transition-all ${selectedChart === 'payment' ? 'ring-2 ring-blue-500 shadow-lg' : ''
+                        }`}>
                     <h3 className="text-lg font-semibold mb-4 flex items-center">
                         <PieChart className="w-5 h-5 mr-2 text-indigo-500" />
                         Ventas por Método de Pago
                     </h3>
-                    {graphsData ? (
+                    {graphsData && !dataLoading ? (
                         <div className="h-80">
                             <SalesByPaymentMethodBarChart data={graphsData.salesByPaymentMethod} />
                         </div>
@@ -209,7 +285,6 @@ export default function DashboardPage() {
                     )}
                 </div>
 
-
                 {/* Entradas recientes a rifas */}
                 <div className={`bg-white rounded-lg shadow p-6 h-96 transition-all ${selectedChart === 'entries' ? 'ring-2 ring-blue-500 shadow-lg' : ''
                     }`}>
@@ -217,7 +292,7 @@ export default function DashboardPage() {
                         <Calendar className="w-5 h-5 mr-2 text-purple-500" />
                         Entradas Recientes (Últimas 24h)
                     </h3>
-                    {graphsData ? (
+                    {graphsData && !dataLoading ? (
                         <div className="h-80">
                             <RecentEntriesColumnChart data={graphsData.recentEntries} />
                         </div>
@@ -233,7 +308,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Summary Stats */}
-            {metrics && graphsData && (
+            {metrics && graphsData && !dataLoading && (
                 <div className="mt-8 bg-white rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold mb-4">Resumen de Actividad</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">

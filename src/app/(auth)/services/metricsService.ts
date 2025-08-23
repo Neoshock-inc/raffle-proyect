@@ -1,5 +1,6 @@
 // src/app/services/metricsService.ts
-import { supabase } from '../../lib/supabase';
+
+import { supabase } from "../lib/supabaseTenantClient";
 
 // Utilidad para paginar y obtener todos los registros
 async function fetchAllRecords(table: string, select: string, filters?: string) {
@@ -100,7 +101,7 @@ export async function getSalesByDay(days: number = 30) {
         if (error) throw error;
 
         // Agrupar por día
-        const salesByDay = data.reduce((acc: { [date: string]: { date: string; ventas: number; facturas: number } }, invoice) => {
+        const salesByDay = data.reduce((acc: { [date: string]: { date: string; ventas: number; facturas: number } }, invoice: { created_at: string | number | Date; total_price: string; }) => {
             const date = new Date(invoice.created_at).toISOString().split('T')[0];
             if (!acc[date]) {
                 acc[date] = { date, ventas: 0, facturas: 0 };
@@ -143,7 +144,7 @@ export async function getRecentEntries() {
         if (error) throw error;
 
         // Agrupar por hora
-        const entriesByHour = data.reduce((acc: { [key: string]: { hora: string; entradas: number } }, entry) => {
+        const entriesByHour = data.reduce((acc: { [key: string]: { hora: string; entradas: number } }, entry: { purchased_at: string | number | Date; }) => {
             const hour = new Date(entry.purchased_at).toLocaleTimeString('es-ES', {
                 hour: '2-digit',
                 minute: '2-digit'
@@ -201,7 +202,7 @@ export async function getSalesByProvince() {
         };
 
         // Agrupar ventas por provincia
-        const salesByProvince = data.reduce((acc: { [province: string]: { provincia: string; ventas: number; lat: number; lng: number; ciudad: string } }, invoice) => {
+        const salesByProvince = data.reduce((acc: { [province: string]: { provincia: string; ventas: number; lat: number; lng: number; ciudad: string } }, invoice: { province: string; total_price: string; }) => {
             const province = invoice.province as keyof typeof provincesCoordinates;
             if (!acc[province]) {
                 acc[province] = {
@@ -216,8 +217,8 @@ export async function getSalesByProvince() {
 
         console.log('Ventas por provincia:', salesByProvince);
         return Object.values(salesByProvince)
-            .filter(item => item.ventas > 0)
-            .sort((a, b) => b.ventas - a.ventas);
+            .filter((item) => (item as { ventas: number }).ventas > 0)
+            .sort((a, b) => (b as { ventas: number }).ventas - (a as { ventas: number }).ventas);
     } catch (error) {
         console.error('Error obteniendo ventas por provincia:', error);
         throw error;
@@ -264,7 +265,7 @@ export async function getReferralStats() {
 
         // Obtener ventas por referido
         const referralStats = await Promise.all(
-            referrals.map(async (referral) => {
+            referrals.map(async (referral: { id: any; commission_rate: string; name: any; is_active: any; }) => {
                 const { data: invoices, error } = await supabase
                     .from('invoices')
                     .select('total_price')
@@ -273,7 +274,7 @@ export async function getReferralStats() {
 
                 if (error) throw error;
 
-                const totalSales = invoices.reduce((sum, inv) => sum + parseFloat(inv.total_price), 0);
+                const totalSales = invoices.reduce((sum: number, inv: { total_price: string; }) => sum + parseFloat(inv.total_price), 0);
                 const totalCommission = totalSales * (parseFloat(referral.commission_rate) / 100);
 
                 return {
