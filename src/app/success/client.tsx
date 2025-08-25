@@ -46,7 +46,7 @@ export default function SuccessClient() {
 
                     // Simulación: si compró el producto mayor, mostramos la ruleta
                     const boughtMajorProduct = true;
-                    if (boughtMajorProduct) setShowRoulette(false);
+                    if (boughtMajorProduct) setShowRoulette(true);
                 });
         }
     }, [email]);
