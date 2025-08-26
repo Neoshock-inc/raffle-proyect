@@ -28,7 +28,7 @@ import { TicketSearchModal } from "./components/TicketSearchModal";
 import { TicketOption } from "./types/tickets";
 import { TestimonialsSection } from "./components/TestimonialsSection";
 
-const MARKETING_BOOST_PERCENTAGE = 12;
+const MARKETING_BOOST_PERCENTAGE = 13;
 
 export default function HomeContent() {
   // Estados para modales
