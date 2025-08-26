@@ -21,41 +21,58 @@ export const useTenantContext = (): TenantContextData => {
 
   // Función para cambiar tenant que también actualiza el interceptor
   const setCurrentTenant = (tenant: Tenant | null) => {
+    console.log('🔄 Changing tenant to:', tenant?.name || 'Global View');
     setCurrentTenantState(tenant)
+
     // Actualizar el contexto en el cliente de Supabase
     supabase.setTenantContext(tenant?.id || null, isAdmin)
+
+    console.log('✅ Tenant context updated in supabase client');
   }
 
   useEffect(() => {
     const initializeTenantContext = async () => {
       try {
+        console.log('🚀 Initializing tenant context...');
+
         const user = await authService.getUser()
-        if (!user) return
+        if (!user) {
+          console.warn('⚠️ No user found in initializeTenantContext');
+          return;
+        }
+
+        console.log('👤 User found:', user.email);
 
         // Verificar si es admin
         const adminStatus = await tenantService.isUserAdmin(user.id)
+        console.log('🔐 Admin status:', adminStatus);
         setIsAdmin(adminStatus)
 
         if (adminStatus) {
           // Si es admin, cargar todos los tenants
           const tenants = await tenantService.getAllTenants()
+          console.log('🏢 Available tenants for admin:', tenants.length);
           setAvailableTenants(tenants)
+
           // Por defecto, no seleccionar ningún tenant (vista global)
-          setCurrentTenant(null)
+          setCurrentTenantState(null)
+          // Establecer contexto admin sin tenant
+          supabase.setTenantContext(null, true)
         } else {
           // Si es customer, obtener su tenant
           const userTenant = await tenantService.getUserTenant(user.id)
-          setCurrentTenant(userTenant)
+          console.log('🏢 User tenant:', userTenant?.name || 'None');
+
+          setCurrentTenantState(userTenant)
           setAvailableTenants(userTenant ? [userTenant] : [])
+
+          // Establecer contexto del tenant del usuario
+          supabase.setTenantContext(userTenant?.id || null, false)
         }
 
-        // Establecer el contexto inicial en el cliente de Supabase
-        supabase.setTenantContext(
-          adminStatus ? null : (await tenantService.getUserTenant(user.id))?.id || null,
-          adminStatus
-        )
+        console.log('✅ Tenant context initialized successfully');
       } catch (error) {
-        console.error('Error initializing tenant context:', error)
+        console.error('❌ Error initializing tenant context:', error)
       } finally {
         setLoading(false)
       }
@@ -64,10 +81,16 @@ export const useTenantContext = (): TenantContextData => {
     initializeTenantContext()
   }, [])
 
-  // Actualizar el interceptor cuando cambie isAdmin
+  // Efecto separado para actualizar el interceptor cuando cambie el estado
   useEffect(() => {
-    supabase.setTenantContext(currentTenant?.id || null, isAdmin)
-  }, [isAdmin, currentTenant])
+    if (!loading) {
+      console.log('🔧 Updating supabase context:', {
+        tenantId: currentTenant?.id || null,
+        isAdmin
+      });
+      supabase.setTenantContext(currentTenant?.id || null, isAdmin)
+    }
+  }, [isAdmin, currentTenant, loading])
 
   return {
     isAdmin,

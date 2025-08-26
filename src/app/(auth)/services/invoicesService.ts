@@ -1,7 +1,7 @@
 // src/services/invoicesService.ts
 import { Invoice } from '@/app/types/invoices'
-import { supabase } from '../../lib/supabase'
 import type { CreateInvoiceInput, UpdateInvoiceInput } from '../types/invoice'
+import { supabase } from '../lib/supabaseTenantClient'
 
 export async function getInvoicesList(): Promise<Invoice[]> {
     const { data, error } = await supabase

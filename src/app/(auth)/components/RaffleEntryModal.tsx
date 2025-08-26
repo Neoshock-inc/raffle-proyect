@@ -2,15 +2,15 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { raffleService } from '../services/rafflesService';
 
 interface RaffleEntryModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    createEntryFromOrder: (orderNumber: string, quantity: number) => Promise<any>; // CAMBIO: Recibir la función del hook
 }
 
-export default function RaffleEntryModal({ isOpen, onClose, onSuccess }: RaffleEntryModalProps) {
+export default function RaffleEntryModal({ isOpen, onClose, onSuccess, createEntryFromOrder }: RaffleEntryModalProps) {
     const [orderNumber, setOrderNumber] = useState('');
     const [quantity, setQuantity] = useState<number | ''>('');
     const [loading, setLoading] = useState(false);
@@ -34,24 +34,25 @@ export default function RaffleEntryModal({ isOpen, onClose, onSuccess }: RaffleE
 
         setLoading(true);
         try {
-            const result = await raffleService.createNewRaffleEntriesFromOrder(orderNumber, Number(quantity));
+            // CAMBIO: Usar la función del hook en lugar del servicio directamente
+            const result = await createEntryFromOrder(orderNumber, Number(quantity));
             console.log('Resultado de la operación:', result);
 
             if (result.success) {
                 if (result.assigned) {
-                    toast.success(`Se asignaron ${result.total_assigned} números correctamente`);
+                    // El toast ya se muestra en el hook, pero podemos agregar más detalles aquí si es necesario
+                    console.log(`Se asignaron ${result.total_assigned} números correctamente`);
                 } else {
-                    toast.info(result.message);
+                    console.log(result.message);
                 }
                 onSuccess();
                 resetForm();
             } else {
-                // Asegurar que mostramos el mensaje de error específico devuelto por el servicio
-                toast.error(result.error || 'Error al registrar los números');
+                // El toast de error ya se muestra en el hook
                 console.error('Error detallado:', result.error);
             }
         } catch (error) {
-            // Este bloque se ejecutará solo si hay un error no manejado en la llamada al servicio
+            // Este bloque se ejecutará solo si hay un error no manejado en la llamada al hook
             console.error('Error inesperado al procesar la solicitud:', error);
             toast.error(error instanceof Error ? error.message : 'Ocurrió un error inesperado');
         } finally {

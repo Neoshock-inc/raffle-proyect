@@ -1,4 +1,4 @@
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../lib/supabaseTenantClient';
 import type {
   Raffle,
   RaffleCategory,

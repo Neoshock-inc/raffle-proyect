@@ -1,4 +1,4 @@
-// src/app/(auth)/layout.tsx - VERSIÓN ACTUALIZADA CON TENANT CONTEXT
+// src/app/(auth)/layout.tsx - CON TENANTPROVIDER INTEGRADO
 'use client'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -9,11 +9,12 @@ import { Menu } from '@headlessui/react'
 import { Toaster } from 'sonner'
 import { LayoutDashboard, ChevronLeft, ChevronRight, Building2, Globe } from 'lucide-react'
 import { useUserFeatures } from './hooks/useUserFeatures'
-import { useTenantContext } from './hooks/useTenantContext'
+import { TenantProvider, useTenantContext } from './contexts/TenantContext'
 import { iconMap } from './utils/iconMap'
 import { Tenant } from './types/tenant'
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+// Componente interno que usa el context
+function AuthLayoutContent({ children }: { children: React.ReactNode }) {
     const [userEmail, setUserEmail] = useState<string | null>(null)
     const [sidebarOpen, setSidebarOpen] = useState(true)
     const router = useRouter()
@@ -29,10 +30,12 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         setCurrentTenant
     } = useTenantContext()
 
-    // Features basadas en el tenant actual
-    const { menuGroups, loading: featuresLoading } = useUserFeatures(
-        currentTenant?.id || null
-    )
+    // CAMBIO CLAVE: Para admins, siempre usar null para obtener el menú completo
+    // Para customers, usar su tenant específico
+    const tenantIdForFeatures = isAdmin ? null : currentTenant?.id || null
+
+    // Features basadas en null para admins (menú completo) o tenant específico para customers
+    const { menuGroups, loading: featuresLoading } = useUserFeatures(tenantIdForFeatures)
 
     useEffect(() => {
         authService.getUser()
@@ -66,9 +69,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     }
 
     const handleTenantChange = (tenant: Tenant | null) => {
-        setCurrentTenant(tenant)
-        // Redirigir al dashboard cuando cambie el tenant
-        router.push('/dashboard')
+        console.log('🔄 Admin changing tenant view to:', tenant?.name || 'Global View');
+        setCurrentTenant(tenant) // ESTO DISPARA CAMBIOS EN TODA LA APP
     }
 
     if (loading || tenantLoading || featuresLoading) {
@@ -134,10 +136,13 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                             <Building2 className="h-4 w-4 text-sky-600 mr-2 flex-shrink-0" />
                             <div className="min-w-0 flex-1">
                                 <p className="text-xs text-sky-600 font-medium">
-                                    {isAdmin ? 'Cliente Actual:' : 'Tu Cliente:'}
+                                    {isAdmin ? 'Vista Actual:' : 'Tu Cliente:'}
                                 </p>
                                 <p className="text-sky-800 font-semibold truncate">
-                                    {currentTenant ? currentTenant.name : 'Vista Global'}
+                                    {isAdmin && !currentTenant
+                                        ? 'Vista Global'
+                                        : currentTenant?.name || 'Sin asignar'
+                                    }
                                 </p>
                             </div>
                         </div>
@@ -205,7 +210,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                                     <Menu as="div" className="relative inline-block text-left">
                                         <Menu.Button className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
                                             <Globe className="h-4 w-4 mr-2" />
-                                            {currentTenant ? currentTenant.name : 'Seleccionar Cliente'}
+                                            {currentTenant ? currentTenant.name : 'Vista Global'}
                                             <svg className="-mr-1 ml-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                                             </svg>
@@ -294,12 +299,23 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                     </div>
                 </header>
 
-                {/* Page Content */}
+                {/* Page Content - AQUÍ VA EL PROVIDER */}
                 <main className="flex-1 p-6 bg-gray-50">
                     {children}
                     <Toaster position="top-right" toastOptions={{ className: 'z-[9999]' }} />
                 </main>
             </div>
         </div>
+    )
+}
+
+// Export principal: AuthLayout con TenantProvider envolviendo todo
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
+    return (
+        <TenantProvider>
+            <AuthLayoutContent>
+                {children}
+            </AuthLayoutContent>
+        </TenantProvider>
     )
 }

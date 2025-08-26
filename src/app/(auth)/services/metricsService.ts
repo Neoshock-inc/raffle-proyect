@@ -3,7 +3,7 @@
 import { supabase } from "../lib/supabaseTenantClient";
 
 // Utilidad para paginar y obtener todos los registros
-async function fetchAllRecords(table: string, select: string, filters?: string) {
+async function fetchAllRecords(table: string, select: string, additionalFilters?: any) {
     const limit = 1000;
     let from = 0;
     let allData: any[] = [];
@@ -14,14 +14,24 @@ async function fetchAllRecords(table: string, select: string, filters?: string) 
             .select(select)
             .range(from, from + limit - 1);
 
-        if (filters) {
-            // Aplicar filtros si se proporcionan
-            query = query.filter(filters.split('=')[0], 'eq', filters.split('=')[1]);
+        // Aplicar filtros adicionales si se proporcionan
+        if (additionalFilters) {
+            Object.entries(additionalFilters).forEach(([key, value]) => {
+                query = query.eq(key, value);
+            });
         }
 
         const { data, error } = await query;
 
-        if (error) throw new Error(`Error al cargar datos de ${table}: ${error.message}`);
+        if (error) {
+            console.error(`❌ Error fetching from ${table}:`, error);
+            throw new Error(`Error al cargar datos de ${table}: ${error.message}`);
+        }
+
+        if (!data) {
+            console.warn(`⚠️ No data returned from ${table}`);
+            break;
+        }
 
         allData = allData.concat(data);
 
@@ -30,19 +40,32 @@ async function fetchAllRecords(table: string, select: string, filters?: string) 
         from += limit;
     }
 
+    console.log(`✅ Fetched ${allData.length} records from ${table}`);
     return allData;
 }
 
 // Función principal para métricas del dashboard
 export async function getDashboardMetrics() {
     try {
-        const invoices = await fetchAllRecords('invoices', 'total_price, status, payment_method');
-        const entries = await fetchAllRecords('raffle_entries', 'is_winner');
+        console.log('📊 Getting dashboard metrics...');
+        const { tenantId, isAdmin } = supabase.getTenantContext();
+        console.log('🔍 Current context:', { tenantId, isAdmin });
+
+        // Para invoices y raffle_entries, el filtro de tenant se aplica automáticamente
+        const [invoices, entries] = await Promise.all([
+            fetchAllRecords('invoices', 'total_price, status, payment_method'),
+            fetchAllRecords('raffle_entries', 'is_winner')
+        ]);
+
+        console.log('📄 Data fetched:', {
+            invoicesCount: invoices.length,
+            entriesCount: entries.length
+        });
 
         const completedInvoices = invoices.filter((i) => i.status === 'completed');
 
         const totalSales = completedInvoices.reduce(
-            (sum, inv) => sum + parseFloat(inv.total_price),
+            (sum, inv) => sum + parseFloat(inv.total_price || '0'),
             0
         );
 
@@ -55,11 +78,11 @@ export async function getDashboardMetrics() {
 
         const transferSales = completedInvoices
             .filter((i) => i.payment_method === 'bank_transfer')
-            .reduce((sum, inv) => sum + parseFloat(inv.total_price), 0);
+            .reduce((sum, inv) => sum + parseFloat(inv.total_price || '0'), 0);
 
         const stripeSales = completedInvoices
             .filter((i) => i.payment_method === 'stripe')
-            .reduce((sum, inv) => sum + parseFloat(inv.total_price), 0);
+            .reduce((sum, inv) => sum + parseFloat(inv.total_price || '0'), 0);
 
         const totalMethodSales = transferSales + stripeSales;
         const transferPercentage = totalMethodSales > 0
@@ -69,7 +92,7 @@ export async function getDashboardMetrics() {
             ? +(stripeSales / totalMethodSales * 100).toFixed(1)
             : 0;
 
-        return {
+        const result = {
             totalSales,
             totalNumbersSold,
             totalWinners,
@@ -79,8 +102,11 @@ export async function getDashboardMetrics() {
             transferPercentage,
             stripePercentage,
         };
+
+        console.log('✅ Dashboard metrics calculated:', result);
+        return result;
     } catch (error) {
-        console.error('Error obteniendo métricas del dashboard:', error);
+        console.error('❌ Error obteniendo métricas del dashboard:', error);
         throw error;
     }
 }
@@ -88,6 +114,7 @@ export async function getDashboardMetrics() {
 // Función para obtener ventas por día (últimos 30 días)
 export async function getSalesByDay(days: number = 30) {
     try {
+        console.log('📈 Getting sales by day...');
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - days);
 
@@ -98,7 +125,15 @@ export async function getSalesByDay(days: number = 30) {
             .eq('status', 'completed')
             .order('created_at', { ascending: true });
 
-        if (error) throw error;
+        if (error) {
+            console.error('❌ Error in getSalesByDay:', error);
+            throw error;
+        }
+
+        if (!data) {
+            console.warn('⚠️ No data returned from getSalesByDay');
+            return [];
+        }
 
         // Agrupar por día
         const salesByDay = data.reduce((acc: { [date: string]: { date: string; ventas: number; facturas: number } }, invoice: { created_at: string | number | Date; total_price: string; }) => {
@@ -106,32 +141,64 @@ export async function getSalesByDay(days: number = 30) {
             if (!acc[date]) {
                 acc[date] = { date, ventas: 0, facturas: 0 };
             }
-            acc[date].ventas += parseFloat(invoice.total_price);
+            acc[date].ventas += parseFloat(invoice.total_price || '0');
             acc[date].facturas += 1;
             return acc;
         }, {} as { [date: string]: { date: string; ventas: number; facturas: number } });
 
-        return Object.values(salesByDay);
+        const result = Object.values(salesByDay);
+        console.log('✅ Sales by day calculated:', result.length);
+        return result;
     } catch (error) {
-        console.error('Error obteniendo ventas por día:', error);
+        console.error('❌ Error obteniendo ventas por día:', error);
         throw error;
     }
 }
 
 export async function getSalesByPaymentMethod() {
-    const { data, error } = await supabase.rpc('get_sales_by_payment_method');
+    try {
+        console.log('💳 Getting sales by payment method...');
 
-    if (error) throw error;
+        // En lugar de usar RPC, hacer la consulta directamente
+        const { data: invoices, error } = await supabase
+            .from('invoices')
+            .select('payment_method, total_price')
+            .eq('status', 'completed');
 
-    return data.map((row: { payment_method: any; total: string; }) => ({
-        payment_method: row.payment_method,
-        total: parseFloat(row.total).toFixed(2)
-    }));
+        if (error) {
+            console.error('❌ Error in getSalesByPaymentMethod:', error);
+            throw error;
+        }
+
+        if (!invoices) {
+            console.warn('⚠️ No invoices data returned');
+            return [];
+        }
+
+        // Agrupar por método de pago
+        const groupedSales = invoices.reduce((acc: { [method: string]: number }, invoice: { payment_method: string; total_price: any; }) => {
+            const method = invoice.payment_method || 'unknown';
+            acc[method] = (acc[method] || 0) + parseFloat(invoice.total_price || '0');
+            return acc;
+        }, {});
+
+        const result = Object.entries(groupedSales).map(([payment_method, total]) => ({
+            payment_method,
+            total: (total as number).toFixed(2)
+        }));
+
+        console.log('✅ Sales by payment method calculated:', result);
+        return result;
+    } catch (error) {
+        console.error('❌ Error obteniendo ventas por método de pago:', error);
+        throw error;
+    }
 }
 
 // Función para obtener entradas recientes a rifas (última semana)
 export async function getRecentEntries() {
     try {
+        console.log('🎫 Getting recent entries...');
         const lastWeek = new Date();
         lastWeek.setDate(lastWeek.getDate() - 7);
 
@@ -141,7 +208,15 @@ export async function getRecentEntries() {
             .gte('purchased_at', lastWeek.toISOString())
             .order('purchased_at', { ascending: true });
 
-        if (error) throw error;
+        if (error) {
+            console.error('❌ Error in getRecentEntries:', error);
+            throw error;
+        }
+
+        if (!data) {
+            console.warn('⚠️ No entries data returned');
+            return [];
+        }
 
         // Agrupar por hora
         const entriesByHour = data.reduce((acc: { [key: string]: { hora: string; entradas: number } }, entry: { purchased_at: string | number | Date; }) => {
@@ -156,9 +231,11 @@ export async function getRecentEntries() {
             return acc;
         }, {});
 
-        return Object.values(entriesByHour);
+        const result = Object.values(entriesByHour);
+        console.log('✅ Recent entries calculated:', result.length);
+        return result;
     } catch (error) {
-        console.error('Error obteniendo entradas recientes:', error);
+        console.error('❌ Error obteniendo entradas recientes:', error);
         throw error;
     }
 }
@@ -166,12 +243,22 @@ export async function getRecentEntries() {
 // Función para obtener ventas por provincia
 export async function getSalesByProvince() {
     try {
+        console.log('🌎 Getting sales by province...');
+
         const { data, error } = await supabase
             .from('invoices')
             .select('province, total_price, city')
             .eq('status', 'completed');
 
-        if (error) throw error;
+        if (error) {
+            console.error('❌ Error in getSalesByProvince:', error);
+            throw error;
+        }
+
+        if (!data) {
+            console.warn('⚠️ No province data returned');
+            return [];
+        }
 
         // Mapeo de coordenadas aproximadas de provincias ecuatorianas
         const provincesCoordinates = {
@@ -211,45 +298,55 @@ export async function getSalesByProvince() {
                     ...(provincesCoordinates[province] || { lat: 0, lng: 0, ciudad: province })
                 };
             }
-            acc[province].ventas += parseFloat(invoice.total_price);
+            acc[province].ventas += parseFloat(invoice.total_price || '0');
             return acc;
         }, {});
 
-        console.log('Ventas por provincia:', salesByProvince);
-        return Object.values(salesByProvince)
+        const result = Object.values(salesByProvince)
             .filter((item) => (item as { ventas: number }).ventas > 0)
             .sort((a, b) => (b as { ventas: number }).ventas - (a as { ventas: number }).ventas);
+
+        console.log('✅ Sales by province calculated:', result.length);
+        return result;
     } catch (error) {
-        console.error('Error obteniendo ventas por provincia:', error);
+        console.error('❌ Error obteniendo ventas por provincia:', error);
         throw error;
     }
 }
+
 // Función para obtener todos los datos del dashboard
 export async function getAllDashboardData() {
     try {
+        console.log('🚀 Starting getAllDashboardData...');
+        const { tenantId, isAdmin } = supabase.getTenantContext();
+        console.log('🔍 Current context in getAllDashboardData:', { tenantId, isAdmin });
+
         const [
             metrics,
             salesByDay,
-            salesByPaymentMethod, // ✅ debe venir aquí
+            salesByPaymentMethod,
             recentEntries,
             salesByProvince
         ] = await Promise.all([
             getDashboardMetrics(),
             getSalesByDay(),
-            getSalesByPaymentMethod(), // ✅ aquí mismo
+            getSalesByPaymentMethod(),
             getRecentEntries(),
             getSalesByProvince()
         ]);
 
-        return {
+        const result = {
             metrics,
             salesByDay,
-            salesByPaymentMethod, // ✅ asignado bien
+            salesByPaymentMethod,
             recentEntries,
             salesByProvince
         };
+
+        console.log('✅ All dashboard data collected successfully');
+        return result;
     } catch (error) {
-        console.error('Error obteniendo todos los datos del dashboard:', error);
+        console.error('❌ Error obteniendo todos los datos del dashboard:', error);
         throw error;
     }
 }
@@ -257,24 +354,21 @@ export async function getAllDashboardData() {
 // Función para obtener estadísticas de referidos
 export async function getReferralStats() {
     try {
-        const { data: referrals, error: referralsError } = await supabase
-            .from('referrals')
-            .select('id, name, commission_rate, is_active');
+        console.log('👥 Getting referral stats...');
 
-        if (referralsError) throw referralsError;
+        const referrals = await fetchAllRecords('referrals', 'id, name, commission_rate, is_active');
 
         // Obtener ventas por referido
         const referralStats = await Promise.all(
             referrals.map(async (referral: { id: any; commission_rate: string; name: any; is_active: any; }) => {
-                const { data: invoices, error } = await supabase
-                    .from('invoices')
-                    .select('total_price')
-                    .eq('referral_id', referral.id)
-                    .eq('status', 'completed');
+                const invoices = await fetchAllRecords(
+                    'invoices',
+                    'total_price',
+                    { referral_id: referral.id, status: 'completed' }
+                );
 
-                if (error) throw error;
-
-                const totalSales = invoices.reduce((sum: number, inv: { total_price: string; }) => sum + parseFloat(inv.total_price), 0);
+                const totalSales = invoices.reduce((sum: number, inv: { total_price: string; }) =>
+                    sum + parseFloat(inv.total_price || '0'), 0);
                 const totalCommission = totalSales * (parseFloat(referral.commission_rate) / 100);
 
                 return {
@@ -289,9 +383,11 @@ export async function getReferralStats() {
             })
         );
 
-        return referralStats.sort((a, b) => b.totalSales - a.totalSales);
+        const result = referralStats.sort((a, b) => b.totalSales - a.totalSales);
+        console.log('✅ Referral stats calculated:', result.length);
+        return result;
     } catch (error) {
-        console.error('Error obteniendo estadísticas de referidos:', error);
+        console.error('❌ Error obteniendo estadísticas de referidos:', error);
         throw error;
     }
 }

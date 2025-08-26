@@ -14,7 +14,7 @@ const TENANT_FILTERED_TABLES = [
     'user_roles',
     'email_configs',
     'payment_configs',
-    'raffle_entries' // Aunque no aparece tenant_id en el esquema, asumo que lo tiene via raffle_id
+    'raffle_entries'
 ];
 
 // Tablas que NO deben ser filtradas (globales o de sistema)
@@ -40,6 +40,7 @@ class TenantSupabaseClient {
     setTenantContext(tenantId: string | null, isAdmin: boolean = false) {
         currentTenantId = tenantId;
         isAdminUser = isAdmin;
+        console.log('🔧 Tenant context updated:', { tenantId, isAdmin });
     }
 
     // Método para obtener el contexto actual
@@ -51,20 +52,29 @@ class TenantSupabaseClient {
     from(table: string) {
         const query = this.client.from(table);
 
-        // Si es admin y no tiene tenant seleccionado, no filtrar
-        if (isAdminUser && !currentTenantId) {
+        // Si la tabla es global, no aplicar filtros
+        if (GLOBAL_TABLES.includes(table)) {
             return query;
         }
 
-        // Si la tabla debe ser filtrada por tenant y tenemos un tenant
-        if (TENANT_FILTERED_TABLES.includes(table) && currentTenantId) {
+        // Si es admin y NO tiene tenant seleccionado, no filtrar (vista global)
+        if (isAdminUser && !currentTenantId) {
+            console.log(`📊 Admin global view for table: ${table}`);
+            return query;
+        }
+
+        // Si la tabla debe ser filtrada por tenant
+        if (TENANT_FILTERED_TABLES.includes(table)) {
             // Para raffle_entries, filtrar por raffle.tenant_id a través de join
             if (table === 'raffle_entries') {
                 return this.createTenantFilteredRaffleEntriesQuery(query);
             }
 
             // Para el resto de tablas, filtrar directamente por tenant_id
-            return this.createTenantFilteredQuery(query, table);
+            if (currentTenantId) {
+                console.log(`🔍 Applying tenant filter for ${table}, tenant: ${currentTenantId}`);
+                return this.createTenantFilteredQuery(query, table);
+            }
         }
 
         return query;
@@ -82,6 +92,7 @@ class TenantSupabaseClient {
 
                         // Si es una operación de lectura (select), aplicar filtro de tenant
                         if (prop === 'select' && currentTenantId) {
+                            console.log(`🎯 Adding tenant filter to ${table}.select: ${currentTenantId}`);
                             return result.eq('tenant_id', currentTenantId);
                         }
 
@@ -92,11 +103,13 @@ class TenantSupabaseClient {
                                 ...item,
                                 tenant_id: currentTenantId
                             }));
+                            console.log(`➕ Adding tenant_id to insert in ${table}`);
                             return target.insert(Array.isArray(args[0]) ? dataWithTenant : dataWithTenant[0]);
                         }
 
                         // Si es una operación de actualización/eliminación, aplicar filtro de tenant
                         if ((prop === 'update' || prop === 'delete') && currentTenantId) {
+                            console.log(`✏️ Adding tenant filter to ${table}.${prop}: ${currentTenantId}`);
                             return result.eq('tenant_id', currentTenantId);
                         }
 
@@ -110,23 +123,30 @@ class TenantSupabaseClient {
     }
 
     private createTenantFilteredRaffleEntriesQuery(query: any) {
-        // Para raffle_entries, necesitamos filtrar a través del raffle
+        // Solo aplicar filtro si tenemos un tenant específico
+        if (!currentTenantId) {
+            return query;
+        }
+
         return new Proxy(query, {
             get: (target, prop) => {
                 const value = target[prop];
 
                 if (typeof value === 'function') {
                     return (...args: any[]) => {
-                        const result = value.apply(target, args);
-
                         // Para operaciones de lectura, hacer join con raffles y filtrar por tenant
                         if (prop === 'select' && currentTenantId) {
-                            // Necesitamos ajustar el select para incluir el join con raffles
+                            console.log(`🎯 Adding raffle tenant filter to raffle_entries: ${currentTenantId}`);
                             const selectStr = args[0] || '*';
-                            const newSelect = `${selectStr}, raffles!inner(tenant_id)`;
+                            // Modificar el select para incluir el join con raffles
+                            const newSelect = selectStr.includes('raffles') 
+                                ? selectStr 
+                                : `${selectStr}, raffles!inner(tenant_id)`;
+                            
                             return target.select(newSelect).eq('raffles.tenant_id', currentTenantId);
                         }
 
+                        const result = value.apply(target, args);
                         return result;
                     };
                 }
@@ -146,13 +166,20 @@ class TenantSupabaseClient {
     }
 
     rpc(fn: string, args?: any) {
-        const enhancedArgs = currentTenantId ?
-            { ...args, p_tenant_id: currentTenantId } : // <-- aquí cambiamos el nombre
+        // Para RPCs, agregar el tenant context como parámetro
+        const enhancedArgs = currentTenantId ? 
+            { ...args, p_tenant_id: currentTenantId } : 
             args;
 
+        console.log(`🔧 Calling RPC ${fn} with context:`, enhancedArgs);
         return this.client.rpc(fn, enhancedArgs);
     }
 
+    // Método directo para queries sin filtros (para casos especiales)
+    directQuery(table: string) {
+        console.log(`🚫 Direct query (no filters) for table: ${table}`);
+        return this.client.from(table);
+    }
 }
 
 // Crear instancia del cliente con tenant

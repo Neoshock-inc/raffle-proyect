@@ -1,16 +1,18 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import { useTenantContext } from '../contexts/TenantContext'
 import {
     BlessedNumber,
-    ActiveRaffle,
+    Raffle,
     CreateBlessedNumberData,
     UpdateBlessedNumberData,
     getBlessedNumbers,
     updateBlessedNumber,
-    getActiveRaffle,
+    getRaffles,
     createBlessedNumbers,
     deleteBlessedNumber,
-    getParticipants
+    getParticipants,
+    setTenantContext
 } from '../services/blessedService'
 
 export const ITEMS_PER_PAGE = 10
@@ -20,10 +22,17 @@ export function useBlessedNumbers(searchTerm: string = '') {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<Error | null>(null)
     const [page, setPage] = useState(1)
-    const [activeRaffle, setActiveRaffle] = useState<ActiveRaffle | null>(null)
+    const [raffles, setRaffles] = useState<Raffle[]>([])
+    const [selectedRaffleId, setSelectedRaffleId] = useState<string>('')
     const [creating, setCreating] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const [participants, setParticipants] = useState<any[]>([])
+
+    // Obtener contexto de tenant
+    const { currentTenant, isAdmin, loading: tenantLoading } = useTenantContext()
+
+    // Obtener la rifa seleccionada
+    const selectedRaffle = raffles.find(r => r.id === selectedRaffleId) || null
 
     const filteredData = data.filter((item) =>
         item.number.includes(searchTerm) ||
@@ -34,28 +43,73 @@ export function useBlessedNumbers(searchTerm: string = '') {
     const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE)
     const paginatedData = filteredData.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
 
+    // Cargar rifas disponibles
+    const loadRaffles = useCallback(async () => {
+        if (tenantLoading) return
+
+        try {
+            console.log('📋 [BLESSED-HOOK] Loading raffles for tenant:', currentTenant?.name || 'Global')
+            setTenantContext(currentTenant?.id || null, isAdmin)
+
+            const rafflesList = await getRaffles()
+            setRaffles(rafflesList)
+
+            // Si hay rifas disponibles y no hay una seleccionada, seleccionar la primera
+            if (rafflesList.length > 0 && !selectedRaffleId) {
+                setSelectedRaffleId(rafflesList[0].id)
+            }
+
+            return rafflesList
+        } catch (e) {
+            setError(e as Error)
+            return []
+        }
+    }, [currentTenant, isAdmin, tenantLoading, selectedRaffleId])
+
+    // Cargar datos de números bendecidos
     const fetchData = useCallback(async () => {
+        if (tenantLoading || !selectedRaffleId) return
+
         setLoading(true)
         setError(null)
         try {
-            const [numbers, raffle, participantsList] = await Promise.all([
-                getBlessedNumbers(),
-                getActiveRaffle(),
+            console.log('✨ [BLESSED-HOOK] Loading data for raffle:', selectedRaffleId)
+            setTenantContext(currentTenant?.id || null, isAdmin)
+
+            const [numbers, participantsList] = await Promise.all([
+                getBlessedNumbers(selectedRaffleId),
                 getParticipants()
             ])
+
             setData(numbers)
-            setActiveRaffle(raffle)
             setParticipants(participantsList)
         } catch (e) {
             setError(e as Error)
         } finally {
             setLoading(false)
         }
-    }, [])
+    }, [selectedRaffleId, currentTenant, isAdmin, tenantLoading])
 
+    // Cargar rifas al inicio o cuando cambie el tenant
     useEffect(() => {
-        fetchData()
-    }, [fetchData])
+        if (!tenantLoading) {
+            loadRaffles()
+        }
+    }, [currentTenant?.id, tenantLoading, isAdmin])
+
+    // Cargar datos cuando se seleccione una rifa
+    useEffect(() => {
+        if (selectedRaffleId) {
+            fetchData()
+        }
+    }, [selectedRaffleId, fetchData])
+
+    // Cambiar de rifa
+    const changeRaffle = useCallback((raffleId: string) => {
+        console.log('🔄 [BLESSED-HOOK] Changing to raffle:', raffleId)
+        setSelectedRaffleId(raffleId)
+        setPage(1) // Resetear paginación
+    }, [])
 
     const toggleClaimed = useCallback(
         async (id: string) => {
@@ -63,6 +117,7 @@ export function useBlessedNumbers(searchTerm: string = '') {
             if (!item) return
 
             try {
+                setTenantContext(currentTenant?.id || null, isAdmin)
                 const updated = await updateBlessedNumber(id, { is_claimed: !item.is_claimed })
                 setData((prev) =>
                     prev.map((item) =>
@@ -73,19 +128,27 @@ export function useBlessedNumbers(searchTerm: string = '') {
                 setError(e as Error)
             }
         },
-        [data]
+        [data, currentTenant, isAdmin]
     )
 
     const createNew = useCallback(
-        async (createData: CreateBlessedNumberData) => {
-            if (!activeRaffle) {
-                throw new Error('No hay una rifa activa')
+        async (createData: Omit<CreateBlessedNumberData, 'raffle_id'>) => {
+            if (!selectedRaffleId) {
+                throw new Error('No hay una rifa seleccionada')
             }
 
             setCreating(true)
             setError(null)
             try {
-                const newBlessedNumbers = await createBlessedNumbers(createData)
+                console.log('➕ [BLESSED-HOOK] Creating blessed numbers for raffle:', selectedRaffleId)
+                setTenantContext(currentTenant?.id || null, isAdmin)
+
+                const fullCreateData: CreateBlessedNumberData = {
+                    ...createData,
+                    raffle_id: selectedRaffleId
+                }
+
+                const newBlessedNumbers = await createBlessedNumbers(fullCreateData)
                 setData((prev) => [...prev, ...newBlessedNumbers].sort((a, b) => a.number.localeCompare(b.number)))
                 return newBlessedNumbers
             } catch (e) {
@@ -95,7 +158,7 @@ export function useBlessedNumbers(searchTerm: string = '') {
                 setCreating(false)
             }
         },
-        [activeRaffle]
+        [selectedRaffleId, currentTenant, isAdmin]
     )
 
     const deleteNumber = useCallback(
@@ -103,6 +166,7 @@ export function useBlessedNumbers(searchTerm: string = '') {
             setDeleting(true)
             setError(null)
             try {
+                setTenantContext(currentTenant?.id || null, isAdmin)
                 await deleteBlessedNumber(id)
                 setData((prev) => prev.filter((item) => item.id !== id))
             } catch (e) {
@@ -112,12 +176,13 @@ export function useBlessedNumbers(searchTerm: string = '') {
                 setDeleting(false)
             }
         },
-        []
+        [currentTenant, isAdmin]
     )
 
     const updateNumber = useCallback(
         async (id: string, updates: UpdateBlessedNumberData) => {
             try {
+                setTenantContext(currentTenant?.id || null, isAdmin)
                 const updated = await updateBlessedNumber(id, updates)
                 setData((prev) =>
                     prev.map((item) =>
@@ -130,7 +195,7 @@ export function useBlessedNumbers(searchTerm: string = '') {
                 throw e
             }
         },
-        []
+        [currentTenant, isAdmin]
     )
 
     const assignParticipant = useCallback(
@@ -139,6 +204,19 @@ export function useBlessedNumbers(searchTerm: string = '') {
         },
         [updateNumber]
     )
+
+    const refreshData = useCallback(async () => {
+        console.log('🔄 [BLESSED-HOOK] Manual refresh triggered')
+        await loadRaffles()
+        if (selectedRaffleId) {
+            await fetchData()
+        }
+    }, [loadRaffles, fetchData, selectedRaffleId])
+
+    // Resetear página cuando cambian los filtros
+    useEffect(() => {
+        setPage(1)
+    }, [searchTerm])
 
     return {
         // Datos existentes
@@ -150,13 +228,18 @@ export function useBlessedNumbers(searchTerm: string = '') {
             itemsPerPage: ITEMS_PER_PAGE,
             totalItems: filteredData.length
         },
-        loading,
+        loading: loading || tenantLoading,
         error,
         setPage,
         toggleClaimed,
 
-        // Nuevas funcionalidades
-        activeRaffle,
+        // Gestión de rifas
+        raffles,
+        selectedRaffleId,
+        selectedRaffle,
+        changeRaffle,
+
+        // Funcionalidades
         creating,
         deleting,
         createNew,
@@ -164,6 +247,6 @@ export function useBlessedNumbers(searchTerm: string = '') {
         updateNumber,
         assignParticipant,
         participants,
-        refreshData: fetchData
+        refreshData
     }
 }

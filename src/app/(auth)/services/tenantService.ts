@@ -1,10 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
+// src/app/services/tenantService.ts - CORREGIDO
+import { supabase } from '../lib/supabaseTenantClient' // Usar el cliente con interceptor
 import { Tenant, UserRole } from '../types/tenant'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export const tenantService = {
   // Obtener roles y tenants del usuario
@@ -36,7 +32,15 @@ export const tenantService = {
 
   // Obtener todos los tenants (solo para admins)
   async getAllTenants(): Promise<Tenant[]> {
-    const { data, error } = await supabase
+    // Para esta consulta necesitamos usar el cliente sin filtros
+    // porque queremos TODOS los tenants sin importar el contexto actual
+    const { createClient } = await import('@supabase/supabase-js')
+    const directClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    const { data, error } = await directClient
       .from('tenants')
       .select('*')
       .order('name')
@@ -47,7 +51,15 @@ export const tenantService = {
 
   // Verificar si el usuario es admin (tiene rol admin sin tenant_id)
   async isUserAdmin(userId: string): Promise<boolean> {
-    const { data, error } = await supabase
+    // Para esta consulta también necesitamos el cliente directo
+    // porque necesitamos verificar roles sin filtros de tenant
+    const { createClient } = await import('@supabase/supabase-js')
+    const directClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    const { data, error } = await directClient
       .from('user_roles')
       .select(`
         role:role_id (
@@ -59,15 +71,22 @@ export const tenantService = {
 
     if (error) return false
 
-    // Es admin si tiene rol 'admin' Y tenant_id es null
-    return data.some((userRole: any) => 
-      userRole.role?.name === 'admin' && userRole.tenant_id === null
+    // Es admin si tiene rol 'super_admin' Y tenant_id es null
+    return data.some((userRole: any) =>
+      userRole.role?.name === 'super_admin' && userRole.tenant_id === null
     )
   },
 
   // Obtener tenant del usuario customer
   async getUserTenant(userId: string): Promise<Tenant | null> {
-    const { data, error } = await supabase
+    // También usar cliente directo para esta consulta de configuración inicial
+    const { createClient } = await import('@supabase/supabase-js')
+    const directClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    const { data, error } = await directClient
       .from('user_roles')
       .select(`
         tenant:tenant_id (

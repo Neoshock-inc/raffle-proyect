@@ -1,26 +1,31 @@
-// services/invoiceService.ts
-import { supabase } from '../lib/supabase';
+// src/app/services/invoicesService.ts
+import { supabase } from '../(auth)/lib/supabaseTenantClient';
 import { Invoice, InvoiceCreationData } from '../types/invoices';
 
 /**
- * Obtiene todas las facturas desde Supabase
- * @returns Lista de facturas
+ * Obtiene todas las facturas con contexto de tenant
+ * @returns Lista de facturas filtradas por tenant
  */
-export const getAllInvoices = async (): Promise<Invoice[]> => {
+export const getInvoicesList = async (): Promise<Invoice[]> => {
     try {
+        console.log('📄 Getting invoices list...');
+        const { tenantId, isAdmin } = supabase.getTenantContext();
+        console.log('🔍 Current context:', { tenantId, isAdmin });
+
         const { data, error } = await supabase
             .from('invoices')
             .select('*')
             .order('created_at', { ascending: false });
 
         if (error) {
-            console.error('Error fetching invoices:', error);
+            console.error('❌ Error fetching invoices:', error);
             throw new Error(error.message);
         }
 
+        console.log('✅ Invoices fetched:', data?.length || 0);
         return data || [];
     } catch (error) {
-        console.error('Error in getAllInvoices:', error);
+        console.error('❌ Error in getInvoicesList:', error);
         throw error;
     }
 };
@@ -32,6 +37,8 @@ export const getAllInvoices = async (): Promise<Invoice[]> => {
  */
 export const getInvoiceById = async (invoiceId: string): Promise<Invoice | null> => {
     try {
+        console.log('📄 Getting invoice by ID:', invoiceId);
+        
         const { data, error } = await supabase
             .from('invoices')
             .select('*')
@@ -39,13 +46,14 @@ export const getInvoiceById = async (invoiceId: string): Promise<Invoice | null>
             .single();
 
         if (error) {
-            console.error('Error fetching invoice:', error);
+            console.error('❌ Error fetching invoice:', error);
             throw new Error(error.message);
         }
 
+        console.log('✅ Invoice fetched:', data?.id);
         return data;
     } catch (error) {
-        console.error('Error in getInvoiceById:', error);
+        console.error('❌ Error in getInvoiceById:', error);
         throw error;
     }
 };
@@ -57,6 +65,8 @@ export const getInvoiceById = async (invoiceId: string): Promise<Invoice | null>
  */
 export const getInvoicesByParticipant = async (participantId: string): Promise<Invoice[]> => {
     try {
+        console.log('📄 Getting invoices by participant:', participantId);
+        
         const { data, error } = await supabase
             .from('invoices')
             .select('*')
@@ -64,13 +74,14 @@ export const getInvoicesByParticipant = async (participantId: string): Promise<I
             .order('created_at', { ascending: false });
 
         if (error) {
-            console.error('Error fetching participant invoices:', error);
+            console.error('❌ Error fetching participant invoices:', error);
             throw new Error(error.message);
         }
 
+        console.log('✅ Participant invoices fetched:', data?.length || 0);
         return data || [];
     } catch (error) {
-        console.error('Error in getInvoicesByParticipant:', error);
+        console.error('❌ Error in getInvoicesByParticipant:', error);
         throw error;
     }
 };
@@ -83,14 +94,18 @@ export const getInvoicesByParticipant = async (participantId: string): Promise<I
  */
 export const findOrCreateParticipant = async (email: string, name?: string): Promise<string> => {
     try {
+        console.log('👤 Finding or creating participant:', email);
+        
         // Primero intentamos encontrar el participante por email
         const { data: existingParticipant, error: searchError } = await supabase
             .from('participants')
             .select('id')
             .eq('email', email)
             .maybeSingle();
+        
         // Si el participante existe, retornamos su ID
         if (existingParticipant) {
+            console.log('✅ Participant found:', existingParticipant.id);
             return existingParticipant.id;
         }
 
@@ -102,24 +117,29 @@ export const findOrCreateParticipant = async (email: string, name?: string): Pro
             .single();
 
         if (insertError) {
-            console.error('Error creating participant:', insertError);
+            console.error('❌ Error creating participant:', insertError);
             throw new Error(insertError.message);
         }
 
+        console.log('✅ Participant created:', newParticipant.id);
         return newParticipant.id;
     } catch (error) {
-        console.error('Error in findOrCreateParticipant:', error);
+        console.error('❌ Error in findOrCreateParticipant:', error);
         throw error;
     }
 };
 
 /**
- * Crea una nueva factura en Supabase, primero asegurándose de que exista el participante
+ * Crea una nueva factura, primero asegurándose de que exista el participante
  * @param invoiceData Datos de la factura a crear
  * @returns La factura creada
  */
-export const createInvoiceWithParticipant = async (invoiceData: Omit<InvoiceCreationData, 'participantId'>): Promise<any> => {
+export const createInvoiceWithParticipant = async (invoiceData: Omit<InvoiceCreationData, 'participantId'>): Promise<Invoice> => {
     try {
+        console.log('📝 Creating invoice with participant for:', invoiceData.email);
+        const { tenantId, isAdmin } = supabase.getTenantContext();
+        console.log('🔍 Current context during creation:', { tenantId, isAdmin });
+
         // Encontrar o crear el participante primero
         const participantId = await findOrCreateParticipant(invoiceData.email, invoiceData.fullName);
 
@@ -129,36 +149,43 @@ export const createInvoiceWithParticipant = async (invoiceData: Omit<InvoiceCrea
             participantId
         };
 
-        return await createInvoice(completeInvoiceData);
+        const result = await createInvoice(completeInvoiceData);
+        console.log('✅ Invoice with participant created:', result.id);
+        return result;
     } catch (error) {
-        console.error('Error in createInvoiceWithParticipant:', error);
+        console.error('❌ Error in createInvoiceWithParticipant:', error);
         throw error;
     }
 };
 
 /**
- * Crea una nueva factura en Supabase
+ * Crea una nueva factura con contexto de tenant
  * @param invoiceData Datos de la factura a crear
  * @returns La factura creada
  */
 export const createInvoice = async (invoiceData: InvoiceCreationData): Promise<Invoice> => {
-    let referralId: string | null = null;
-    
-    if (invoiceData.referral_code) {
-        const { data: referral, error: referralError } = await supabase
-            .from("referrals")
-            .select("id")
-            .eq("referral_code", invoiceData.referral_code.toUpperCase())
-            .single();
-
-        if (referralError) {
-            console.warn("Código de referido no encontrado:", invoiceData.referral_code);
-        } else {
-            referralId = referral.id;
-        }
-    }
-
     try {
+        console.log('📝 Creating invoice...');
+        const { tenantId, isAdmin } = supabase.getTenantContext();
+        console.log('🔍 Current context during invoice creation:', { tenantId, isAdmin });
+
+        let referralId: string | null = null;
+        
+        if (invoiceData.referral_code) {
+            const { data: referral, error: referralError } = await supabase
+                .from("referrals")
+                .select("id")
+                .eq("referral_code", invoiceData.referral_code.toUpperCase())
+                .single();
+
+            if (referralError) {
+                console.warn("⚠️ Código de referido no encontrado:", invoiceData.referral_code);
+            } else {
+                referralId = referral.id;
+                console.log('✅ Referral found:', referralId);
+            }
+        }
+
         const newInvoice = {
             order_number: invoiceData.orderNumber,
             full_name: invoiceData.fullName,
@@ -183,19 +210,20 @@ export const createInvoice = async (invoiceData: InvoiceCreationData): Promise<I
             .single();
 
         if (error) {
-            console.error('Error creating invoice:', error);
+            console.error('❌ Error creating invoice:', error);
             throw new Error(error.message);
         }
 
+        console.log('✅ Invoice created:', data.id);
         return data;
     } catch (error) {
-        console.error('Error in createInvoice:', error);
+        console.error('❌ Error in createInvoice:', error);
         throw error;
     }
 };
 
 /**
- * Actualiza una factura existente
+ * Actualiza una factura existente con contexto de tenant
  * @param invoiceId ID de la factura a actualizar
  * @param invoiceData Datos a actualizar
  * @returns La factura actualizada
@@ -205,6 +233,10 @@ export const updateInvoice = async (
     invoiceData: Partial<InvoiceCreationData>
 ): Promise<Invoice> => {
     try {
+        console.log('✏️ Updating invoice:', invoiceId);
+        const { tenantId, isAdmin } = supabase.getTenantContext();
+        console.log('🔍 Current context during update:', { tenantId, isAdmin });
+
         // Convertir nombres de propiedades al formato de la base de datos
         const updateData: any = {};
         if (invoiceData.orderNumber !== undefined) updateData.order_number = invoiceData.orderNumber;
@@ -219,6 +251,7 @@ export const updateInvoice = async (
         if (invoiceData.amount !== undefined) updateData.amount = invoiceData.amount;
         if (invoiceData.totalPrice !== undefined) updateData.total_price = invoiceData.totalPrice;
         if (invoiceData.participantId !== undefined) updateData.participant_id = invoiceData.participantId;
+        if (invoiceData.status !== undefined) updateData.status = invoiceData.status;
 
         const { data, error } = await supabase
             .from('invoices')
@@ -228,52 +261,66 @@ export const updateInvoice = async (
             .single();
 
         if (error) {
-            console.error('Error updating invoice:', error);
+            console.error('❌ Error updating invoice:', error);
             throw new Error(error.message);
         }
 
+        console.log('✅ Invoice updated:', data.id);
         return data;
     } catch (error) {
-        console.error('Error in updateInvoice:', error);
+        console.error('❌ Error in updateInvoice:', error);
         throw error;
     }
 };
 
 /**
- * Elimina una factura
+ * Elimina una factura con contexto de tenant
  * @param invoiceId ID de la factura a eliminar
  * @returns true si se eliminó correctamente
  */
 export const deleteInvoice = async (invoiceId: string): Promise<boolean> => {
     try {
+        console.log('🗑️ Deleting invoice:', invoiceId);
+        const { tenantId, isAdmin } = supabase.getTenantContext();
+        console.log('🔍 Current context during deletion:', { tenantId, isAdmin });
+
         const { error } = await supabase
             .from('invoices')
             .delete()
             .eq('id', invoiceId);
 
         if (error) {
-            console.error('Error deleting invoice:', error);
+            console.error('❌ Error deleting invoice:', error);
             throw new Error(error.message);
         }
 
+        console.log('✅ Invoice deleted successfully');
         return true;
     } catch (error) {
-        console.error('Error in deleteInvoice:', error);
+        console.error('❌ Error in deleteInvoice:', error);
         throw error;
     }
 };
 
 /**
- * Genera un número de orden secuencial para la factura usando RPC de Supabase
+ * Genera un número de orden secuencial usando RPC
  * @returns Número de orden para la nueva factura
  */
 export const generateOrderNumber = async (): Promise<string> => {
-    const { data, error } = await supabase.rpc('generate_order_number');
+    try {
+        console.log('🔢 Generating order number...');
+        
+        const { data, error } = await supabase.rpc('generate_order_number');
 
-    if (error) {
-        console.error('Error generating order number:', error);
+        if (error) {
+            console.error('❌ Error generating order number:', error);
+            throw error;
+        }
+
+        console.log('✅ Order number generated:', data);
+        return data as string;
+    } catch (error) {
+        console.error('❌ Error in generateOrderNumber:', error);
         throw error;
     }
-
-    return data as string;
 };

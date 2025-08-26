@@ -1,53 +1,28 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Plus, Ticket } from 'lucide-react'
-import { raffleService } from '../../services/rafflesService';
+import { useRaffleEntries } from '../../hooks/useRaffleEntries' // CAMBIO: Usar el hook con tenant context
 import RaffleEntryModal from '../../components/RaffleEntryModal'
 
-const ITEMS_PER_PAGE = 10
-
 export default function EntradasRifaPage() {
-    const [raffleEntries, setRaffleEntries] = useState<any[]>([])
-    const [filteredEntries, setFilteredEntries] = useState<any[]>([])
-    const [paginatedEntries, setPaginatedEntries] = useState<any[]>([])
-    const [currentPage, setCurrentPage] = useState(1)
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
 
-    const loadEntries = async () => {
-        try {
-            setLoading(true)
-            const data = await raffleService.getRaffleEntries()
-            setRaffleEntries(data)
-            setFilteredEntries(data)
-        } catch (error) {
-            console.error('Error al cargar entradas de rifa:', error)
-        } finally {
-            setLoading(false)
-        }
+    // CAMBIO: Usar el hook que maneja el tenant context
+    const {
+        paginatedEntries,
+        pagination,
+        setPage,
+        loading,
+        createEntryFromOrder,
+        refetch
+    } = useRaffleEntries(search)
+
+    const handleModalSuccess = async () => {
+        setIsModalOpen(false)
+        await refetch() // Refrescar usando el hook
     }
-
-    useEffect(() => {
-        loadEntries()
-    }, [])
-
-    useEffect(() => {
-        const term = search.toLowerCase()
-        const filtered = raffleEntries.filter((entry: any) =>
-            `${entry.number}`.includes(term) ||
-            new Date(entry.purchased_at).toLocaleDateString().includes(term)
-        )
-        setFilteredEntries(filtered)
-        setCurrentPage(1)
-    }, [search, raffleEntries])
-
-    useEffect(() => {
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-        const endIndex = startIndex + ITEMS_PER_PAGE
-        setPaginatedEntries(filteredEntries.slice(startIndex, endIndex))
-    }, [currentPage, filteredEntries])
 
     return (
         <div className="space-y-6">
@@ -129,22 +104,22 @@ export default function EntradasRifaPage() {
             </div>
 
             {/* Paginación */}
-            {filteredEntries.length > ITEMS_PER_PAGE && (
+            {pagination.totalPages > 1 && (
                 <div className="flex justify-end items-center space-x-2 mt-2">
                     <button
-                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="px-3 py-1 text-sm border rounded hover:bg-gray-100 disabled:opacity-50"
+                        onClick={() => setPage(Math.max(pagination.page - 1, 1))}
+                        disabled={pagination.page === 1}
+                        className="px-3 py-1 text-sm border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Anterior
                     </button>
                     <span className="text-sm">
-                        Página {currentPage} de {Math.ceil(filteredEntries.length / ITEMS_PER_PAGE)}
+                        Página {pagination.page} de {pagination.totalPages}
                     </span>
                     <button
-                        onClick={() => setCurrentPage((p) => p + 1)}
-                        disabled={currentPage >= Math.ceil(filteredEntries.length / ITEMS_PER_PAGE)}
-                        className="px-3 py-1 text-sm border rounded hover:bg-gray-100 disabled:opacity-50"
+                        onClick={() => setPage(Math.min(pagination.page + 1, pagination.totalPages))}
+                        disabled={pagination.page >= pagination.totalPages}
+                        className="px-3 py-1 text-sm border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Siguiente
                     </button>
@@ -155,10 +130,8 @@ export default function EntradasRifaPage() {
             <RaffleEntryModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onSuccess={() => {
-                    setIsModalOpen(false)
-                    loadEntries()
-                }}
+                onSuccess={handleModalSuccess}
+                createEntryFromOrder={createEntryFromOrder} // Pasar la función del hook
             />
         </div>
     )

@@ -1,10 +1,11 @@
 // src/hooks/useInvoices.ts
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
-import { getInvoicesList } from '../services/invoicesService'
+import { getInvoicesList, updateInvoice } from '../services/invoicesService' // CAMBIO: Usar el servicio actualizado
 import type { UpdateInvoiceInput } from '../types/invoice'
 import { Invoice, InvoiceCreationData } from '@/app/types/invoices'
-import { createInvoiceWithParticipant, updateInvoice } from '@/app/services/invoiceService'
+import { useTenantContext } from '../contexts/TenantContext' // AGREGAR: Usar contexto de tenant
+import { createInvoiceWithParticipant } from '@/app/services/invoiceService'
 
 const ITEMS_PER_PAGE = 10
 
@@ -14,37 +15,50 @@ export const useInvoices = (searchTerm: string = '') => {
     const [error, setError] = useState<string | null>(null)
     const [currentPage, setCurrentPage] = useState(1)
 
-    // Fetch invoices - solo se ejecuta una vez al montar
-    useEffect(() => {
-        let mounted = true
+    // AGREGAR: Obtener contexto de tenant
+    const { currentTenant, isAdmin, loading: tenantLoading } = useTenantContext()
 
-        const fetchInvoices = async () => {
-            try {
-                setLoading(true)
-                const data = await getInvoicesList()
-                if (mounted) {
-                    setInvoices(data)
-                    setError(null)
-                }
-            } catch (err) {
-                if (mounted) {
-                    setError('Error al obtener facturas')
-                    console.error(err)
-                    toast.error('Error al cargar las facturas')
-                }
-            } finally {
-                if (mounted) {
-                    setLoading(false)
-                }
+    // Función para cargar facturas
+    const fetchInvoices = useCallback(async (forceRefresh = false) => {
+        // No cargar si el tenant aún está cargando
+        if (tenantLoading) return
+
+        try {
+            setLoading(true)
+            console.log('📄 [INVOICES] Loading invoices for tenant:', currentTenant?.name || 'Global')
+
+            // Agregar pequeño delay si es force refresh para asegurar contexto
+            if (forceRefresh) {
+                await new Promise(resolve => setTimeout(resolve, 100))
             }
-        }
 
-        fetchInvoices()
+            const data = await getInvoicesList()
+            setInvoices(data)
+            setError(null)
 
-        return () => {
-            mounted = false
+            console.log('✅ [INVOICES] Loaded invoices:', data.length)
+        } catch (err) {
+            setError('Error al obtener facturas')
+            console.error('❌ [INVOICES] Error:', err)
+            toast.error('Error al cargar las facturas')
+        } finally {
+            setLoading(false)
         }
-    }, []) // Sin dependencias - solo se ejecuta al montar
+    }, [currentTenant, tenantLoading])
+
+    // Efecto para cargar facturas cuando cambie el tenant
+    useEffect(() => {
+        console.log('🔄 [INVOICES] Tenant context changed:', {
+            tenantId: currentTenant?.id,
+            tenantName: currentTenant?.name,
+            isAdmin,
+            tenantLoading
+        })
+
+        if (!tenantLoading) {
+            fetchInvoices(true) // Force refresh cuando cambie el tenant
+        }
+    }, [currentTenant?.id, tenantLoading, fetchInvoices])
 
     // Filtrar invoices
     const filteredInvoices = useMemo(() => {
@@ -85,59 +99,54 @@ export const useInvoices = (searchTerm: string = '') => {
         setCurrentPage(page)
     }, [])
 
-    // Nueva función create que usa los servicios actualizados
+    // Función create actualizada
     const create = useCallback(async (input: InvoiceCreationData) => {
         try {
-            // El orderNumber ya viene del modal, solo necesitamos crear el invoiceData
+            console.log('📝 [INVOICES] Creating invoice for tenant:', currentTenant?.name || 'Global')
+
             const invoiceData: Omit<InvoiceCreationData, 'participantId'> = {
                 ...input
             }
 
-            // Crear factura con participante
             const newInvoice = await createInvoiceWithParticipant(invoiceData)
             setInvoices(prev => [newInvoice, ...prev])
 
             toast.success('Factura creada exitosamente')
+            console.log('✅ [INVOICES] Invoice created:', newInvoice.id)
             return newInvoice
         } catch (err) {
-            console.error('Error creating invoice:', err)
+            console.error('❌ [INVOICES] Error creating invoice:', err)
             toast.error('Error al crear la factura')
             throw err
         }
-    }, [])
+    }, [currentTenant])
 
+    // Función update actualizada
     const update = useCallback(async (input: UpdateInvoiceInput) => {
         try {
-            const { id, ...invoiceData } = input
-            const updated = await updateInvoice(id, invoiceData)
+            console.log('✏️ [INVOICES] Updating invoice for tenant:', currentTenant?.name || 'Global')
+
+            const updated = await updateInvoice(input)
             setInvoices(prev => prev.map(inv => inv.id === updated.id ? updated : inv))
 
             toast.success('Factura actualizada exitosamente')
+            console.log('✅ [INVOICES] Invoice updated:', updated.id)
             return updated
         } catch (err) {
-            console.error('Error updating invoice:', err)
+            console.error('❌ [INVOICES] Error updating invoice:', err)
             toast.error('Error al actualizar la factura')
             throw err
         }
-    }, [])
+    }, [currentTenant])
 
+    // Función refetch actualizada
     const refetch = useCallback(async () => {
-        try {
-            setLoading(true)
-            const data = await getInvoicesList()
-            setInvoices(data)
-            setError(null)
-        } catch (err) {
-            setError('Error al obtener facturas')
-            console.error(err)
-            toast.error('Error al recargar las facturas')
-        } finally {
-            setLoading(false)
-        }
-    }, [])
+        console.log('🔄 [INVOICES] Manual refresh triggered')
+        await fetchInvoices(true)
+    }, [fetchInvoices])
 
     return {
-        loading,
+        loading: loading || tenantLoading, // Incluir tenant loading
         error,
         filteredInvoices,
         paginatedInvoices,
