@@ -4,19 +4,23 @@ import { EnhancedTicketOption } from '../types/ticketPackages';
 
 interface TemporalOfferBarProps {
     ticketOptions: EnhancedTicketOption[];
+    isVisible: boolean;
 }
 
-export function TemporalOfferBar({ ticketOptions }: TemporalOfferBarProps) {
+export function TemporalOfferBar({ ticketOptions, isVisible }: TemporalOfferBarProps) {
     // Buscar cualquier opción que tenga una oferta activa para obtener las fechas
-    const activeOffer = ticketOptions.find(option => 
-        option.package.current_offer && 
+    const activeOffer = ticketOptions.find(option =>
+        option.package.current_offer &&
         option.package.current_offer.is_active
     )?.package.current_offer;
 
-    const countdown = activeOffer ? useCountdown(activeOffer.end_date) : null;
+    // SIEMPRE llamar el hook, incluso si no hay oferta activa
+    // Pasamos una fecha por defecto si no hay oferta activa
+    const defaultEndDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 horas desde ahora
+    const countdown = useCountdown(activeOffer?.end_date || defaultEndDate);
 
-    // Si no hay oferta activa o ya expiró, no mostrar la barra
-    if (!activeOffer || countdown === 'Expirado') {
+    // Si no es visible, no hay oferta activa o ya expiró, no mostrar la barra
+    if (!isVisible || !activeOffer || countdown === 'Expirado') {
         return null;
     }
 
@@ -24,7 +28,7 @@ export function TemporalOfferBar({ ticketOptions }: TemporalOfferBarProps) {
         <div className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-red-500 text-white py-4 mb-6 relative overflow-hidden rounded-lg shadow-lg">
             {/* Efectos de fondo animados */}
             <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-red-500 animate-pulse opacity-50"></div>
-            
+
             {/* Patrón de puntos de fondo */}
             <div className="absolute inset-0 opacity-20">
                 <div className="w-full h-full" style={{
@@ -63,7 +67,7 @@ export function TemporalOfferBar({ ticketOptions }: TemporalOfferBarProps) {
                                 </span>
                             </div>
                         </div>
-                        
+
                         {/* Botón CTA opcional */}
                         <div className="hidden md:block">
                             <button className="bg-white text-purple-600 px-6 py-2 rounded-full font-bold uppercase tracking-wide hover:bg-purple-50 transition-all duration-200 transform hover:scale-105 shadow-lg">
@@ -83,7 +87,7 @@ export function TemporalOfferBar({ ticketOptions }: TemporalOfferBarProps) {
 
             {/* Barra de progreso animada (opcional) */}
             <div className="absolute bottom-0 left-0 w-full h-1 bg-black/20">
-                <div 
+                <div
                     className="h-full bg-white/40 animate-pulse"
                     style={{
                         width: '70%', // Puedes calcular el porcentaje basado en tiempo restante

@@ -1,4 +1,4 @@
-// components/TicketsGrid.tsx (versión actualizada)
+// components/TicketsGrid.tsx (versión corregida)
 import { TicketOption } from '../types/tickets';
 import { EnhancedTicketOption } from '../types/ticketPackages';
 import { TicketCard } from './TicketCard';
@@ -27,10 +27,14 @@ export function TicketsGrid({ ticketOptions, referralCode, isUsingPackages = fal
     return (
         <section className="w-full py-8">
             <div className="container mx-auto px-4">
-                {/* Barra de oferta temporal - solo mostrar si hay ofertas activas */}
-                {isUsingPackages && hasActiveOffers && (
-                    <TemporalOfferBar ticketOptions={enhancedOptions} />
-                )}
+                {/* 
+                    SOLUCIÓN: Siempre renderizar TemporalOfferBar, 
+                    pero pasar la condición como prop para que maneje la lógica internamente
+                */}
+                <TemporalOfferBar
+                    ticketOptions={enhancedOptions}
+                    isVisible={isUsingPackages && hasActiveOffers}
+                />
 
                 {/* Grid responsivo */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
