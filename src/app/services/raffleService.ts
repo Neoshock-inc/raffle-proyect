@@ -15,94 +15,111 @@ export async function getActiveRaffle() {
 
 // Obtener todos los paquetes de tickets activos para la rifa activa
 export async function getActiveTicketPackages(): Promise<CalculatedTicketPackage[]> {
-    try {
-        // Primero obtener la rifa activa
-        const raffle = await getActiveRaffle();
+    const raffle = await getActiveRaffle();
+    if (!raffle) throw new Error('No hay rifa activa');
 
-        if (!raffle) {
-            throw new Error("No hay rifa activa");
+    // Paquetes + ofertas (como arreglo anidado)
+    const { data: packages, error } = await supabase
+        .from('ticket_packages')
+        .select(`
+      *,
+      ticket_package_time_offers (
+        id,
+        ticket_package_id,
+        offer_name,
+        start_date,
+        end_date,
+        special_discount_percentage,
+        special_bonus_entries,
+        special_badge_text,
+        special_badge_color,
+        special_gradient_from,
+        special_gradient_via,
+        special_gradient_to,
+        max_purchases_during_offer,
+        stock_limit_for_offer,
+        is_active,
+        created_at
+      )
+    `)
+        .eq('raffle_id', raffle.id)
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+    if (error) throw error;
+
+    const now = new Date();
+    const result: CalculatedTicketPackage[] = [];
+
+    // Procesar cada paquete una sola vez
+    (packages ?? []).forEach((pkg: any) => {
+        const offers: TicketPackageTimeOffer[] = (pkg.ticket_package_time_offers ?? []) as TicketPackageTimeOffer[];
+
+        // Solo ofertas activas en este instante
+        const activeOffers = offers.filter(o =>
+            o.is_active &&
+            now >= new Date(o.start_date) &&
+            now <= new Date(o.end_date)
+        );
+
+        // Calcular el paquete final (con o sin ofertas activas)
+        const calculated = calculatePackage(pkg as TicketPackage, raffle, now, activeOffers);
+
+        // Solo agregar si está disponible
+        if (calculated.is_available) {
+            result.push(calculated);
         }
+    });
 
-        // Obtener los paquetes activos para esta rifa
-        const { data: packages, error: packagesError } = await supabase
-            .from("ticket_packages")
-            .select(`
-                    *,
-                    ticket_package_time_offers(*)
-                `)
-            .eq("raffle_id", raffle.id)
-            .eq("is_active", true)
-            .order("display_order", { ascending: true });
-
-
-        if (packagesError) throw packagesError;
-
-        // Obtener ofertas temporales activas por separado para evitar problemas con el inner join
-        const { data: timeOffers, error: offersError } = await supabase
-            .from("ticket_package_time_offers")
-            .select("*")
-            .eq("is_active", true);
-
-        if (offersError) throw offersError;
-
-        // Calcular los paquetes finales
-        const now = new Date();
-        const calculatedPackages = packages?.map(pkg => {
-            // Encontrar ofertas temporales activas para este paquete
-            const activeOffers = timeOffers?.filter(offer =>
-                offer.ticket_package_id === pkg.id &&
-                now >= new Date(offer.start_date) &&
-                now <= new Date(offer.end_date)
-            ) || [];
-
-            return calculatePackage(pkg, raffle, now, activeOffers);
-        }).filter(pkg => pkg.is_available) || [];
-
-        return calculatedPackages;
-
-    } catch (error) {
-        console.error("Error obteniendo paquetes de tickets:", error);
-        throw error;
-    }
+    return result;
 }
 
-// Obtener un paquete específico por ID
+// Obtener un paquete por ID (misma lógica de ofertas activas)
 export async function getTicketPackageById(packageId: string): Promise<CalculatedTicketPackage | null> {
-    try {
-        const raffle = await getActiveRaffle();
-        if (!raffle) throw new Error("No hay rifa activa");
+    const raffle = await getActiveRaffle();
+    if (!raffle) throw new Error('No hay rifa activa');
 
-        const { data: pkg, error } = await supabase
-            .from("ticket_packages")
-            .select("*")
-            .eq("id", packageId)
-            .eq("is_active", true)
-            .single();
+    const { data: pkg, error } = await supabase
+        .from('ticket_packages')
+        .select(`
+      *,
+      ticket_package_time_offers (
+        id,
+        ticket_package_id,
+        offer_name,
+        start_date,
+        end_date,
+        special_discount_percentage,
+        special_bonus_entries,
+        special_badge_text,
+        special_badge_color,
+        special_gradient_from,
+        special_gradient_via,
+        special_gradient_to,
+        max_purchases_during_offer,
+        stock_limit_for_offer,
+        is_active,
+        created_at
+      )
+    `)
+        .eq('id', packageId)
+        .eq('is_active', true)
+        .single();
 
-        if (error || !pkg) return null;
+    if (error || !pkg) return null;
 
-        // Obtener ofertas temporales activas
-        const { data: timeOffers } = await supabase
-            .from("ticket_package_time_offers")
-            .select("*")
-            .eq("ticket_package_id", packageId)
-            .eq("is_active", true);
+    const now = new Date();
+    const offers: TicketPackageTimeOffer[] = (pkg.ticket_package_time_offers ?? []) as TicketPackageTimeOffer[];
+    const activeOffers = offers.filter(o =>
+        o.is_active &&
+        now >= new Date(o.start_date) &&
+        now <= new Date(o.end_date)
+    );
 
-        const now = new Date();
-        const activeOffers = timeOffers?.filter(offer =>
-            now >= new Date(offer.start_date) &&
-            now <= new Date(offer.end_date)
-        ) || [];
-
-        return calculatePackage(pkg, raffle, now, activeOffers);
-
-    } catch (error) {
-        console.error("Error obteniendo paquete por ID:", error);
-        return null;
-    }
+    return calculatePackage(pkg as TicketPackage, raffle, now, activeOffers);
 }
 
-// Función interna para calcular el paquete final
+// Cálculo del paquete final - MEJORADO
 function calculatePackage(
     pkg: TicketPackage,
     raffle: any,
@@ -111,41 +128,29 @@ function calculatePackage(
 ): CalculatedTicketPackage {
 
     // Encontrar la mejor oferta activa (mayor descuento)
-    const bestOffer = activeOffers.reduce((best, current) => {
+    const bestOffer = activeOffers.reduce<TicketPackageTimeOffer | null>((best, current) => {
         if (!best) return current;
-        return current.special_discount_percentage > best.special_discount_percentage ? current : best;
-    }, null as TicketPackageTimeOffer | null);
+        return (current.special_discount_percentage || 0) > (best.special_discount_percentage || 0)
+            ? current : best;
+    }, null);
 
-    // Calcular precio final
-    let final_price: number;
-    if (pkg.fixed_price) {
-        final_price = pkg.fixed_price;
-    } else {
-        final_price = pkg.amount * raffle.price * pkg.price_multiplier;
-    }
+    // Precio base
+    let final_price = pkg.fixed_price ?? (pkg.amount * (raffle.price ?? 1) * (pkg.price_multiplier ?? 1));
 
-    // Aplicar descuentos
-    let discount = pkg.discount_percentage;
-    if (bestOffer && bestOffer.special_discount_percentage > 0) {
-        discount = Math.max(discount, bestOffer.special_discount_percentage);
-    }
+    // Descuento mayor entre paquete y oferta
+    const baseDiscount = pkg.discount_percentage || 0;
+    const offerDiscount = bestOffer?.special_discount_percentage || 0;
+    const discount = Math.max(baseDiscount, offerDiscount);
+    if (discount > 0) final_price = final_price * (1 - discount / 100);
 
-    if (discount > 0) {
-        final_price = final_price * (1 - discount / 100);
-    }
-
-    // Calcular entradas finales (amount + bonus)
-    let bonus = pkg.bonus_entries;
-    if (bestOffer && bestOffer.special_bonus_entries > 0) {
-        bonus += bestOffer.special_bonus_entries;
-    }
-
+    // Bonus
+    const bonus = (pkg.bonus_entries || 0) + (bestOffer?.special_bonus_entries || 0);
     const final_amount = pkg.amount + bonus;
 
-    // Verificar disponibilidad
-    const is_available = checkAvailability(pkg, currentDate, bestOffer);
+    // Disponibilidad
+    const is_available = checkAvailability(pkg, currentDate, bestOffer || undefined);
 
-    // Generar displays
+    // Displays
     const entries_display = `${(final_amount * 100).toLocaleString()} Entries`;
     const multiplier_display = pkg.custom_multiplier_text || `${Math.floor(final_amount / 10)}x`;
 
@@ -153,7 +158,7 @@ function calculatePackage(
         ...pkg,
         final_price: Math.round(final_price * 100) / 100,
         final_amount,
-        current_offer: bestOffer || undefined,
+        current_offer: bestOffer || undefined, // Solo la mejor oferta activa
         is_available,
         entries_display,
         multiplier_display

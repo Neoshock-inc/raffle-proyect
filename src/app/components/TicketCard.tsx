@@ -30,11 +30,13 @@ export function TicketCard({ option, referralCode }: TicketCardProps) {
     };
 
     const pkg = option.package;
+    const currentOffer = pkg.current_offer;
+
 
     // Determinar si es "Más Vendido"
     const isBestSeller = pkg.name?.toLowerCase().includes('más vendido') ||
         pkg.badge_text?.toLowerCase().includes('más vendido') ||
-        option.originalAmount === 10; // O cualquier lógica que uses
+        option.originalAmount === 20; // O cualquier lógica que uses
 
     // Determinar si es "Oferta Limitada"
     const isLimitedOffer = pkg.current_offer ||
@@ -42,7 +44,7 @@ export function TicketCard({ option, referralCode }: TicketCardProps) {
         pkg.name?.toLowerCase().includes('oferta limitada');
 
     // Nueva condición: es el paquete más grande (100 números)
-    const isMegaPack = option.originalAmount === 100;
+    const isMegaPack = option.originalAmount === 150;
 
     const getBorderStyle = () => {
         if (isMegaPack) {
@@ -145,7 +147,7 @@ export function TicketCard({ option, referralCode }: TicketCardProps) {
                   bg-red-600 text-white text-sm font-black 
                   px-1 py-1 rounded-full shadow-lg animate-bounce 
                   min-w-[200px] text-center z-10">
-                    🔥 OFERTA LIMITADA 🔥
+                    🔥 PROMO 2X1 🔥
                 </div>
             )}
 
@@ -165,6 +167,13 @@ export function TicketCard({ option, referralCode }: TicketCardProps) {
                 {/* Título principal */}
                 <div className="text-white font-black text-lg sm:text-xl mb-3 sm:mb-4 tracking-wide">
                     X{option.originalAmount} NÚMEROS
+                </div>
+
+                {/* Precio Original */}
+                <div className="text-gray-400 text-sm line-through">
+                    {currentOffer
+                        ? `$${(option.price / (1 - currentOffer.special_discount_percentage / 100)).toFixed(1)}`
+                        : null}
                 </div>
 
                 {/* Precio */}

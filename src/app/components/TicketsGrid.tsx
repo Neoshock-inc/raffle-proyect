@@ -1,8 +1,9 @@
-// components/TicketsGrid.tsx
+// components/TicketsGrid.tsx (versión actualizada)
 import { TicketOption } from '../types/tickets';
 import { EnhancedTicketOption } from '../types/ticketPackages';
 import { TicketCard } from './TicketCard';
 import { LegacyTicketCard } from './LegacyTicketCard';
+import { TemporalOfferBar } from './TemporalOfferBar';
 
 interface TicketsGridProps {
     ticketOptions: (TicketOption | EnhancedTicketOption)[];
@@ -17,11 +18,22 @@ export function TicketsGrid({ ticketOptions, referralCode, isUsingPackages = fal
         return option.package !== undefined;
     };
 
+    // Filtrar solo las opciones enhanced para la barra de oferta
+    const enhancedOptions = ticketOptions.filter(isEnhancedOption);
+    const hasActiveOffers = enhancedOptions.some(option =>
+        option.package.current_offer && option.package.current_offer.is_active
+    );
+
     return (
         <section className="w-full py-8">
             <div className="container mx-auto px-4">
+                {/* Barra de oferta temporal - solo mostrar si hay ofertas activas */}
+                {isUsingPackages && hasActiveOffers && (
+                    <TemporalOfferBar ticketOptions={enhancedOptions} />
+                )}
+
                 {/* Grid responsivo */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6  justify-items-center">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
                     {ticketOptions.map((option, index) => {
                         return (
                             <div
