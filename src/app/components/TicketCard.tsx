@@ -147,7 +147,7 @@ export function TicketCard({ option, referralCode }: TicketCardProps) {
                   bg-red-600 text-white text-sm font-black 
                   px-1 py-1 rounded-full shadow-lg animate-bounce 
                   min-w-[200px] text-center z-10">
-                    🔥 PROMO 2X1 🔥
+                    🔥 OFERTA LIMITADA 🔥
                 </div>
             )}
 
