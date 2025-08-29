@@ -28,7 +28,8 @@ import { TicketSearchModal } from "./components/TicketSearchModal";
 import { TicketOption } from "./types/tickets";
 import { TestimonialsSection } from "./components/TestimonialsSection";
 
-const MARKETING_BOOST_PERCENTAGE = 20;
+// FALLBACK: En caso de que no venga desde la DB
+const DEFAULT_MARKETING_BOOST_PERCENTAGE = 0;
 
 export default function HomeContent() {
   // Estados para modales
@@ -66,9 +67,12 @@ export default function HomeContent() {
     refetch: refetchPackages
   } = useTicketPackages();
 
+  // Obtener marketing boost desde la DB o usar fallback
+  const marketingBoostPercentage = raffle?.MARKETING_BOOST_PERCENTAGE ?? DEFAULT_MARKETING_BOOST_PERCENTAGE;
+
   // Cálculo del porcentaje de venta
   const soldPercentage = raffle && raffle.total_numbers > 0
-    ? Math.min(((soldTickets / raffle.total_numbers) * 100) + MARKETING_BOOST_PERCENTAGE, 100)
+    ? Math.min(((soldTickets / raffle.total_numbers) * 100) + marketingBoostPercentage, 100)
     : 0;
 
   const animatedPercentage = useProgressAnimation(soldPercentage, raffleLoading);
@@ -170,7 +174,8 @@ export default function HomeContent() {
       {process.env.NODE_ENV === 'development' && (
         <div className="text-center mb-4 p-2 bg-yellow-100 rounded">
           <small className="text-gray-600">
-            Debug: {ticketPackages.length} paquetes de DB, {fallbackTicketOptions.length} fallback
+            Debug: {ticketPackages.length} paquetes de DB, {fallbackTicketOptions.length} fallback | 
+            Marketing Boost: {marketingBoostPercentage}%
           </small>
         </div>
       )}

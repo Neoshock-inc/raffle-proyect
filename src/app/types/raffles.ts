@@ -6,4 +6,5 @@ export interface Raffle {
     total_numbers: number;
     drawDate: string;
     isActive: boolean;
+    MARKETING_BOOST_PERCENTAGE: number;
 }
