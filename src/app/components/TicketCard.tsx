@@ -44,7 +44,7 @@ export function TicketCard({ option, referralCode }: TicketCardProps) {
         pkg.name?.toLowerCase().includes('oferta limitada');
 
     // Nueva condición: es el paquete más grande (100 números)
-    const isMegaPack = option.originalAmount === 150;
+    const isMegaPack = option.originalAmount === 100;
 
     const getBorderStyle = () => {
         if (isMegaPack) {
