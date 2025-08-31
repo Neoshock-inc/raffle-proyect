@@ -1,5 +1,6 @@
 import { BlessedNumber, Raffle, RaffleEntry, RaffleMedia, Tenant } from "./database";
-import { CalculatedTicketPackage, TenantConfig } from "./template";
+import {  TenantConfig } from "./template";
+import { CalculatedTicketPackage } from "./ticketPackages";
 
 export interface RaffleService {
     getRaffleById: (id: string) => Promise<Raffle>;
