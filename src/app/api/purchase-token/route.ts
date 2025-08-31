@@ -1,14 +1,22 @@
+// src/app/api/purchase-token/route.ts - Actualizada para multi-tenant
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { getActiveRaffle } from '@/app/services/raffleService';
+import { RaffleService } from '@/app/services/raffleService';
+import { TenantService } from '@/app/services/tenantService';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key';
 
 export async function POST(request: NextRequest) {
     try {
-        const { amount, finalPrice } = await request.json();
+        const {
+            amount,
+            finalPrice,
+            tenantSlug,
+            raffleId,
+            packageId
+        } = await request.json();
 
-        // Validaciones en el backend
+        // Validaciones básicas
         if (!amount || amount <= 0) {
             return NextResponse.json(
                 { error: 'Cantidad inválida' },
@@ -23,7 +31,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Validar que se proporcione el precio final
         if (!finalPrice || finalPrice <= 0) {
             return NextResponse.json(
                 { error: 'Precio inválido' },
@@ -31,8 +38,30 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Obtener datos actuales del sorteo para validación
-        const raffle = await getActiveRaffle();
+        if (!tenantSlug || !raffleId) {
+            return NextResponse.json(
+                { error: 'Datos del tenant o rifa faltantes' },
+                { status: 400 }
+            );
+        }
+
+        // Validar tenant
+        const tenant = await TenantService.getTenantBySlug(tenantSlug);
+        if (!tenant) {
+            return NextResponse.json(
+                { error: 'Tenant no encontrado' },
+                { status: 404 }
+            );
+        }
+
+        // Validar rifa
+        const raffle = await RaffleService.getRaffleById(raffleId);
+        if (!raffle || raffle.tenant_id !== tenant.id) {
+            return NextResponse.json(
+                { error: 'Rifa no encontrada o no pertenece al tenant' },
+                { status: 404 }
+            );
+        }
 
         // Validación adicional: el precio no puede ser mayor que el precio base
         const basePrice = amount * raffle.price;
@@ -47,12 +76,15 @@ export async function POST(request: NextRequest) {
         const token = jwt.sign(
             {
                 amount,
-                price: finalPrice, // Usar el precio final ya calculado con descuentos
+                price: finalPrice,
                 raffleId: raffle.id,
+                tenantId: tenant.id,
+                tenantSlug: tenant.slug,
+                packageId,
                 createdAt: Date.now(),
             },
             JWT_SECRET,
-            { expiresIn: '15m' } // Token válido por 15 minutos
+            { expiresIn: '15m' }
         );
 
         return NextResponse.json({ token });

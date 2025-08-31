@@ -1,5 +1,7 @@
 // services/ticketPackageService.ts
 import { supabase } from "../lib/supabase";
+import { BlessedNumber, Raffle, RaffleMedia } from "../types/database";
+import { RaffleData, Product, Testimonial } from "../types/template";
 import { TicketPackage, TicketPackageTimeOffer, CalculatedTicketPackage } from "../types/ticketPackages";
 
 export async function getActiveRaffle() {
@@ -223,4 +225,206 @@ export function packageToTicketOption(pkg: CalculatedTicketPackage): any {
         originalAmount: pkg.amount,
         package: pkg // Incluir toda la información del paquete
     };
+}
+
+export class RaffleService {
+    static async getRafflesByTenant(tenantId: string): Promise<Raffle[]> {
+        try {
+            const { data, error } = await supabase
+                .from('raffles')
+                .select('*')
+                .eq('tenant_id', tenantId)
+                .eq('is_active', true)
+                .eq('status', 'active')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching raffles:', error);
+                return [];
+            }
+
+            return data || [];
+        } catch (error) {
+            console.error('Unexpected error in getRafflesByTenant:', error);
+            return [];
+        }
+    }
+
+    static async getRaffleById(id: string): Promise<Raffle | null> {
+        try {
+            const { data, error } = await supabase
+                .from('raffles')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (error || !data) {
+                console.error('Error fetching raffle:', error);
+                return null;
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Unexpected error in getRaffleById:', error);
+            return null;
+        }
+    }
+
+    static async getRaffleMedia(raffleId: string): Promise<RaffleMedia[]> {
+        try {
+            const { data, error } = await supabase
+                .from('raffle_media')
+                .select('*')
+                .eq('raffle_id', raffleId)
+                .eq('is_active', true)
+                .order('display_order', { ascending: true });
+
+            if (error) {
+                console.error('Error fetching raffle media:', error);
+                return [];
+            }
+
+            return data || [];
+        } catch (error) {
+            console.error('Unexpected error in getRaffleMedia:', error);
+            return [];
+        }
+    }
+
+    static async getSoldTicketsCount(raffleId: string): Promise<number> {
+        try {
+            const { count, error } = await supabase
+                .from('raffle_entries')
+                .select('*', { count: 'exact', head: true })
+                .eq('raffle_id', raffleId)
+                .eq('payment_status', 'completed');
+
+            if (error) {
+                console.error('Error counting sold tickets:', error);
+                return 0;
+            }
+
+            return count || 0;
+        } catch (error) {
+            console.error('Unexpected error in getSoldTicketsCount:', error);
+            return 0;
+        }
+    }
+
+    static async getBlessedNumbers(raffleId: string): Promise<BlessedNumber[]> {
+        try {
+            const { data, error } = await supabase
+                .from('blessed_numbers')
+                .select('*')
+                .eq('raffle_id', raffleId)
+                .eq('is_claimed', false);
+
+            if (error) {
+                console.error('Error fetching blessed numbers:', error);
+                return [];
+            }
+
+            return data || [];
+        } catch (error) {
+            console.error('Unexpected error in getBlessedNumbers:', error);
+            return [];
+        }
+    }
+
+    static async buildRaffleData(
+        raffle: Raffle,
+        soldTickets: number,
+        media: RaffleMedia[],
+        blessedNumbers: BlessedNumber[],
+        allRaffles?: Raffle[]
+    ): Promise<RaffleData> {
+        const images = media
+            .filter(m => m.media_type === 'image')
+            .map(m => m.file_url);
+
+        const progress = raffle.total_numbers > 0
+            ? Math.min((soldTickets / raffle.total_numbers) * 100, 100)
+            : 0;
+
+        // Calculate time remaining
+        const timeRemaining = this.calculateTimeRemaining(raffle.draw_date);
+
+        // Build products for luxury template (all raffles as products)
+        const products: Product[] = (allRaffles || [raffle]).map(r => ({
+            id: r.id,
+            name: r.title,
+            image: r.banner_url || '/default-raffle-image.jpg',
+            originalPrice: r.price * r.total_numbers,
+            ticketPrice: r.price,
+            totalTickets: r.total_numbers,
+            soldTickets: r.id === raffle.id ? soldTickets : 0, // TODO: Calculate for each raffle
+            endDate: r.draw_date,
+            featured: r.id === raffle.id,
+            category: 'raffle',
+            progress: r.id === raffle.id ? progress : 0
+        }));
+
+        // Mock testimonials for luxury template
+        const testimonials: Testimonial[] = [
+            {
+                id: 1,
+                name: "María González",
+                location: "Madrid, España",
+                product: raffle.title,
+                comment: "¡No puedo creer que gané! El proceso fue muy transparente y confiable.",
+                rating: 5,
+                avatar: "https://plus.unsplash.com/premium_photo-1690086519096-0594592709d3?q=80&w=1742&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                prize_value: raffle.price * raffle.total_numbers * 0.1
+            },
+            {
+                id: 2,
+                name: "Juan Pérez",
+                location: "Barcelona, España",
+                product: raffle.title,
+                comment: "La experiencia fue increíble. ¡Definitivamente participaré de nuevo!",
+                rating: 4,
+                avatar: "https://plus.unsplash.com/premium_photo-1679888488670-4b4bf8e05bfc?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                prize_value: raffle.price * raffle.total_numbers * 0.1
+            },
+            {
+                id: 3,
+                name: "Laura Martínez",
+                location: "Valencia, España",
+                product: raffle.title,
+                comment: "Una experiencia única. ¡Gracias por la oportunidad!",
+                rating: 5,
+                avatar: "https://plus.unsplash.com/premium_photo-1670884441012-c5cf195c062a?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                prize_value: raffle.price * raffle.total_numbers * 0.1
+            }
+        ];
+
+        return {
+            ...raffle,
+            soldTickets,
+            images,
+            blessedNumbers: blessedNumbers.map(bn => bn.number),
+            media,
+            products,
+            testimonials,
+            progress,
+            timeRemaining
+        };
+    }
+
+    private static calculateTimeRemaining(drawDate: string) {
+        const now = new Date();
+        const end = new Date(drawDate);
+        const diff = end.getTime() - now.getTime();
+
+        if (diff <= 0) {
+            return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+        }
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        return { days, hours, minutes, seconds };
+    }
 }

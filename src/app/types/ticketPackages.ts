@@ -79,11 +79,13 @@ export interface TicketPackageTimeOffer {
 // Tipo para el cálculo final del paquete
 export interface CalculatedTicketPackage extends TicketPackage {
     final_price: number;
-    final_amount: number; // amount + bonus_entries
+    final_amount: number;
     current_offer?: TicketPackageTimeOffer;
     is_available: boolean;
-    entries_display: string; // "12,000 Entries"
-    multiplier_display: string; // "160x"
+    entries_display: string;
+    multiplier_display: string;
+    original_price: number;  // Agregar esta propiedad
+    total_discount: number;  // Agregar esta propiedad
 }
 
 // Tipos para compatibilidad con el sistema actual
