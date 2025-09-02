@@ -60,8 +60,8 @@ export const useTenantPurchase = (tenantSlug: string, raffleId: string) => {
             });
 
             const checkoutUrl = referralCode
-                ? `/${tenantSlug}/checkout?token=${token}&ref=${encodeURIComponent(referralCode)}`
-                : `/${tenantSlug}/checkout?token=${token}`;
+                ? `/checkout?token=${token}&ref=${encodeURIComponent(referralCode)}`
+                : `/checkout?token=${token}`;
 
             router.push(checkoutUrl);
         } catch (error) {
