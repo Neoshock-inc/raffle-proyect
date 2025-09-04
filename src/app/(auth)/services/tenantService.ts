@@ -1,5 +1,5 @@
 // src/app/services/tenantService.ts - ACTUALIZADO
-import { supabase } from '../lib/supabaseTenantClient'
+import { supabase, supabaseService } from '../lib/supabaseTenantClient'
 import { Tenant, UserRole } from '../types/tenant'
 
 export interface TenantWithMetrics extends Tenant {
@@ -14,6 +14,7 @@ export interface CreateTenantData {
   name: string;
   slug: string;
   domain: string;
+  template?: string;
   description?: string;
   plan?: 'basic' | 'pro' | 'enterprise';
   ownerEmail: string;
@@ -286,15 +287,10 @@ export const tenantService = {
 
   // Crear nuevo tenant
   async createTenant(data: CreateTenantData) {
-    const { createClient } = await import('@supabase/supabase-js')
-    const directClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
 
     try {
       // 1. Verificar que el slug no exista
-      const { data: existingSlug } = await directClient
+      const { data: existingSlug } = await supabaseService
         .from('tenants')
         .select('id')
         .eq('slug', data.slug)
@@ -304,14 +300,41 @@ export const tenantService = {
         throw new Error('El slug ya existe')
       }
 
-      // 2. Crear tenant con todos los campos
-      const { data: tenant, error: tenantError } = await directClient
+      // 2. Crear usuario administrador primero
+      // 2. Invitar usuario administrador primero (solo email)
+      const { data: authUser, error: authError } = await supabaseService.auth.admin.inviteUserByEmail(
+        data.ownerEmail
+      )
+
+      if (authError) throw authError
+
+      // 2b. Actualizar metadata y password del usuario invitado
+      const tempPassword = Math.random().toString(36).slice(-12) + 'A1!' // Generar password temporal
+      const { error: updateError } = await supabaseService.auth.admin.updateUserById(authUser.user.id, {
+        password: tempPassword,
+        user_metadata: {
+          name: data.ownerName,
+          phone: data.ownerPhone,
+          role: 'tenant_admin'
+        }
+      })
+
+      if (updateError) {
+        // Rollback: eliminar usuario si falla la actualización
+        await supabaseService.auth.admin.deleteUser(authUser.user.id)
+        throw updateError
+      }
+
+      if (authError) throw authError
+
+      // 3. Crear tenant con todos los campos
+      const { data: tenant, error: tenantError } = await supabaseService
         .from('tenants')
         .insert({
           name: data.name,
           slug: data.slug,
           description: data.description || null,
-          layout: 'default',
+          layout: data.template || 'default',
           status: 'active',
           plan: data.plan || 'basic',
           owner_name: data.ownerName,
@@ -321,32 +344,35 @@ export const tenantService = {
         .select()
         .single()
 
-      if (tenantError) throw tenantError
-
-      // 3. Crear dominio
-      const { error: domainError } = await directClient
-        .from('tenant_domains')
-        .insert({
-          tenant_id: tenant.id,
-          domain: data.domain,
-          verified: false
-        })
-
-      if (domainError) {
-        // Rollback: eliminar tenant si falla la creación del dominio
-        await directClient.from('tenants').delete().eq('id', tenant.id)
-        throw domainError
+      if (tenantError) {
+        // Rollback: eliminar usuario si falla la creación del tenant
+        await supabaseService.auth.admin.deleteUser(authUser.user.id)
+        throw tenantError
       }
 
-      // 4. Log de auditoría
-      console.log('Tenant creado exitosamente:', {
-        tenant_id: tenant.id,
-        action: 'tenant_created',
-        details: data,
-        timestamp: new Date()
-      })
+      // 4. Crear dominio (solo si no es plan basic)
+      if (data.domain) {
+        const { error: domainError } = await supabaseService
+          .from('tenant_domains')
+          .insert({
+            tenant_id: tenant.id,
+            domain: data.domain,
+            verified: false
+          })
 
-      return tenant
+        if (domainError) {
+          // Rollback: eliminar tenant y usuario
+          await supabaseService.from('tenants').delete().eq('id', tenant.id)
+          await supabaseService.auth.admin.deleteUser(authUser.user.id)
+          throw domainError
+        }
+      }
+
+      return {
+        ...tenant,
+        user: authUser.user
+      }
+
     } catch (error) {
       console.error('Error creating tenant:', error)
       if (error instanceof Error) {
@@ -358,14 +384,9 @@ export const tenantService = {
 
   // Actualizar tenant
   async updateTenant(id: string, data: Partial<Tenant>) {
-    const { createClient } = await import('@supabase/supabase-js')
-    const directClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
 
     try {
-      const { data: tenant, error } = await directClient
+      const { data: tenant, error } = await supabaseService
         .from('tenants')
         .update({
           ...data,

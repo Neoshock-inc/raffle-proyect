@@ -190,3 +190,9 @@ export const supabase = new TenantSupabaseClient(supabaseUrl, supabaseKey);
 
 // También exportar el cliente original para casos especiales
 export const supabaseOriginal = createClient(supabaseUrl, supabaseKey);
+
+// Supabase with service role for server-side operations
+export const supabaseService = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!
+);
