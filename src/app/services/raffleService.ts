@@ -118,23 +118,28 @@ function calculatePackage(
         return current.special_discount_percentage > best.special_discount_percentage ? current : best;
     }, null as TicketPackageTimeOffer | null);
 
-    // Calcular precio final
-    let final_price: number;
+    // Calcular precio original (antes de descuentos)
+    let original_price: number;
     if (pkg.fixed_price) {
-        final_price = pkg.fixed_price;
+        original_price = pkg.fixed_price;
     } else {
-        final_price = pkg.amount * raffle.price * pkg.price_multiplier;
+        original_price = pkg.amount * raffle.price * pkg.price_multiplier;
     }
 
-    // Aplicar descuentos
+    // Calcular precio final aplicando descuentos
+    let final_price = original_price;
     let discount = pkg.discount_percentage;
+
     if (bestOffer && bestOffer.special_discount_percentage > 0) {
         discount = Math.max(discount, bestOffer.special_discount_percentage);
     }
 
     if (discount > 0) {
-        final_price = final_price * (1 - discount / 100);
+        final_price = original_price * (1 - discount / 100);
     }
+
+    // Calcular el descuento total en valor monetario
+    const total_discount = original_price - final_price;
 
     // Calcular entradas finales (amount + bonus)
     let bonus = pkg.bonus_entries;
@@ -153,7 +158,9 @@ function calculatePackage(
 
     return {
         ...pkg,
+        original_price: Math.round(original_price * 100) / 100,
         final_price: Math.round(final_price * 100) / 100,
+        total_discount: Math.round(total_discount * 100) / 100,
         final_amount,
         current_offer: bestOffer || undefined,
         is_available,

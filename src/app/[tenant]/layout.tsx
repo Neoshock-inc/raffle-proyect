@@ -1,17 +1,18 @@
-// src/app/[tenant]/layout.tsx - Versión más simple usando solo CSS
+// src/app/[tenant]/layout.tsx - Fixed for Next.js 15
 import { ReactNode } from 'react';
 import { TenantService } from '../services/tenantService';
 
 interface TenantLayoutProps {
   children: ReactNode;
-  params: { tenant: string };
+  params: Promise<{ tenant: string }>; // Changed to Promise
 }
 
 export default async function TenantLayout({ 
   children, 
   params 
 }: TenantLayoutProps) {
-  const { tenant: tenantSlug } = params;
+  // Await the params Promise
+  const { tenant: tenantSlug } = await params;
   
   const tenant = await TenantService.getTenantBySlug(tenantSlug);
   

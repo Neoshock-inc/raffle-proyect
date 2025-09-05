@@ -155,8 +155,8 @@ export function useReferidos() {
     // Copiar enlace de referido
     const copyReferralLink = useCallback(async (code: string) => {
         // Usar el dominio del tenant si está disponible
-        const baseUrl = currentTenant?.domain 
-            ? `https://${currentTenant.domain}`
+        const baseUrl = currentTenant?.slug 
+            ? `https://${currentTenant.slug}`
             : window.location.origin
             
         const link = `${baseUrl}/?ref=${code}`
@@ -171,8 +171,8 @@ export function useReferidos() {
 
     // Abrir enlace de referido
     const openReferralLink = useCallback((code: string) => {
-        const baseUrl = currentTenant?.domain 
-            ? `https://${currentTenant.domain}`
+        const baseUrl = currentTenant?.slug 
+            ? `https://${currentTenant.slug}`
             : window.location.origin
             
         const link = `${baseUrl}/?ref=${code}`

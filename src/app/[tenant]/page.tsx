@@ -1,4 +1,4 @@
-// src/app/[tenant]/page.tsx - Mapeo actualizado con nombres descriptivos
+// src/app/[tenant]/page.tsx - Fixed for Next.js 15
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { DefaultTemplate } from '../components/templates/DefaultTemplate';
@@ -13,15 +13,15 @@ const templates = {
   'default': DefaultTemplate,      // Diseño limpio y funcional
   'vibrant': VibrantTemplate,      // Diseño llamativo con animaciones (antes luxury)
   'classic': DefaultTemplate,      // Alias para default
-
 } as const;
 
 interface PageProps {
-  params: { tenant: string };
+  params: Promise<{ tenant: string }>; // Changed to Promise
 }
 
 export default async function TenantPage({ params }: PageProps) {
-  const { tenant: tenantSlug } = params;
+  // Await the params Promise
+  const { tenant: tenantSlug } = await params;
 
   try {
     // 1. Buscar tenant por slug
