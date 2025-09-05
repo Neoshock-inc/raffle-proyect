@@ -179,7 +179,7 @@ export default function HomeContent() {
       {isEventFinalized && (
         <EventFinalizedSection
           reason={raffle?.status === 'finalized' ? 'manual' : 'sold_out'}
-          soldTickets={soldTickets}
+          soldTickets={soldTickets + 4000}
           totalNumbers={raffle?.total_numbers || 0}
         />
       )}
@@ -236,7 +236,7 @@ export default function HomeContent() {
         <ProgressBar
           soldPercentage={soldPercentage}
           animatedPercentage={animatedPercentage}
-          soldTickets={soldTickets}
+          soldTickets={soldTickets + 4000} // Ajuste para mostrar 4000 adicionales
           totalNumbers={raffle?.total_numbers || 0}
           isEventFinalized={isEventFinalized}
         />
