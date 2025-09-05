@@ -1,4 +1,4 @@
-// HomeContent.tsx - Solo las partes que cambian
+// HomeContent.tsx - Con funcionalidad de finalización
 'use client';
 import { useState } from "react";
 
@@ -8,7 +8,7 @@ import { useTicketSearch } from "./hooks/useTicketSearch";
 import { useReferralCode } from "./hooks/useReferralCode";
 import { useProgressAnimation } from "./hooks/useProgressAnimation";
 import { useCustomTicketPurchase } from "./hooks/useCustomTicketPurchase";
-import { useTicketPackages } from "./hooks/useTicketPackages"; // NUEVO HOOK
+import { useTicketPackages } from "./hooks/useTicketPackages";
 
 // Componentes
 import { Header } from "./components/Header";
@@ -23,6 +23,7 @@ import { Footer } from "./components/Footer";
 import { WhatsAppButton } from "./components/WhatsAppButton";
 import { VideoModal } from './components/VideoModal';
 import { TicketSearchModal } from "./components/TicketSearchModal";
+import { EventFinalizedSection } from "./components/EventFinalizedSection"; // NUEVO COMPONENTE
 
 // Tipos y servicios
 import { TicketOption } from "./types/tickets";
@@ -58,7 +59,7 @@ export default function HomeContent() {
 
   const referralCode = useReferralCode();
 
-  // NUEVO: Hook para manejar los paquetes de tickets
+  // Hook para manejar los paquetes de tickets
   const {
     ticketPackages,
     ticketOptions,
@@ -76,6 +77,9 @@ export default function HomeContent() {
     : 0;
 
   const animatedPercentage = useProgressAnimation(soldPercentage, raffleLoading);
+
+  // NUEVA LÓGICA: Verificar si el evento está finalizado
+  const isEventFinalized = raffle?.status === 'finalized' || soldPercentage >= 100;
 
   const {
     customAmount,
@@ -168,33 +172,47 @@ export default function HomeContent() {
         imageUrls={imageUrls}
         offerStartDate={offerStart}
         offerEndDate={offerEnd}
+        isEventFinalized={isEventFinalized} // Pasar estado de finalización
       />
+
+      {/* NUEVO: Mostrar sección de evento finalizado si aplica */}
+      {isEventFinalized && (
+        <EventFinalizedSection
+          reason={raffle?.status === 'finalized' ? 'manual' : 'sold_out'}
+          soldTickets={soldTickets}
+          totalNumbers={raffle?.total_numbers || 0}
+        />
+      )}
 
       {/* Mostrar información de debug en desarrollo */}
       {process.env.NODE_ENV === 'development' && (
         <div className="text-center mb-4 p-2 bg-yellow-100 rounded">
           <small className="text-gray-600">
-            Debug: {ticketPackages.length} paquetes de DB, {fallbackTicketOptions.length} fallback | 
-            Marketing Boost: {marketingBoostPercentage}%
+            Debug: {ticketPackages.length} paquetes de DB, {fallbackTicketOptions.length} fallback |
+            Marketing Boost: {marketingBoostPercentage}% | Status: {raffle?.status} | Finalizado: {isEventFinalized ? 'Sí' : 'No'}
           </small>
         </div>
       )}
 
-      <TicketsGrid
-        ticketOptions={finalTicketOptions}
-        referralCode={referralCode}
-        isUsingPackages={ticketOptions.length > 0}
-      />
+      {/* Solo mostrar la grilla de tickets si el evento NO está finalizado */}
+      {!isEventFinalized && (
+        <>
+          <TicketsGrid
+            ticketOptions={finalTicketOptions}
+            referralCode={referralCode}
+            isUsingPackages={ticketOptions.length > 0}
+          />
 
-      <section className="text-center">
-        <p>Participa comprando uno o más boletos. <strong>¡Mientras más compres, más chances tienes!</strong></p>
-      </section>
+          <section className="text-center">
+            <p>Participa comprando uno o más boletos. <strong>¡Mientras más compres, más chances tienes!</strong></p>
+          </section>
+        </>
+      )}
 
       <main className="flex flex-col items-center p-4 max-w-4xl mx-auto">
         <h3 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-sky-400 to-blue-700 drop-shadow-[2px_2px_4px_rgba(0,0,0,0.25)] text-center mb-4">
-          ¿Estás listo para llevarte todos estos premios?
+          {isEventFinalized ? '¡El evento ha finalizado!' : '¿Estás listo para llevarte todos estos premios?'}
         </h3>
-
 
         {/* Youtube video Section */}
         <section className="w-full px-1 py-1 flex justify-center bg-gray-50">
@@ -212,7 +230,7 @@ export default function HomeContent() {
 
         {/* Título de la sección */}
         <h2 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-700 drop-shadow-[2px_2px_5px_rgba(0,0,0,0.3)] text-center mb-4">
-          ¡Sí, pero las cantidades son limitadas!
+          {isEventFinalized ? '¡Gracias por participar!' : '¡Sí, pero las cantidades son limitadas!'}
         </h2>
 
         <ProgressBar
@@ -220,26 +238,34 @@ export default function HomeContent() {
           animatedPercentage={animatedPercentage}
           soldTickets={soldTickets}
           totalNumbers={raffle?.total_numbers || 0}
+          isEventFinalized={isEventFinalized}
         />
 
-        {/* <BlessedNumbersSection
-          blessedNumbers={blessedNumbers}
-          onNumberClaimed={handleNumberClaimed}
-        /> */}
+        {/* Solo mostrar estas secciones si el evento NO está finalizado */}
+        {!isEventFinalized && (
+          <>
+            {/* <BlessedNumbersSection
+              blessedNumbers={blessedNumbers}
+              onNumberClaimed={handleNumberClaimed}
+            /> */}
 
-        {/* <InstructionsSection
-          onVideoClick={() => setIsVideoModalOpen(true)}
-        /> */}
+            {/* <InstructionsSection
+              onVideoClick={() => setIsVideoModalOpen(true)}
+            /> */}
 
-        <CustomTicketSection
-          customAmount={customAmount}
-          setCustomAmount={setCustomAmount}
-          onCustomBuy={handleCustomBuyWithToken}
-        />
+            <CustomTicketSection
+              customAmount={customAmount}
+              setCustomAmount={setCustomAmount}
+              onCustomBuy={handleCustomBuyWithToken}
+              isEventFinalized={isEventFinalized}
+            />
+          </>
+        )}
 
-        {/* Componente de Testimonios */}
+        {/* Componente de Testimonios - siempre visible */}
         <TestimonialsSection />
 
+        {/* Búsqueda de tickets - siempre visible para que puedan ver sus compras */}
         <TicketSearchSection
           searchEmail={searchEmail}
           setSearchEmail={setSearchEmail}

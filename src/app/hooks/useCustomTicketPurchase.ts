@@ -8,6 +8,13 @@ export const useCustomTicketPurchase = (referralCode: string | null, soldTickets
     const router = useRouter();
 
     const handleCustomBuyWithToken = async () => {
+        // Verificar si quedan boletos disponibles (evento finalizado por agotamiento)
+        const remainingTickets = totalNumbers - soldTickets;
+        if (remainingTickets <= 0) {
+            alert("Lo sentimos, todos los boletos han sido vendidos. El evento ha finalizado.");
+            return;
+        }
+
         if (!customAmount || customAmount <= 0 || customAmount < 20) {
             alert("Por favor ingresa una cantidad válida");
             return;
@@ -18,7 +25,6 @@ export const useCustomTicketPurchase = (referralCode: string | null, soldTickets
             return;
         }
 
-        const remainingTickets = totalNumbers - soldTickets;
         if (customAmount > remainingTickets) {
             alert(`Solo quedan ${remainingTickets} boletos disponibles`);
             return;
