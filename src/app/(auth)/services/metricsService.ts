@@ -51,9 +51,9 @@ export async function getDashboardMetrics() {
                 .eq('status', 'completed'),
 
             // Solo contar entradas, no traer todos los datos
-            supabase
+            await supabase
                 .from('raffle_entries')
-                .select('*', { count: 'exact' })
+                .select('*', { count: 'exact', head: true })
         ]);
 
         if (invoiceMetrics.error) throw invoiceMetrics.error;
@@ -63,7 +63,7 @@ export async function getDashboardMetrics() {
 
         // Cálculos optimizados
         const totalSales = invoices.reduce((sum: any, inv: any) => sum + (inv.total_price || 0), 0);
-        const totalNumbersSold = entryMetrics.data.length;
+        const totalNumbersSold = entryMetrics.count || 0;
 
         console.log('Total Sales:', totalSales);
         console.log('Total Numbers Sold:', totalNumbersSold);
@@ -283,7 +283,7 @@ export async function getSalesByProvince() {
 
         if (error) {
             console.warn('⚠️ RPC not available, using optimized fallback');
-            
+
             // Solo traer campos necesarios
             const { data: invoices, error: invoiceError } = await supabase
                 .from('invoices')
@@ -297,7 +297,7 @@ export async function getSalesByProvince() {
             const salesByProvince = (invoices || []).reduce((acc: any, invoice: any) => {
                 const province = invoice.province;
                 if (!province) return acc;
-                
+
                 if (!acc[province]) {
                     const coordinates = provincesCoordinates[province] || { lat: 0, lng: 0, ciudad: province };
                     acc[province] = {
