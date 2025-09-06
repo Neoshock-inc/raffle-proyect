@@ -51,7 +51,7 @@ export const DefaultTemplate: React.FC<DefaultTemplateProps> = ({
                 )}
 
                 <TicketsGrid
-                    ticketOptions={ticketOptions}
+                    ticketOptions={[]}
                     raffleData={raffleData}
                     tenantConfig={tenantConfig}
                 />
