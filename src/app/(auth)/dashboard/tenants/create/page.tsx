@@ -45,7 +45,7 @@ const INITIAL_DATA: StepData = {
 const PLANS = {
   basic: {
     name: 'Basic',
-    price: '$999',
+    price: '$199',
     description: 'Plan básico con funcionalidades esenciales',
     features: {
       'Rifas Ilimitadas': true,
@@ -61,7 +61,7 @@ const PLANS = {
   },
   pro: {
     name: 'Pro',
-    price: '$1299',
+    price: '$1000',
     description: 'Plan profesional para pequeñas empresas',
     features: {
       'Rifas Ilimitadas': true,
@@ -77,7 +77,7 @@ const PLANS = {
   },
   enterprise: {
     name: 'Enterprise',
-    price: '$1499',
+    price: '$1299',
     description: 'Plan empresarial con todas las funcionalidades',
     features: {
       'Rifas Ilimitadas': true,

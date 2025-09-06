@@ -1,11 +1,20 @@
-// src/components/vibrant/VibrantTicketCard.tsx - Actualizada
+// src/components/vibrant/VibrantTicketCard.tsx
 'use client';
 
+import { calculateFinalPrice, calculateTotalTickets, TicketOption, TicketPackage } from '@/app/(auth)/types/ticketPackage';
 import { useTenantPurchase } from '@/app/hooks/useTenantPurchase';
-import { CalculatedTicketPackage } from '@/app/types/ticketPackages';
+
+
+interface CalculatedTicketPackage extends TicketPackage {
+  final_price: number;
+  final_amount: number;
+  original_price: number;
+  total_discount: number;
+  is_available: boolean;
+}
 
 interface VibrantTicketCardProps {
-  option: CalculatedTicketPackage;
+  option: TicketOption;
   referralCode: string | null;
   index: number;
   selectedPackage: string | null;
@@ -17,13 +26,14 @@ interface VibrantTicketCardProps {
 export const VibrantTicketCard: React.FC<VibrantTicketCardProps> = ({
   option,
   referralCode,
-  index,
   selectedPackage,
   onSelect,
   tenantSlug,
   raffleId
 }) => {
   const { purchaseTickets, loading } = useTenantPurchase(tenantSlug, raffleId);
+
+  console.log('CalculatedTicketPackage:', option);
 
   const handlePurchase = async () => {
     await purchaseTickets(
@@ -40,23 +50,22 @@ export const VibrantTicketCard: React.FC<VibrantTicketCardProps> = ({
 
   return (
     <div
-      className={`relative bg-white rounded-3xl shadow-lg p-6 cursor-pointer transition-all duration-300 border-4 ${
-        option.is_best_seller
-          ? 'border-yellow-400 transform scale-110 shadow-2xl'
-          : selectedPackage === option.id
-            ? 'border-red-400 transform scale-105'
-            : 'border-gray-200 hover:border-orange-300 hover:shadow-xl'
-      }`}
+      className={`relative bg-white rounded-3xl shadow-lg p-6 cursor-pointer transition-all duration-300 border-4 ${option.is_featured
+        ? 'border-yellow-400 transform scale-110 shadow-2xl'
+        : selectedPackage === option.id
+          ? 'border-red-400 transform scale-105'
+          : 'border-gray-200 hover:border-orange-300 hover:shadow-xl'
+        }`}
       onClick={handleSelect}
     >
-      {/* Badge popular */}
-      {option.is_best_seller && (
+      {/* Badge destacado */}
+      {option.is_featured && (
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-full font-bold text-sm shadow-lg">
-          ¡MÁS POPULAR! ⭐
+          ¡DESTACADO! ⭐
         </div>
       )}
 
-      {/* Descuento badge */}
+      {/* Badge de descuento */}
       {option.total_discount > 0 && (
         <div className="absolute -top-2 -right-2 bg-red-500 text-white w-16 h-16 rounded-full flex items-center justify-center font-bold text-sm shadow-lg">
           -{option.total_discount}%
@@ -83,26 +92,13 @@ export const VibrantTicketCard: React.FC<VibrantTicketCardProps> = ({
           </p>
         </div>
 
-        {/* Bonus */}
-        {(option.badge_text || (option.bonus_entries > 0)) && (
+        {/* Bonus o badge */}
+        {(option.badge_text || option.promotion_type === 'bonus') && (
           <div className="bg-gradient-to-r from-green-100 to-emerald-100 border-2 border-green-300 rounded-xl p-3 mb-4">
             <p className="text-green-700 font-bold text-sm">
-              {option.badge_text || `¡${option.bonus_entries} números GRATIS!`}
+              {option.badge_text ||
+                `¡${option.promotion_value} números GRATIS!`}
             </p>
-          </div>
-        )}
-
-        {/* Información de oferta actual */}
-        {option.current_offer && (
-          <div className="bg-orange-100 border-2 border-orange-400 rounded-xl p-3 mb-4">
-            <p className="text-orange-800 font-bold text-xs mb-1">
-              {option.current_offer.offer_name}
-            </p>
-            {option.current_offer.special_discount_percentage > 0 && (
-              <p className="text-orange-700 text-xs">
-                {option.current_offer.special_discount_percentage}% descuento extra
-              </p>
-            )}
           </div>
         )}
 
@@ -113,19 +109,37 @@ export const VibrantTicketCard: React.FC<VibrantTicketCardProps> = ({
             handlePurchase();
           }}
           disabled={loading || !option.is_available}
-          className={`w-full font-bold py-3 rounded-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
-            selectedPackage === option.id
-              ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
-              : option.is_best_seller
-                ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white'
-                : 'bg-gradient-to-r from-red-500 to-pink-500 text-white hover:from-red-400 hover:to-pink-400'
-          }`}
+          className={`w-full font-bold py-3 rounded-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${selectedPackage === option.id
+            ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
+            : option.is_featured
+              ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white'
+              : 'bg-gradient-to-r from-red-500 to-pink-500 text-white hover:from-red-400 hover:to-pink-400'
+            }`}
         >
           {loading ? 'PROCESANDO...' :
-           selectedPackage === option.id ? '¡Seleccionado! ✅' :
-           option.button_text || '¡Elegir Paquete! 🎁'}
+            selectedPackage === option.id ? '¡Seleccionado! ✅' :
+              '¡Elegir Paquete! 🎁'}
         </button>
       </div>
     </div>
   );
 };
+
+// === Helper para mapear TicketPackage del admin a CalculatedTicketPackage ===
+export const mapToCalculatedTicketPackage = (pkg: TicketPackage): CalculatedTicketPackage => {
+  const final_price = calculateFinalPrice(pkg) ?? 0;
+  const final_amount = calculateTotalTickets(pkg) ?? pkg.amount ?? 0;
+
+  const original_price = pkg.base_price ?? 0;
+  const total_discount = pkg.promotion_type === 'discount' ? pkg.promotion_value ?? 0 : 0;
+
+  return {
+    ...pkg,
+    final_price,
+    final_amount,
+    original_price,
+    total_discount,
+    is_available: pkg.is_active && (pkg.stock_limit ? (pkg.current_stock ?? 0) < pkg.stock_limit : true)
+  };
+};
+

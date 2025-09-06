@@ -1,7 +1,41 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
+// Cache simple para evitar consultas repetidas
+const domainToTenantCache = new Map<string, { slug: string; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
+async function getTenantSlugByDomain(domain: string): Promise<string | null> {
+  // Verificar cache
+  const cached = domainToTenantCache.get(domain);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.slug;
+  }
+
+  try {
+    // Llamar al endpoint que ya tienes
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/tenant/by-domain?domain=${domain}`);
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.slug) {
+        // Guardar en cache
+        domainToTenantCache.set(domain, {
+          slug: data.slug,
+          timestamp: Date.now()
+        });
+        return data.slug;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error getting tenant by domain:', error);
+    return null;
+  }
+}
+
+export async function middleware(request: NextRequest) {
   const host = request.headers.get("host") || "";
   const url = request.nextUrl.clone();
 
@@ -29,7 +63,24 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Detectar subdominio (ej: luxury-dreams.127.0.0.1.nip.io o luxury-dreams.myfortunacloud.com)
+  // Verificar si es un dominio personalizado (no contiene nuestros dominios base)
+  const isCustomDomain = !host.includes('.app.myfortunacloud.com') &&
+    !host.includes('.127.0.0.1.nip.io');
+
+  if (isCustomDomain) {
+    // Buscar tenant por dominio personalizado
+    const tenantSlug = await getTenantSlugByDomain(host);
+
+    if (tenantSlug) {
+      url.pathname = `/${tenantSlug}${url.pathname}`;
+      return NextResponse.rewrite(url);
+    } else {
+      // Dominio personalizado no encontrado - podrías mostrar una página de error
+      return NextResponse.next(); // O redirigir a error
+    }
+  }
+
+  // Detectar subdominio (ej: luxury-dreams.127.0.0.1.nip.io o luxury-dreams.app.myfortunacloud.com)
   const parts = host.split(".");
   if (parts.length >= 3) {
     const subdomain = parts[0];

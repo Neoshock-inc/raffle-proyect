@@ -29,6 +29,7 @@ export interface Raffle {
     status: RaffleStatus
     category_id?: string
     organization_id?: string
+    MARKETING_BOOST_PERCENTAGE?: number
 
     // Relaciones
     category?: RaffleCategory

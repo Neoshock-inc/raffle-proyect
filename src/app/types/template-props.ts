@@ -1,9 +1,10 @@
 import { CalculatedTicketPackage } from "./ticketPackages"; // Cambiar import
 import { RaffleData, TenantConfig } from "./template";
+import { TicketOption } from "../(auth)/types/ticketPackage";
 
 export interface BaseTemplateProps {
     raffleData: RaffleData;
-    ticketOptions: CalculatedTicketPackage[];
+    ticketOptions: TicketOption[];
     tenantConfig: TenantConfig;
     className?: string;
 }

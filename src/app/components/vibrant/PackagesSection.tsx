@@ -5,10 +5,10 @@ import React, { useState } from 'react';
 import { VibrantTicketCard } from './VibrantTicketCard';
 import { useReferralCode } from '@/app/hooks/useReferralCode';
 import { RaffleData, TenantConfig } from '@/app/types/template';
-import { CalculatedTicketPackage } from '@/app/types/ticketPackages';
+import { TicketOption } from '@/app/(auth)/types/ticketPackage';
 
 interface PackagesSectionProps {
-    ticketOptions: CalculatedTicketPackage[];
+    ticketOptions: TicketOption[];
     raffleData: RaffleData;
     tenantConfig: TenantConfig;
 }

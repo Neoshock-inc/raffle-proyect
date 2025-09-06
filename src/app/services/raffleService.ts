@@ -350,7 +350,7 @@ export class RaffleService {
             .map(m => m.file_url);
 
         const progress = raffle.total_numbers > 0
-            ? Math.min((soldTickets / raffle.total_numbers) * 100, 100)
+            ? Math.min((soldTickets / raffle.total_numbers) * 100, 100) + (raffle.MARKETING_BOOST_PERCENTAGE ? raffle.MARKETING_BOOST_PERCENTAGE : 0)
             : 0;
 
         // Calculate time remaining

@@ -1,5 +1,17 @@
+// services/TicketPackageService.ts
+import { calculateFinalPrice, calculateTotalTickets, TicketPackage } from "../(auth)/types/ticketPackage";
 import { supabase } from "../lib/supabase";
-import { CalculatedTicketPackage, TicketPackage, TicketPackageTimeOffer } from "../types/ticketPackages";
+
+export interface CalculatedTicketPackage extends TicketPackage {
+  final_price: number;
+  final_amount: number;
+  original_price: number;
+  total_discount: number;
+  is_available: boolean;
+  entries_display: string;
+  multiplier_display: string;
+  current_offer?: any; // Puedes tiparlo si manejas ofertas temporales
+}
 
 export class TicketPackageService {
   static async getTicketPackages(raffleId: string): Promise<TicketPackage[]> {
@@ -23,136 +35,56 @@ export class TicketPackageService {
     }
   }
 
-  static async getTimeOffers(packageIds: string[]): Promise<TicketPackageTimeOffer[]> {
-    if (packageIds.length === 0) return [];
-
-    try {
-      const { data, error } = await supabase
-        .from('ticket_package_time_offers')
-        .select('*')
-        .in('ticket_package_id', packageIds)
-        .eq('is_active', true);
-
-      if (error) {
-        console.error('Error fetching time offers:', error);
-        return [];
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Unexpected error in getTimeOffers:', error);
-      return [];
-    }
-  }
-
-  static calculatePackages(
-    packages: TicketPackage[],
-    offers: TicketPackageTimeOffer[],
-    baseTicketPrice: number
-  ): CalculatedTicketPackage[] {
+  static calculatePackages(packages: TicketPackage[]): CalculatedTicketPackage[] {
     const currentTime = new Date();
 
     return packages.map(pkg => {
-      // Find active time offer for this package
-      const activeOffer = offers.find(offer => 
-        offer.ticket_package_id === pkg.id &&
-        offer.is_active &&
-        new Date(offer.start_date) <= currentTime &&
-        new Date(offer.end_date) >= currentTime
-      );
+      const final_price = calculateFinalPrice(pkg);
+      const final_amount = calculateTotalTickets(pkg);
+      const original_price = pkg.base_price;
+      const total_discount = pkg.promotion_type === 'discount' ? pkg.promotion_value : 0;
 
-      // Calculate base price
-      const basePrice = pkg.fixed_price || (pkg.amount * baseTicketPrice * pkg.price_multiplier);
-
-      // Calculate total discount
-      const totalDiscount = pkg.discount_percentage + (activeOffer?.special_discount_percentage || 0);
-      
-      // Calculate final price
-      const finalPrice = basePrice * (1 - totalDiscount / 100);
-
-      // Calculate total bonus entries
-      const totalBonusEntries = pkg.bonus_entries + (activeOffer?.special_bonus_entries || 0);
-      
-      // Calculate final amount
-      const finalAmount = pkg.amount + totalBonusEntries;
-
-      // Determine availability
-      const isAvailable = this.checkAvailability(pkg, activeOffer, currentTime);
+      const is_available = pkg.is_active && (pkg.stock_limit ? pkg.current_stock < pkg.stock_limit : true);
 
       return {
         ...pkg,
-        final_price: finalPrice,
-        final_amount: finalAmount,
-        current_offer: activeOffer,
-        is_available: isAvailable,
-        entries_display: `${finalAmount.toLocaleString()} Entries`,
-        multiplier_display: `${Math.round(finalAmount / pkg.amount)}x`,
-        original_price: basePrice,
-        total_discount: totalDiscount
+        final_price,
+        final_amount,
+        original_price,
+        total_discount,
+        is_available,
+        entries_display: `${final_amount.toLocaleString()} Entries`,
+        multiplier_display: `${Math.round(final_amount / pkg.amount)}x`,
       };
     });
   }
 
-  private static checkAvailability(
-    pkg: TicketPackage,
-    activeOffer?: TicketPackageTimeOffer,
-    currentTime?: Date
-  ): boolean {
-    // Check package availability window
-    if (pkg.available_from && new Date(pkg.available_from) > (currentTime || new Date())) {
-      return false;
-    }
-    
-    if (pkg.available_until && new Date(pkg.available_until) < (currentTime || new Date())) {
-      return false;
-    }
-
-    // Check stock limits
-    if (pkg.stock_limit && (pkg.current_stock ?? 0) >= pkg.stock_limit) {
-      return false;
-    }
-
-    // Check offer stock limits
-    if (activeOffer?.stock_limit_for_offer) {
-      // TODO: Implement offer stock tracking
-    }
-
-    return true;
-  }
-
-  static createFallbackPackages(baseTicketPrice: number): CalculatedTicketPackage[] {
+  static createFallbackPackages(): CalculatedTicketPackage[] {
     const baseAmounts = [20, 30, 40, 50, 75, 100];
-    
-    return baseAmounts.map((amount, index) => ({
-      id: `fallback-${index}`,
-      raffle_id: '',
-      name: `${amount} Tickets`,
-      amount,
-      price_multiplier: 1,
-      badge_color: '#6B7280',
-      gradient_from: '#3B82F6',
-      gradient_to: '#1D4ED8',
-      is_limited_offer: false,
-      is_best_seller: index === 1,
-      is_featured: false,
-      discount_percentage: 0,
-      bonus_entries: 0,
-      button_text: 'COMPRAR AHORA',
-      display_order: index,
-      is_active: true,
-      current_stock: 0,
-      final_price: amount * baseTicketPrice,
-      final_amount: amount,
-      is_available: true,
-      entries_display: `${amount} Entries`,
-      multiplier_display: '1x',
-      original_price: amount * baseTicketPrice,
-      total_discount: 0,
-      show_entry_count: true,
-      show_multiplier: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      current_offer: undefined
-    }));
+
+    return baseAmounts.map((amount, index) => {
+      const now = new Date().toISOString();
+
+      const pkg: TicketPackage = {
+        id: `fallback-${index}`,
+        raffle_id: '',
+        name: `${amount} Tickets`,
+        amount,
+        base_price: amount * 10, // ejemplo de precio base
+        promotion_type: 'none',
+        promotion_value: 0,
+        primary_color: '#3B82F6',
+        secondary_color: '#1D4ED8',
+        badge_text: undefined,
+        is_featured: false,
+        is_active: true,
+        display_order: index,
+        current_stock: 0,
+        created_at: now,
+        updated_at: now,
+      };
+
+      return this.calculatePackages([pkg])[0];
+    });
   }
 }

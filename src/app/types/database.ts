@@ -30,6 +30,8 @@ export interface Raffle {
   tenant_id: string;
   created_at: string;
   updated_at: string;
+
+  MARKETING_BOOST_PERCENTAGE?: number
 }
 
 export interface RaffleMedia {

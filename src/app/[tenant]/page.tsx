@@ -62,15 +62,12 @@ export default async function TenantPage({ params }: PageProps) {
 
     // 5. Obtener paquetes de tickets
     const packages = await TicketPackageService.getTicketPackages(mainRaffle.id);
-    const packageIds = packages.map(p => p.id);
-    const offers = packageIds.length > 0
-      ? await TicketPackageService.getTimeOffers(packageIds)
-      : [];
 
-    // 6. Calcular paquetes finales con ofertas
-    const calculatedPackages = packages.length > 0
-      ? TicketPackageService.calculatePackages(packages, offers, mainRaffle.price)
-      : TicketPackageService.createFallbackPackages(mainRaffle.price);
+    const calculatedPackages =
+      packages.length > 0
+        ? TicketPackageService.calculatePackages(packages)
+        : TicketPackageService.createFallbackPackages();
+
 
     // 7. Construir datos completos de la rifa
     const raffleData = await RaffleService.buildRaffleData(

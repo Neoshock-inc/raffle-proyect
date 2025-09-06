@@ -1,307 +1,187 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Ticket, Pencil } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useRaffles } from '../../../hooks/useRaffles'
-import type { Raffle, RaffleStatus } from '../../../types/raffle'
-import DragAndDropImage from '@/app/(auth)/components/DragAndDropImage'
-import { useRaffleMedia } from '../../../hooks/useRaffleMedia'
+import { Ticket, Settings, Package, BarChart3, ArrowLeft } from 'lucide-react'
+import { useRaffle } from '../../../hooks/useRaffles'
+import type { Raffle, UpdateRaffleData } from '../../../types/raffle'
+import classNames from 'classnames'
+
+import RaffleGeneralTab from '@/app/(auth)/components/raffle/RaffleGeneralTab'
+import RaffleTicketsTab from '@/app/(auth)/components/raffle/RaffleTicketsTab'
+import RaffleStatsTab from '@/app/(auth)/components/raffle/RaffleStatsTab'
+import RaffleConfigTab from '@/app/(auth)/components/raffle/RaffleConfigTab'
 
 interface Props {
     id: string
 }
 
-interface EditableInputProps {
-    label: string
-    value: string | number
-    onChange: (val: string) => void
-    type?: React.HTMLInputTypeAttribute
-    textarea?: boolean
-    placeholder?: string
-    className?: string
-}
-
-function EditableInput({
-    label,
-    value,
-    onChange,
-    type = 'text',
-    textarea = false,
-    placeholder,
-    className = '',
-}: EditableInputProps) {
-    const [isEditing, setIsEditing] = useState(false)
-    const [internalValue, setInternalValue] = useState(String(value))
-
-    useEffect(() => {
-        setInternalValue(String(value))
-    }, [value])
-
-    const handleSave = () => {
-        setIsEditing(false)
-        if (internalValue !== String(value)) {
-            onChange(internalValue)
-        }
-    }
-
-    return (
-        <div className={`relative mb-5 ${className}`}>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-
-            {textarea ? (
-                <textarea
-                    className={`block w-full rounded border px-3 py-2 pr-10 text-gray-900 placeholder-gray-400 focus:outline-none transition ${isEditing
-                        ? 'border-sky-700 focus:ring-1 focus:ring-sky-700'
-                        : 'border-gray-300 bg-gray-100 cursor-not-allowed'
-                        } resize vertical min-h-[80px]`}
-                    placeholder={placeholder}
-                    value={internalValue}
-                    onChange={(e) => setInternalValue(e.target.value)}
-                    readOnly={!isEditing}
-                    onBlur={handleSave}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-                />
-            ) : (
-                <input
-                    type={type}
-                    placeholder={placeholder}
-                    className={`block w-full rounded border px-3 py-2 pr-10 text-gray-900 placeholder-gray-400 focus:outline-none transition ${isEditing
-                        ? 'border-sky-700 focus:ring-1 focus:ring-sky-700'
-                        : 'border-gray-300 bg-gray-100 cursor-not-allowed'
-                        }`}
-                    value={internalValue}
-                    onChange={(e) => setInternalValue(e.target.value)}
-                    readOnly={!isEditing}
-                    onBlur={handleSave}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-                />
-            )}
-
-            {/* Botón lápiz solo visible para modo readonly */}
-            {!isEditing && (
-                <button
-                    type="button"
-                    onClick={() => setIsEditing(true)}
-                    className="absolute right-2 top-[38px] p-1 text-gray-500 hover:text-sky-700 focus:outline-none"
-                    aria-label={`Editar ${label.toLowerCase()}`}
-                    tabIndex={0}
-                >
-                    <Pencil size={16} />
-                </button>
-            )}
-        </div>
-    )
-}
+type TabType = 'general' | 'tickets' | 'config' | 'stats'
 
 export default function RaffleDetailPage({ id }: Props) {
     const router = useRouter()
-    const { raffles, updateRaffle } = useRaffles()
-    const [raffle, setRaffle] = useState<Raffle | null>(null)
-    const [loading, setLoading] = useState(true)
+    const [activeTab, setActiveTab] = useState<TabType>('general')
 
-    const { media, loading: mediaLoading, uploadMedia, deleteMedia, error: mediaError } = useRaffleMedia({
-        raffleId: id,
-        mediaType: 'image',
-    })
+    const { raffle, loading, error, updateRaffle, updating } = useRaffle(id)
 
-    useEffect(() => {
-        const found = raffles.find((r) => r.id === id) ?? null
-        setRaffle(found)
-        setLoading(false)
-    }, [id, raffles])
+    const tabs = [
+        { id: 'general' as TabType, name: 'General', icon: Ticket },
+        { id: 'tickets' as TabType, name: 'Paquetes de Tickets', icon: Package },
+        { id: 'config' as TabType, name: 'Configuración', icon: Settings },
+        { id: 'stats' as TabType, name: 'Estadísticas', icon: BarChart3 },
+    ]
 
-    const handleFieldChange = (field: keyof Raffle, value: any) => {
-        if (!raffle) return
-        const updated = { ...raffle, [field]: value }
-        setRaffle(updated)
-        updateRaffle(updated)
+    const handleUpdate = async (data: UpdateRaffleData) => {
+        try {
+            await updateRaffle(data)
+            // updateRaffle ya actualiza el estado local, no necesitamos refetch
+        } catch (error) {
+            console.error('Error updating raffle:', error)
+            // El error ya se muestra en el hook, pero podemos agregar lógica adicional aquí si es necesario
+            throw error // Re-throw para que los componentes hijos puedan manejarlo
+        }
     }
 
-    if (loading) return <div>Cargando...</div>
-    if (!raffle) return <div>Rifa no encontrada</div>
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600"></div>
+            </div>
+        )
+    }
 
-    return (
-        <>
-            {/* Header */}
-            <div className="flex justify-between items-center pb-8">
-                <div className="flex items-center gap-4">
-                    <div className="bg-sky-700 text-white p-3 rounded-full">
-                        <Ticket className="h-7 w-7" />
-                    </div>
-                    <h1 className="text-3xl font-bold text-gray-900">{raffle.title}</h1>
+    if (error || !raffle) {
+        return (
+            <div className="text-center py-12">
+                <div className="text-red-600 mb-4">
+                    {error || 'Rifa no encontrada'}
                 </div>
                 <button
                     onClick={() => router.push('/dashboard/raffles')}
-                    className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                    className="px-4 py-2 bg-sky-600 text-white rounded-md hover:bg-sky-700"
                 >
-                    Volver
+                    Volver a Rifas
                 </button>
             </div>
-            <div className="p-8 max-w-6xl mx-auto bg-white rounded-lg shadow-md space-y-8">
-                {/* Logo y Banner con drag and drop */}
-                <div className="flex flex-col md:flex-row md:gap-8">
-                    <DragAndDropImage
-                        label="Logo"
-                        value={raffle.logo_url}
-                        onChange={(v) => handleFieldChange('logo_url', v)}
-                        raffleId={raffle.id} // ✅ ID real
+        )
+    }
 
-                        onUpload={uploadMedia}       // <-- función subida aquí
-                        mediaList={media}            // opcional, para mostrar lista o previews
-                        loading={mediaLoading}
-                        error={mediaError}
-                    />
-                    <DragAndDropImage
-                        label="Banner"
-                        value={raffle.banner_url}
-
-                        onChange={(v) => handleFieldChange('banner_url', v)}
-                        raffleId={raffle.id} // ✅ ID real
-
-                        onUpload={uploadMedia}
-                        mediaList={media}
-                        loading={mediaLoading}
-                        error={mediaError}
-                    />
+    return (
+        <div className="space-y-6">
+            {/* Header con navegación de regreso */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => router.push('/dashboard/raffles')}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                        disabled={updating}
+                    >
+                        <ArrowLeft className="h-5 w-5" />
+                        <span className="text-sm">Volver a Rifas</span>
+                    </button>
                 </div>
+                {updating && (
+                    <div className="flex items-center gap-2 text-sky-600">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-sky-600"></div>
+                        <span className="text-sm">Actualizando...</span>
+                    </div>
+                )}
+            </div>
 
-                {/* Descripción ocupa 2 columnas */}
-                <EditableInput
-                    label="Descripción"
-                    value={raffle.description || ''}
-                    onChange={(v) => handleFieldChange('description', v)}
-                    textarea
-                    className="md:col-span-2"
-                    placeholder="Describe la rifa aquí"
-                />
-
-                {/* Resto de campos en grid 2 columnas */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Campos editables con lápiz */}
-                    <EditableInput
-                        label="Título"
-                        value={raffle.title}
-                        onChange={(v) => handleFieldChange('title', v)}
-                        placeholder="Título de la rifa"
-                    />
-                    <EditableInput
-                        label="Total números"
-                        value={raffle.total_numbers.toString()}
-                        type="number"
-                        onChange={(v) => handleFieldChange('total_numbers', parseInt(v))}
-                    />
-
-                    {/* Campos sin lápiz - inputs siempre editables */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
-                        <input
-                            type="number"
-                            placeholder="Precio del ticket"
-
-                            className="block w-full rounded border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-sky-700 focus:ring-1 focus:ring-sky-700 focus:outline-none"
-                            value={raffle.price.toString()}
-                            onChange={(e) => handleFieldChange('price', parseFloat(e.target.value))}
-                        />
+            {/* Header de la rifa */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-sky-700 text-white p-3 rounded-full">
+                            <Ticket className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">{raffle.title}</h1>
+                            <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                                <span>ID: {raffle.id}</span>
+                                <span>•</span>
+                                <span className={classNames(
+                                    'px-2 py-1 rounded-full text-xs font-semibold',
+                                    {
+                                        'bg-green-100 text-green-800': raffle.status === 'active',
+                                        'bg-yellow-100 text-yellow-800': raffle.status === 'draft',
+                                        'bg-blue-100 text-blue-800': raffle.status === 'paused',
+                                        'bg-gray-100 text-gray-800': raffle.status === 'completed',
+                                        'bg-red-100 text-red-800': raffle.status === 'cancelled'
+                                    }
+                                )}>
+                                    {raffle.status}
+                                </span>
+                                <span>•</span>
+                                <span>${raffle.price} por ticket</span>
+                                <span>•</span>
+                                <span>{raffle.total_numbers.toLocaleString()} números</span>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Fecha sorteo</label>
-                        <input
-                            type="date"
-                            placeholder="Fecha del sorteo"
-                            className="block w-full rounded border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-sky-700 focus:ring-1 focus:ring-sky-700 focus:outline-none"
-                            value={new Date(raffle.draw_date).toISOString().slice(0, 10)}
-                            onChange={(e) => handleFieldChange('draw_date', new Date(e.target.value).toISOString())}
-                        />
+                    <div className="text-right">
+                        <div className="text-sm text-gray-600">Sorteo</div>
+                        <div className="font-semibold text-gray-900">
+                            {new Date(raffle.draw_date).toLocaleDateString()}
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                        <select
-                            title="Selecciona una opción"
-                            className="block w-full rounded border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-sky-700 focus:ring-1 focus:ring-sky-700 focus:outline-none"
-                            value={raffle.status}
-                            onChange={(e) => handleFieldChange('status', e.target.value as RaffleStatus)}
-                        >
-                            {['draft', 'active', 'paused', 'completed', 'cancelled'].map((opt) => (
-                                <option key={opt} value={opt}>
-                                    {opt}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Color primario</label>
-                        <input
-                            type="color"
-                            placeholder='Ejemplo: "#FF5733"'
-                            className="block w-full h-10 rounded border border-gray-300 cursor-pointer"
-                            value={raffle.primary_color}
-                            onChange={(e) => handleFieldChange('primary_color', e.target.value)}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Color secundario</label>
-                        <input
-                            type="color"
-                            placeholder='Ejemplo: "#33FF57"'
-                            className="block w-full h-10 rounded border border-gray-300 cursor-pointer"
-                            value={raffle.secondary_color}
-                            onChange={(e) => handleFieldChange('secondary_color', e.target.value)}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Color fondo</label>
-                        <input
-                            type="color"
-                            placeholder='Ejemplo: "#FFFFFF"'
-                            className="block w-full h-10 rounded border border-gray-300 cursor-pointer"
-                            value={raffle.background_color}
-                            onChange={(e) => handleFieldChange('background_color', e.target.value)}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Mostrar cuenta regresiva</label>
-                        <select
-                            title="Selecciona una opción"
-                            className="block w-full rounded border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-sky-700 focus:ring-1 focus:ring-sky-700 focus:outline-none"
-                            value={raffle.show_countdown ? 'Sí' : 'No'}
-                            onChange={(e) => handleFieldChange('show_countdown', e.target.value === 'Sí')}
-                        >
-                            {['Sí', 'No'].map((opt) => (
-                                <option key={opt} value={opt}>
-                                    {opt}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    {/* Más campos editables con lápiz */}
-                    <EditableInput
-                        label="Tickets máximos por usuario"
-                        value={raffle.max_tickets_per_user?.toString() || ''}
-                        type="number"
-                        placeholder="Opcional"
-                        onChange={(v) => handleFieldChange('max_tickets_per_user', v ? parseInt(v) : undefined)}
-                    />
-                    <EditableInput
-                        label="Tickets mínimos para activar"
-                        value={raffle.min_tickets_to_activate.toString()}
-                        type="number"
-                        onChange={(v) => handleFieldChange('min_tickets_to_activate', parseInt(v))}
-                    />
-                    <EditableInput
-                        label="ID Categoría"
-                        value={raffle.category_id || ''}
-                        placeholder="Opcional"
-                        onChange={(v) => handleFieldChange('category_id', v)}
-                    />
-                    <EditableInput
-                        label="ID Organización"
-                        value={raffle.organization_id || ''}
-                        placeholder="Opcional"
-                        onChange={(v) => handleFieldChange('organization_id', v)}
-                    />
                 </div>
             </div>
-        </>
+
+            {/* Tabs Navigation */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div className="border-b border-gray-200">
+                    <nav className="flex space-x-8 px-6">
+                        {tabs.map((tab) => {
+                            const Icon = tab.icon
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    disabled={updating}
+                                    className={classNames(
+                                        'flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition whitespace-nowrap',
+                                        activeTab === tab.id
+                                            ? 'border-sky-500 text-sky-600'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                                        updating && 'opacity-50 cursor-not-allowed'
+                                    )}
+                                >
+                                    <Icon className="h-4 w-4" />
+                                    {tab.name}
+                                </button>
+                            )
+                        })}
+                    </nav>
+                </div>
+
+                {/* Tab Content */}
+                <div className="min-h-96">
+                    {activeTab === 'general' && (
+                        <RaffleGeneralTab
+                            raffle={raffle}
+                            onUpdate={handleUpdate}
+                        />
+                    )}
+                    {activeTab === 'tickets' && (
+                        <RaffleTicketsTab
+                            raffle={raffle}
+                            onRaffleUpdate={handleUpdate}
+                        />
+                    )}
+                    {activeTab === 'config' && (
+                        <RaffleConfigTab
+                            raffle={raffle}
+                            onUpdate={handleUpdate}
+                        />
+                    )}
+                    {activeTab === 'stats' && (
+                        <RaffleStatsTab
+                            raffle={raffle}
+                        />
+                    )}
+                </div>
+            </div>
+        </div>
     )
 }
