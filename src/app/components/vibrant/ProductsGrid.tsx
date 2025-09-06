@@ -42,10 +42,10 @@ export const ProductsGrid: React.FC<ProductsGridProps> = ({
               </p>
 
               <div className="mb-6">
-                <div className="flex justify-between text-sm text-gray-600 mb-2">
+                {/* <div className="flex justify-between text-sm text-gray-600 mb-2">
                   <span>Vendidos: {product.soldTickets}</span>
                   <span>Total: {product.totalTickets}</span>
-                </div>
+                </div> */}
                 <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
                   <div 
                     className="bg-gradient-to-r from-green-400 to-emerald-500 h-full rounded-full transition-all duration-1000 relative"

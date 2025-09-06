@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabaseTenantClient';
+import { supabase, supabaseOriginal } from '../lib/supabaseTenantClient';
 import type {
   Raffle,
   CreateRaffleData,
@@ -327,7 +327,7 @@ class RaffleService {
       }
 
       // 8. Generar números
-      const { data: generated, error: generateError } = await supabase.rpc('generate_raffle_numbers', {
+      const { data: generated, error: generateError } = await supabaseOriginal.rpc('generate_raffle_numbers', {
         in_participant_id: participantId,
         in_raffle_id: raffleId,
         in_amount: quantity,

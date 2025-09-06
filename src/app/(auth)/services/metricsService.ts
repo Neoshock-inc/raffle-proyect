@@ -53,7 +53,7 @@ export async function getDashboardMetrics() {
             // Solo contar entradas, no traer todos los datos
             supabase
                 .from('raffle_entries')
-                .select('is_winner', { count: 'exact' })
+                .select('*', { count: 'exact' })
         ]);
 
         if (invoiceMetrics.error) throw invoiceMetrics.error;
@@ -63,7 +63,10 @@ export async function getDashboardMetrics() {
 
         // Cálculos optimizados
         const totalSales = invoices.reduce((sum: any, inv: any) => sum + (inv.total_price || 0), 0);
-        const totalNumbersSold = entryMetrics.count || 0;
+        const totalNumbersSold = entryMetrics.data.length;
+
+        console.log('Total Sales:', totalSales);
+        console.log('Total Numbers Sold:', totalNumbersSold);
 
         // Contar ganadores con una consulta específica
         const { count: winnersCount } = await supabase

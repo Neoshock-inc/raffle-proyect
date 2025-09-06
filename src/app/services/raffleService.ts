@@ -304,7 +304,7 @@ export class RaffleService {
                 .from('raffle_entries')
                 .select('*', { count: 'exact', head: true })
                 .eq('raffle_id', raffleId)
-                .eq('payment_status', 'completed');
+                .eq('payment_status', 'paid');
 
             if (error) {
                 console.error('Error counting sold tickets:', error);
@@ -364,7 +364,7 @@ export class RaffleService {
             originalPrice: r.price * r.total_numbers,
             ticketPrice: r.price,
             totalTickets: r.total_numbers,
-            soldTickets: r.id === raffle.id ? soldTickets : 0, // TODO: Calculate for each raffle
+            soldTickets: r.id === raffle.id ? soldTickets : 0, 
             endDate: r.draw_date,
             featured: r.id === raffle.id,
             category: 'raffle',

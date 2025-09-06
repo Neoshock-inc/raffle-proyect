@@ -1,5 +1,5 @@
 // src/app/services/invoicesService.ts
-import { supabase } from '../(auth)/lib/supabaseTenantClient';
+import { supabase, supabaseOriginal } from '../(auth)/lib/supabaseTenantClient';
 import { Invoice, InvoiceCreationData } from '../types/invoices';
 
 /**
@@ -310,7 +310,7 @@ export const generateOrderNumber = async (): Promise<string> => {
     try {
         console.log('🔢 Generating order number...');
         
-        const { data, error } = await supabase.rpc('generate_order_number');
+        const { data, error } = await supabaseOriginal.rpc('generate_order_number');
 
         if (error) {
             console.error('❌ Error generating order number:', error);
