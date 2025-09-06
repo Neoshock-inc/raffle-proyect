@@ -110,7 +110,7 @@ export const useRaffleEntries = (searchTerm: string = '') => {
             const result = await raffleService.createNewRaffleEntriesFromOrder(orderNumber, quantity)
 
             if (result.success) {
-                toast.success(`Se asignaron ${result.total_assigned} números exitosamente`)
+                toast.success(`Atención: ${result.message || 'Entradas creadas exitosamente'}`)
                 await fetchRaffleEntries(true) // Refrescar la lista
             } else {
                 toast.error(result.error || 'Error al crear las entradas')

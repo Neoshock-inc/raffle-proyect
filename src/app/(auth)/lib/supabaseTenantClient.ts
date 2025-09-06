@@ -36,6 +36,41 @@ class TenantSupabaseClient {
         this.client = createClient(supabaseUrl, supabaseKey);
     }
 
+    private createTenantFilteredInvoicesQuery(query: any) {
+        if (!currentTenantId) {
+            return query;
+        }
+
+        return new Proxy(query, {
+            get: (target, prop) => {
+                const value = target[prop];
+
+                if (typeof value === 'function') {
+                    return (...args: any[]) => {
+                        // Para operaciones de lectura, hacer join con participants → raffles y filtrar por tenant
+                        if (prop === 'select' && currentTenantId) {
+                            console.log(`🎯 Adding tenant filter to invoices: ${currentTenantId}`);
+                            const [selectStr, options] = args;
+                            const newSelect = (selectStr || '*').includes('participants')
+                                ? selectStr
+                                : `${selectStr || '*'}, participants!inner(raffles!inner(tenant_id))`;
+
+                            return target
+                                .select(newSelect, options)
+                                .eq('participants.raffles.tenant_id', currentTenantId);
+                        }
+
+                        const result = value.apply(target, args);
+                        return result;
+                    };
+                }
+
+                return value;
+            }
+        });
+    }
+
+
     // Método para establecer el contexto de tenant
     setTenantContext(tenantId: string | null, isAdmin: boolean = false) {
         currentTenantId = tenantId;

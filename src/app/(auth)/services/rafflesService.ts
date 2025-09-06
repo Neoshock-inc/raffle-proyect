@@ -268,6 +268,8 @@ class RaffleService {
         throw new Error(`Cantidad solicitada (${quantity}) no coincide con el total de la orden (${amount})`);
       }
 
+      console.log('Order found:', { full_name, email, amount, status });
+
       // 3. Si ya fue procesada (por status)
       if (status === 'completed') {
         return { success: true, message: 'Orden ya fue procesada previamente' };
