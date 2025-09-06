@@ -137,13 +137,14 @@ class TenantSupabaseClient {
                         // Para operaciones de lectura, hacer join con raffles y filtrar por tenant
                         if (prop === 'select' && currentTenantId) {
                             console.log(`🎯 Adding raffle tenant filter to raffle_entries: ${currentTenantId}`);
-                            const selectStr = args[0] || '*';
-                            // Modificar el select para incluir el join con raffles
-                            const newSelect = selectStr.includes('raffles') 
-                                ? selectStr 
-                                : `${selectStr}, raffles!inner(tenant_id)`;
-                            
-                            return target.select(newSelect).eq('raffles.tenant_id', currentTenantId);
+                            const [selectStr, options] = args;
+                            const newSelect = (selectStr || '*').includes('raffles')
+                                ? selectStr
+                                : `${selectStr || '*'}, raffles!inner(tenant_id)`;
+
+                            return target
+                                .select(newSelect, options) // 👈 importante: pasar también options
+                                .eq('raffles.tenant_id', currentTenantId);
                         }
 
                         const result = value.apply(target, args);
@@ -167,8 +168,8 @@ class TenantSupabaseClient {
 
     rpc(fn: string, args?: any) {
         // Para RPCs, agregar el tenant context como parámetro
-        const enhancedArgs = currentTenantId ? 
-            { ...args, p_tenant_id: currentTenantId } : 
+        const enhancedArgs = currentTenantId ?
+            { ...args, p_tenant_id: currentTenantId } :
             args;
 
         console.log(`🔧 Calling RPC ${fn} with context:`, enhancedArgs);

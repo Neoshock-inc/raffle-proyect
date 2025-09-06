@@ -49,9 +49,7 @@ export async function getDashboardMetrics() {
                     total_price::numeric
                 `)
                 .eq('status', 'completed'),
-
-            // Solo contar entradas, no traer todos los datos
-            await supabase
+            supabase
                 .from('raffle_entries')
                 .select('*', { count: 'exact', head: true })
         ]);
