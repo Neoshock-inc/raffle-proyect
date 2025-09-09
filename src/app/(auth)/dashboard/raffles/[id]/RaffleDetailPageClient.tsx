@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Ticket, Settings, Package, BarChart3, ArrowLeft } from 'lucide-react'
 import { useRaffle } from '../../../hooks/useRaffles'
-import type { Raffle, UpdateRaffleData } from '../../../types/raffle'
+import type { UpdateRaffleData } from '../../../types/raffle'
 import classNames from 'classnames'
 
 import RaffleGeneralTab from '@/app/(auth)/components/raffle/RaffleGeneralTab'

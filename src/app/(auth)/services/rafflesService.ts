@@ -220,28 +220,186 @@ class RaffleService {
     }
   }
 
-  async getRaffleEntries() {
+  // Reemplazar el método getRaffleEntries existente en raffleService con este:
+
+  async getRaffleEntries(raffleId?: string) {
     try {
       console.log('🎫 Getting raffle entries...');
       const { tenantId, isAdmin } = supabase.getTenantContext();
       console.log('🔍 Current context:', { tenantId, isAdmin });
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('raffle_entries')
-        .select('id, number, participant_id, is_winner, purchased_at')
+        .select(`
+        id,
+        number,
+        participant_id,
+        raffle_id,
+        is_winner,
+        purchased_at,
+        participant:participants(
+          id,
+          name,
+          email
+        )
+      `)
         .order('purchased_at', { ascending: false });
+
+      // Si se especifica un raffleId, filtrar por él
+      if (raffleId) {
+        query = query.eq('raffle_id', raffleId);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('❌ Error fetching raffle entries:', error);
         throw new Error('Error al obtener los números comprados');
       }
 
-      console.log('✅ Raffle entries fetched:', data?.length || 0);
-      return data;
+      // Transformar los datos para incluir el nombre del participante
+      const transformedData = data?.map((entry: { participant: { name: any; }; }) => ({
+        ...entry,
+        participant_name: entry.participant?.name || 'Participante Anónimo'
+      })) || [];
+
+      console.log('✅ Raffle entries fetched:', transformedData.length);
+      return transformedData;
     } catch (error) {
       console.error('❌ Error in getRaffleEntries:', error);
       throw error;
     }
+  }
+
+  // Agregar este nuevo método al final de la clase RaffleService:
+
+  async getRaffleStats(raffleId: string, timeFilter: '7d' | '30d' | 'all' = '30d') {
+    try {
+      console.log('📊 Getting raffle stats for:', raffleId);
+      const { tenantId, isAdmin } = supabase.getTenantContext();
+
+      // Obtener la rifa para tener datos base
+      const raffle = await this.getRaffleById(raffleId);
+
+      // Obtener todas las entradas de esta rifa
+      const entries = await this.getRaffleEntries(raffleId);
+
+      // Filtrar por tiempo si es necesario
+      let filteredEntries = entries;
+      if (timeFilter !== 'all') {
+        const days = timeFilter === '7d' ? 7 : 30;
+        const dateFrom = new Date();
+        dateFrom.setDate(dateFrom.getDate() - days);
+        filteredEntries = entries.filter((entry: { purchased_at: string | number | Date; }) =>
+          new Date(entry.purchased_at) >= dateFrom
+        );
+      }
+
+      // Calcular estadísticas
+      const totalEntries = entries.length;
+      const uniqueParticipants = new Set(entries.map((e: { participant_id: any; }) => e.participant_id)).size;
+      const totalRevenue = totalEntries * raffle.price;
+      const averageTicketsPerUser = uniqueParticipants > 0 ? totalEntries / uniqueParticipants : 0;
+
+      // Calcular progreso
+      const progressPercentage = (totalEntries / raffle.total_numbers) * 100;
+
+      // Calcular días restantes
+      const daysRemaining = Math.max(0, Math.ceil((new Date(raffle.draw_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+
+      // Calcular entradas por día (basado en filteredEntries)
+      const entriesPerDay = filteredEntries.length / (timeFilter === '7d' ? 7 : timeFilter === '30d' ? 30 : Math.max(1, totalEntries > 0 ? this.getDaysSinceFirstEntry(entries) : 1));
+
+      // Analizar patrones de compra
+      const participantGroups = this.groupEntriesByParticipant(entries);
+      const participantCounts = Object.values(participantGroups).map(entries => entries.length);
+
+      const singleTicketBuyers = participantCounts.filter(count => count === 1).length;
+      const multiTicketBuyers = participantCounts.filter(count => count > 1 && count <= 5).length;
+      const bulkBuyers = participantCounts.filter(count => count > 5).length;
+
+      const popularPackages = [
+        {
+          id: '1',
+          name: 'Ticket Individual',
+          purchases: singleTicketBuyers,
+          revenue: singleTicketBuyers * raffle.price
+        },
+        {
+          id: '2',
+          name: 'Paquete Múltiple (2-5)',
+          purchases: multiTicketBuyers,
+          revenue: participantCounts
+            .filter(count => count > 1 && count <= 5)
+            .reduce((sum, count) => sum + (count * raffle.price), 0)
+        },
+        {
+          id: '3',
+          name: 'Paquete Bulk (6+)',
+          purchases: bulkBuyers,
+          revenue: participantCounts
+            .filter(count => count > 5)
+            .reduce((sum, count) => sum + (count * raffle.price), 0)
+        }
+      ].filter(pkg => pkg.purchases > 0);
+
+      // Estimación de tasa de conversión (simplificada)
+      const estimatedConversionRate = Math.min((totalEntries / (raffle.total_numbers * 0.1)) * 100, 25);
+
+      const stats = {
+        totalEntries,
+        totalParticipants: uniqueParticipants,
+        totalRevenue,
+        averageTicketsPerUser,
+        conversionRate: estimatedConversionRate,
+        progressPercentage,
+        daysRemaining,
+        entriesPerDay: Math.round(entriesPerDay * 10) / 10,
+        popularPackages,
+        recentEntries: entries.slice(0, 10).map((entry: { id: any; number: any; participant_name: any; purchased_at: any; }) => ({
+          id: entry.id,
+          number: entry.number,
+          participant_name: entry.participant_name,
+          purchased_at: entry.purchased_at
+        }))
+      };
+
+      console.log('✅ Stats calculated:', stats);
+      return stats;
+    } catch (error) {
+      console.error('❌ Error in getRaffleStats:', error);
+      throw error;
+    }
+  }
+
+  // Métodos auxiliares privados - agregar al final de la clase:
+
+  private getDaysSinceFirstEntry(entries: any[]): number {
+    if (entries.length === 0) return 1;
+
+    const sortedEntries = entries.sort((a, b) =>
+      new Date(a.purchased_at).getTime() - new Date(b.purchased_at).getTime()
+    );
+
+    const firstEntry = new Date(sortedEntries[0].purchased_at);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - firstEntry.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return Math.max(1, diffDays);
+  }
+
+  private groupEntriesByParticipant(entries: any[]) {
+    const groups: Record<string, any[]> = {};
+
+    entries.forEach(entry => {
+      if (!groups[entry.participant_id]) {
+        groups[entry.participant_id] = [];
+      }
+      groups[entry.participant_id].push(entry);
+    });
+
+    return groups;
   }
 
   async createNewRaffleEntriesFromOrder(orderNumber: string, quantity: number) {

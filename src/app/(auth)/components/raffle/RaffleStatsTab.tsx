@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react'
 import { BarChart3, Users, DollarSign, Ticket, TrendingUp, Calendar, Package, AlertTriangle } from 'lucide-react'
 import { Raffle } from '../../types/raffle'
+import { raffleService } from '../../services/rafflesService'
+import { ticketPackagesService } from '../../services/ticketPackagesService'
+import { TicketPackage, calculateFinalPrice, calculateTotalTickets } from '../../types/ticketPackage'
 
 interface Props {
     raffle: Raffle
@@ -17,56 +20,150 @@ interface RaffleStats {
     progressPercentage: number
     daysRemaining: number
     entriesPerDay: number
-    popularPackages: Array<{
+    realPackages: Array<{
         id: string
         name: string
+        ticket_count: number
+        price: number
         purchases: number
         revenue: number
+        percentage: number
+    }>
+    recentEntries: Array<{
+        id: string
+        number: number
+        participant_name: string
+        purchased_at: string
     }>
 }
 
 export default function RaffleStatsTab({ raffle }: Props) {
     const [stats, setStats] = useState<RaffleStats | null>(null)
     const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
     const [timeFilter, setTimeFilter] = useState<'7d' | '30d' | 'all'>('30d')
 
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchRealStats = async () => {
             try {
                 setLoading(true)
+                setError(null)
 
-                // Simular delay de carga
-                await new Promise(resolve => setTimeout(resolve, 1000))
+                // Obtener estadísticas básicas de la rifa
+                const basicStats = await raffleService.getRaffleStats(raffle.id, timeFilter)
 
-                // Datos simulados basados en la rifa
-                const simulatedEntries = Math.floor(Math.random() * (raffle.total_numbers * 0.3)) + 50
-                const simulatedParticipants = Math.floor(simulatedEntries * 0.7)
+                // Obtener los paquetes reales configurados para esta rifa
+                const packages: TicketPackage[] = await ticketPackagesService.getPackagesByRaffleId(raffle.id)
 
-                const mockStats: RaffleStats = {
-                    totalEntries: simulatedEntries,
-                    totalParticipants: simulatedParticipants,
-                    totalRevenue: raffle.price * simulatedEntries,
-                    averageTicketsPerUser: simulatedEntries / simulatedParticipants,
-                    conversionRate: Math.random() * 20 + 5, // 5-25%
-                    progressPercentage: (simulatedEntries / raffle.total_numbers) * 100,
-                    daysRemaining: Math.max(0, Math.ceil((new Date(raffle.draw_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))),
-                    entriesPerDay: Math.floor(simulatedEntries / 30) + Math.floor(Math.random() * 20),
-                    popularPackages: [
-                        { id: '1', name: 'Paquete Básico', purchases: Math.floor(simulatedParticipants * 0.6), revenue: raffle.price * simulatedEntries * 0.4 },
-                        { id: '2', name: 'Paquete Premium', purchases: Math.floor(simulatedParticipants * 0.3), revenue: raffle.price * simulatedEntries * 0.35 },
-                        { id: '3', name: 'Mega Pack', purchases: Math.floor(simulatedParticipants * 0.1), revenue: raffle.price * simulatedEntries * 0.25 }
-                    ]
+                // Obtener todas las entradas para analizar por paquetes
+                const entries = await raffleService.getRaffleEntries(raffle.id)
+
+                const packageStats = packages.map(pkg => {
+                    // Tickets que este paquete entrega (incluyendo promos)
+                    const totalTicketsFromPackage = calculateTotalTickets(pkg)
+
+                    // Agrupar entradas por participante
+                    const participantGroups = entries.reduce((acc: Record<string, any[]>, entry: { participant_id: string }) => {
+                        if (!acc[entry.participant_id]) {
+                            acc[entry.participant_id] = []
+                        }
+                        acc[entry.participant_id].push(entry)
+                        return acc
+                    }, {})
+
+                    // Contar participantes que tienen exactamente ese número de tickets
+                    const purchases = (Object.values(participantGroups) as any[][])
+                        .filter((participantEntries) => participantEntries.length === totalTicketsFromPackage)
+                        .length
+
+                    const finalPrice = calculateFinalPrice(pkg)
+                    const revenue = purchases * finalPrice
+                    const percentage =
+                        basicStats.totalParticipants > 0
+                            ? (purchases / basicStats.totalParticipants) * 100
+                            : 0
+
+                    return {
+                        id: pkg.id,
+                        name: pkg.name,
+                        ticket_count: totalTicketsFromPackage,
+                        price: finalPrice,
+                        purchases,
+                        revenue,
+                        percentage,
+                    }
+                }).filter(pkg => pkg.purchases > 0)
+
+                // Si no hay paquetes con ventas, crear un análisis básico
+                if (packageStats.length === 0 && basicStats.totalEntries > 0) {
+                    const participantGroups = entries.reduce((acc: { [x: string]: any[] }, entry: { participant_id: string | number }) => {
+                        if (!acc[entry.participant_id]) {
+                            acc[entry.participant_id] = []
+                        }
+                        acc[entry.participant_id].push(entry)
+                        return acc
+                    }, {} as Record<string, any[]>)
+
+                    const singleBuyers = (Object.values(participantGroups) as any[])
+                        .filter(g => g.length === 1).length
+
+                    const multiBuyers = (Object.values(participantGroups) as any[])
+                        .filter(g => g.length > 1).length
+
+
+                    if (singleBuyers > 0) {
+                        packageStats.push({
+                            id: 'single',
+                            name: 'Compra Individual',
+                            ticket_count: 1,
+                            price: raffle.price,
+                            purchases: singleBuyers,
+                            revenue: singleBuyers * raffle.price,
+                            percentage: (singleBuyers / basicStats.totalParticipants) * 100
+                        })
+                    }
+
+                    if (multiBuyers > 0) {
+                        const avgTicketsMulti =
+                            (Object.values(participantGroups) as Array<{ length: number }>)
+                                .filter(g => g.length > 1)
+                                .reduce((sum, g) => sum + g.length, 0) / multiBuyers
+
+                        const revenue: any = Object.values(participantGroups)
+                            .filter((g: any) => g.length > 1)
+                            .reduce((sum: any, g: any) => sum + g.length * raffle.price, 0)
+
+                        packageStats.push({
+                            id: 'multi',
+                            name: 'Compra Múltiple',
+                            ticket_count: Math.round(avgTicketsMulti),
+                            price: Math.round(avgTicketsMulti) * raffle.price,
+                            purchases: multiBuyers,
+                            revenue,
+                            percentage: (multiBuyers / basicStats.totalParticipants) * 100
+                        })
+                    }
                 }
-                setStats(mockStats)
-            } catch (error) {
-                console.error('Error fetching stats:', error)
+
+                // Ordenar por ingresos
+                packageStats.sort((a, b) => b.revenue - a.revenue)
+
+                const enhancedStats: RaffleStats = {
+                    ...basicStats,
+                    realPackages: packageStats
+                }
+
+                setStats(enhancedStats)
+            } catch (err) {
+                console.error('Error fetching real stats:', err)
+                setError(err instanceof Error ? err.message : 'Error al cargar estadísticas')
             } finally {
                 setLoading(false)
             }
         }
 
-        fetchStats()
-    }, [raffle, timeFilter])
+        fetchRealStats()
+    }, [raffle.id, timeFilter])
 
     if (loading) {
         return (
@@ -83,10 +180,28 @@ export default function RaffleStatsTab({ raffle }: Props) {
         )
     }
 
+    if (error) {
+        return (
+            <div className="p-6">
+                <div className="text-center py-12">
+                    <div className="text-red-600 mb-4">
+                        {error}
+                    </div>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-4 py-2 bg-sky-600 text-white rounded-md hover:bg-sky-700"
+                    >
+                        Reintentar
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
     if (!stats) {
         return (
             <div className="p-6 text-center text-gray-500">
-                Error al cargar las estadísticas
+                No hay datos disponibles
             </div>
         )
     }
@@ -154,8 +269,9 @@ export default function RaffleStatsTab({ raffle }: Props) {
                         </div>
                     </div>
                     <div className="mt-2 flex items-center text-sm">
-                        <span className="text-green-600">↗ +12.5%</span>
-                        <span className="text-gray-500 ml-1">vs período anterior</span>
+                        <span className="text-gray-500">
+                            {stats.totalEntries === 0 ? 'Aún no hay ventas' : 'Vendidos de forma real'}
+                        </span>
                     </div>
                 </div>
 
@@ -170,8 +286,7 @@ export default function RaffleStatsTab({ raffle }: Props) {
                         </div>
                     </div>
                     <div className="mt-2 flex items-center text-sm">
-                        <span className="text-green-600">↗ +8.2%</span>
-                        <span className="text-gray-500 ml-1">nuevos usuarios</span>
+                        <span className="text-gray-500">participantes únicos</span>
                     </div>
                 </div>
 
@@ -186,8 +301,7 @@ export default function RaffleStatsTab({ raffle }: Props) {
                         </div>
                     </div>
                     <div className="mt-2 flex items-center text-sm">
-                        <span className="text-green-600">↗ +15.3%</span>
-                        <span className="text-gray-500 ml-1">vs objetivo</span>
+                        <span className="text-gray-500">ingresos reales</span>
                     </div>
                 </div>
 
@@ -242,65 +356,75 @@ export default function RaffleStatsTab({ raffle }: Props) {
                 </div>
             </div>
 
-            {/* Paquetes más populares */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                <div className="p-6 border-b border-gray-200">
-                    <div className="flex items-center gap-2">
-                        <Package className="h-5 w-5 text-gray-600" />
-                        <h4 className="text-md font-semibold text-gray-900">Paquetes Más Populares</h4>
-                    </div>
-                </div>
-                <div className="p-6">
-                    <div className="space-y-4">
-                        {stats.popularPackages.map((pkg, index) => (
-                            <div key={pkg.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                                <div className="flex items-center gap-4">
-                                    <div className="flex items-center justify-center w-8 h-8 bg-sky-100 text-sky-600 rounded-full text-sm font-semibold">
-                                        {index + 1}
-                                    </div>
-                                    <div>
-                                        <h5 className="font-medium text-gray-900">{pkg.name}</h5>
-                                        <p className="text-sm text-gray-600">{pkg.purchases} compras</p>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-semibold text-gray-900">{formatCurrency(pkg.revenue)}</p>
-                                    <p className="text-sm text-gray-600">Ingresos</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            {/* Análisis de rendimiento */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Paquetes reales */}
+            {stats.realPackages.length > 0 && (
                 <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
                     <div className="p-6 border-b border-gray-200">
-                        <h4 className="text-md font-semibold text-gray-900">Análisis de Rendimiento</h4>
+                        <div className="flex items-center gap-2">
+                            <Package className="h-5 w-5 text-gray-600" />
+                            <h4 className="text-md font-semibold text-gray-900">Rendimiento de Paquetes</h4>
+                        </div>
                     </div>
-                    <div className="p-6 space-y-4">
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Tasa de Conversión</span>
-                            <span className="font-semibold text-gray-900">{formatPercentage(stats.conversionRate)}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Tickets por Participante</span>
-                            <span className="font-semibold text-gray-900">{stats.averageTicketsPerUser.toFixed(1)}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Valor Promedio por Compra</span>
-                            <span className="font-semibold text-gray-900">
-                                {formatCurrency(stats.totalRevenue / stats.totalParticipants)}
-                            </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Velocidad de Venta</span>
-                            <span className="font-semibold text-gray-900">{stats.entriesPerDay}/día</span>
+                    <div className="p-6">
+                        <div className="space-y-4">
+                            {stats.realPackages.map((pkg, index) => (
+                                <div key={pkg.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex items-center justify-center w-8 h-8 bg-sky-100 text-sky-600 rounded-full text-sm font-semibold">
+                                            {index + 1}
+                                        </div>
+                                        <div>
+                                            <h5 className="font-medium text-gray-900">{pkg.name}</h5>
+                                            <p className="text-sm text-gray-600">
+                                                {pkg.ticket_count} ticket{pkg.ticket_count > 1 ? 's' : ''} - {formatCurrency(pkg.price)}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                {pkg.purchases} compras ({formatPercentage(pkg.percentage)} de participantes)
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-semibold text-gray-900">{formatCurrency(pkg.revenue)}</p>
+                                        <p className="text-sm text-gray-600">Ingresos</p>
+                                        <p className="text-xs text-gray-500">
+                                            {pkg.purchases * pkg.ticket_count} tickets vendidos
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
+            )}
 
+            {/* Entradas recientes */}
+            {stats.recentEntries.length > 0 && (
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div className="p-6 border-b border-gray-200">
+                        <h4 className="text-md font-semibold text-gray-900">Últimas Compras</h4>
+                    </div>
+                    <div className="p-6">
+                        <div className="space-y-3">
+                            {stats.recentEntries.slice(0, 5).map((entry) => (
+                                <div key={entry.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-sky-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                                            #{entry.number}
+                                        </div>
+                                        <span className="font-medium text-gray-900">{entry.participant_name}</span>
+                                    </div>
+                                    <span className="text-sm text-gray-500">
+                                        {new Date(entry.purchased_at).toLocaleDateString()}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Proyecciones y recomendaciones */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
                     <div className="p-6 border-b border-gray-200">
                         <h4 className="text-md font-semibold text-gray-900">Proyecciones</h4>
@@ -324,79 +448,66 @@ export default function RaffleStatsTab({ raffle }: Props) {
                                 {formatPercentage(projectedProgress)}
                             </span>
                         </div>
-                        <div className="pt-2 border-t border-gray-200">
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm font-medium text-gray-700">Estado Esperado</span>
-                                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${projectedProgress >= 80
-                                        ? 'bg-green-100 text-green-800'
-                                        : projectedProgress >= 50
-                                            ? 'bg-yellow-100 text-yellow-800'
-                                            : 'bg-red-100 text-red-800'
-                                    }`}>
-                                    {projectedProgress >= 80
-                                        ? 'Excelente'
-                                        : projectedProgress >= 50
-                                            ? 'Bueno'
-                                            : 'Necesita impulso'
-                                    }
-                                </span>
-                            </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div className="p-6 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5 text-gray-600" />
+                            <h4 className="text-md font-semibold text-gray-900">Estado y Recomendaciones</h4>
                         </div>
                     </div>
-                </div>
-            </div>
+                    <div className="p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                            <span className="text-sm text-gray-600">Estado actual:</span>
+                            <span className={`font-semibold ${statusInfo.color}`}>
+                                {statusInfo.label}
+                            </span>
+                            <span className="text-sm text-gray-500">
+                                ({formatPercentage(stats.progressPercentage)} completado)
+                            </span>
+                        </div>
 
-            {/* Estado actual y recomendaciones */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                <div className="p-6 border-b border-gray-200">
-                    <div className="flex items-center gap-2">
-                        <AlertTriangle className="h-5 w-5 text-gray-600" />
-                        <h4 className="text-md font-semibold text-gray-900">Estado Actual y Recomendaciones</h4>
-                    </div>
-                </div>
-                <div className="p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                        <span className="text-sm text-gray-600">Estado actual:</span>
-                        <span className={`font-semibold ${statusInfo.color}`}>
-                            {statusInfo.label}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                            ({formatPercentage(stats.progressPercentage)} completado)
-                        </span>
-                    </div>
-
-                    <div className="space-y-2 text-sm text-gray-700">
-                        <h5 className="font-medium text-gray-900">Recomendaciones:</h5>
-                        {stats.progressPercentage < 30 && (
-                            <p className="flex items-start gap-2">
-                                <span className="text-red-500">•</span>
-                                Considera aumentar las promociones o el marketing boost para acelerar las ventas
-                            </p>
-                        )}
-                        {stats.averageTicketsPerUser < 2 && (
-                            <p className="flex items-start gap-2">
-                                <span className="text-orange-500">•</span>
-                                Los usuarios compran pocos tickets. Prueba paquetes con descuentos o promociones 2x1
-                            </p>
-                        )}
-                        {stats.daysRemaining < 7 && stats.progressPercentage < 70 && (
-                            <p className="flex items-start gap-2">
-                                <span className="text-red-500">•</span>
-                                Quedan pocos días y el progreso es bajo. Considera una campaña de último momento
-                            </p>
-                        )}
-                        {stats.entriesPerDay > 50 && (
-                            <p className="flex items-start gap-2">
-                                <span className="text-green-500">•</span>
-                                Excelente velocidad de venta. Mantén el momentum actual
-                            </p>
-                        )}
-                        {stats.progressPercentage >= 80 && (
-                            <p className="flex items-start gap-2">
-                                <span className="text-green-500">•</span>
-                                ¡Felicitaciones! Tu rifa está teniendo un excelente rendimiento
-                            </p>
-                        )}
+                        <div className="space-y-2 text-sm text-gray-700">
+                            <h5 className="font-medium text-gray-900">Recomendaciones:</h5>
+                            {stats.totalEntries === 0 && (
+                                <p className="flex items-start gap-2">
+                                    <span className="text-blue-500">•</span>
+                                    Aún no hay tickets vendidos. Comienza promocionando tu rifa en redes sociales
+                                </p>
+                            )}
+                            {stats.progressPercentage < 30 && stats.totalEntries > 0 && (
+                                <p className="flex items-start gap-2">
+                                    <span className="text-red-500">•</span>
+                                    Considera aumentar las promociones o el marketing para acelerar las ventas
+                                </p>
+                            )}
+                            {stats.averageTicketsPerUser < 2 && stats.totalParticipants > 0 && (
+                                <p className="flex items-start gap-2">
+                                    <span className="text-orange-500">•</span>
+                                    Los usuarios compran pocos tickets. Promociona tus paquetes con descuentos
+                                </p>
+                            )}
+                            {stats.entriesPerDay > 10 && (
+                                <p className="flex items-start gap-2">
+                                    <span className="text-green-500">•</span>
+                                    Excelente velocidad de venta. Mantén el momentum actual
+                                </p>
+                            )}
+                            {stats.progressPercentage >= 80 && (
+                                <p className="flex items-start gap-2">
+                                    <span className="text-green-500">•</span>
+                                    ¡Felicitaciones! Tu rifa está teniendo un excelente rendimiento
+                                </p>
+                            )}
+                            {stats.realPackages.length > 0 && (
+                                <p className="flex items-start gap-2">
+                                    <span className="text-blue-500">•</span>
+                                    Paquete más popular: {stats.realPackages[0]?.name} con {stats.realPackages[0]?.purchases} compras
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
