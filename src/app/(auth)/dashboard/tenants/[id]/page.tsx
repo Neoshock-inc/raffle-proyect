@@ -20,6 +20,10 @@ interface TenantDetailsPageProps {
   }>
 }
 
+const getBaseUrl = () => {
+    return process.env.NEXT_PUBLIC_BASE_URL || 'https://app.myfortunacloud.com'
+}
+
 interface TenantDetails {
   id: string
   name: string
@@ -565,7 +569,7 @@ export default function TenantDetailsPage({ params }: TenantDetailsPageProps) {
                         <div className="mt-2 text-sm text-amber-700">
                           <p>Con el plan básico, tu tenant está disponible en:</p>
                           <p className="mt-1 font-mono bg-amber-100 px-2 py-1 rounded">
-                            https://{tenant.slug}.rifasystem.com
+                            https://{tenant.slug}.{getBaseUrl().replace(/^https?:\/\//, '')}
                           </p>
                           <p className="mt-2">
                             Para usar dominios personalizados, actualiza a Plan Pro o Enterprise.
@@ -642,7 +646,7 @@ export default function TenantDetailsPage({ params }: TenantDetailsPageProps) {
                       </h4>
                       <p className="text-gray-500 mb-4">
                         {isBasicPlan
-                          ? `Tu tenant está disponible en https://${tenant.slug}.rifasystem.com`
+                          ? `Tu tenant está disponible en https://${tenant.slug}.${getBaseUrl().replace(/^https?:\/\//, '')}`
                           : 'Agrega un dominio para que los usuarios puedan acceder al tenant.'
                         }
                       </p>

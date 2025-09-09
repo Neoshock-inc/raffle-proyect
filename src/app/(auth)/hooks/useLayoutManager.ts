@@ -1,5 +1,10 @@
 // hooks/useLayoutManager.ts
 import { useState, useCallback, useEffect } from 'react'
+import AppleRaffleLanding from '../components/raffle_templates/AppleRaffleLanding'
+import CyberpunkRaffleLanding from '../components/raffle_templates/CyberpunkRaffleLanding'
+import LatinaRaffleLanding from '../components/raffle_templates/LatinaRaffleLanding'
+import LuxuryRaffleLanding from '../components/raffle_templates/LuxuryRaffleLanding'
+import RifaOffRoadLanding from '../components/raffle_templates/RifaOffRoadLanding'
 
 export interface LayoutTemplate {
     id: string
@@ -8,45 +13,94 @@ export interface LayoutTemplate {
     preview: string
     features: string[]
     available: ('basic' | 'pro' | 'enterprise')[]
-    category?: 'modern' | 'classic' | 'creative'
+    category?: 'modern' | 'classic' | 'creative' | 'premium' | 'futuristic' | 'cultural' | 'adventure'
     color_scheme?: 'light' | 'dark' | 'auto'
     responsive?: boolean
+    component?: React.ComponentType<any>
+    props?: Record<string, any>
 }
 
-// Simulación de templates disponibles (en producción vendría de una API)
+// Templates de rifas disponibles con componentes directos
 const AVAILABLE_LAYOUTS: LayoutTemplate[] = [
     {
-        id: 'default',
-        name: 'Default',
-        description: 'Layout clásico y funcional para todo tipo de rifas',
-        preview: '/images/templates/default.jpeg',
-        features: ['Diseño limpio', 'Fácil navegación', 'Compatible móvil', 'Carga rápida'],
+        id: 'apple',
+        name: 'Apple Raffle',
+        description: 'Diseño moderno y elegante inspirado en productos Apple',
+        preview: '/images/templates/screencapture-nextjsauk1epd2-5qhr-3000-96435430-local-credentialless-webcontainer-io-2025-09-08-21_10_54.png',
+        component: AppleRaffleLanding,
+        features: ['Diseño minimalista', 'Animaciones suaves', 'Responsive design', 'Colores corporativos'],
         available: ['basic', 'pro', 'enterprise'],
-        category: 'classic',
-        color_scheme: 'light',
-        responsive: true
-    },
-    {
-        id: 'vibrant',
-        name: 'Vibrant',
-        description: 'Colores vivos y elementos dinámicos para rifas llamativas',
-        preview: '/images/templates/vibrant.jpeg',
-        features: ['Colores brillantes', 'Efectos hover', 'Elementos interactivos', 'Animaciones'],
-        available: ['basic', 'pro', 'enterprise'],
-        category: 'creative',
-        color_scheme: 'light',
-        responsive: true
-    },
-    {
-        id: 'elegant',
-        name: 'Elegant',
-        description: 'Diseño sofisticado con tipografía elegante para rifas premium',
-        preview: '/images/templates/elegant.jpeg',
-        features: ['Tipografía premium', 'Diseño minimalista', 'Espacios amplios', 'Alta legibilidad'],
-        available: ['enterprise', 'pro'],
         category: 'modern',
+        color_scheme: 'light',
+        responsive: true,
+        props: {
+            theme: 'light',
+            showAnimation: true
+        }
+    },
+    {
+        id: 'cyberpunk',
+        name: 'Cyberpunk Raffle',
+        description: 'Estilo futurista con efectos neon y diseño cyberpunk',
+        preview: '/images/templates/screencapture-nextjsauk1epd2-5qhr-3000-96435430-local-credentialless-webcontainer-io-2025-09-08-21_10_13.png',
+        component: CyberpunkRaffleLanding,
+        features: ['Efectos neon', 'Estética futurista', 'Animaciones dinámicas', 'Tema oscuro'],
+        available: ['pro', 'enterprise'],
+        category: 'futuristic',
         color_scheme: 'dark',
-        responsive: true
+        responsive: true,
+        props: {
+            theme: 'dark',
+            enableNeonEffects: true
+        }
+    },
+    {
+        id: 'latina',
+        name: 'Latina Raffle',
+        description: 'Diseño vibrante con colores cálidos y estilo latino',
+        preview: '/images/templates/screencapture-nextjsauk1epd2-5qhr-3000-96435430-local-credentialless-webcontainer-io-2025-09-08-21_09_34.png',
+        component: LatinaRaffleLanding,
+        features: ['Colores vibrantes', 'Estilo festivo', 'Elementos culturales', 'Diseño alegre'],
+        available: ['basic', 'pro', 'enterprise'],
+        category: 'cultural',
+        color_scheme: 'light',
+        responsive: true,
+        props: {
+            theme: 'vibrant',
+            culturalElements: true
+        }
+    },
+    {
+        id: 'luxury',
+        name: 'Luxury Raffle',
+        description: 'Diseño premium con elementos dorados y elegantes',
+        preview: '/images/templates/screencapture-nextjsauk1epd2-5qhr-3000-96435430-local-credentialless-webcontainer-io-2025-09-08-21_07_09.png',
+        component: LuxuryRaffleLanding,
+        features: ['Diseño premium', 'Elementos dorados', 'Tipografía elegante', 'Exclusividad'],
+        available: ['enterprise', 'pro'],
+        category: 'premium',
+        color_scheme: 'dark',
+        responsive: true,
+        props: {
+            theme: 'luxury',
+            showPremiumElements: true
+        }
+    },
+    {
+        id: 'offroad',
+        name: 'Off-Road Raffle',
+        description: 'Tema aventurero para rifas de vehículos y deportes extremos',
+        preview: '/images/templates/screencapture-nextjsauk1epd2-5qhr-3000-96435430-local-credentialless-webcontainer-io-2025-09-08-21_06_25.png',
+        component: RifaOffRoadLanding,
+        features: ['Tema aventurero', 'Colores terrosos', 'Diseño robusto', 'Estilo deportivo'],
+        available: ['pro', 'enterprise'],
+        category: 'adventure',
+        color_scheme: 'light',
+        responsive: true,
+        props: {
+            theme: 'adventure',
+            showVehicles: true
+        }
     }
 ]
 

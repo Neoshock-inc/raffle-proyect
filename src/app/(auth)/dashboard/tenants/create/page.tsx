@@ -106,7 +106,7 @@ const TEMPLATES = {
       'Fácil personalización'
     ],
     category: 'Clásico',
-    image: '/images/templates/default.jpeg' // <- luego cambias por tu URL real
+    image: '/images/templates/default.jpeg'
   },
   vibrant: {
     name: 'Vibrant',
@@ -138,6 +138,18 @@ const TEMPLATES = {
   }
 }
 
+// Helper function to get base URL
+const getBaseUrl = () => {
+  return process.env.NEXT_PUBLIC_BASE_URL || 'https://app.myfortunacloud.com'
+}
+
+// Helper function to format subdomain URL
+const getSubdomainUrl = (slug: string) => {
+  const baseUrl = getBaseUrl()
+  // Remove protocol and get domain
+  const domain = baseUrl.replace(/^https?:\/\//, '')
+  return `https://${slug}.${domain}`
+}
 
 const getSteps = (selectedPlan: 'basic' | 'pro' | 'enterprise') => {
   const baseSteps = [
@@ -406,7 +418,7 @@ export default function CreateTenantPage() {
                 )}
                 <div className="mt-2 p-3 bg-sky-50 rounded-lg">
                   <p className="text-sm text-sky-800">
-                    <strong>URL de acceso:</strong> https://{data.slug || 'tu-slug'}.tudominio.com
+                    <strong>URL de acceso:</strong> {getSubdomainUrl(data.slug || 'tu-slug')}
                   </p>
                 </div>
               </div>
@@ -564,7 +576,7 @@ export default function CreateTenantPage() {
                     </h4>
                     <div className="mt-2 text-sm text-amber-700">
                       <p>Con el plan Basic, tu tenant estará disponible en:</p>
-                      <p className="mt-1 font-medium">https://{data.slug || 'tu-slug'}.rifasystem.com</p>
+                      <p className="mt-1 font-medium">{getSubdomainUrl(data.slug || 'tu-slug')}</p>
                       <p className="mt-2">Si necesitas un dominio personalizado, considera actualizar a Plan Pro o Enterprise.</p>
                     </div>
                   </div>
@@ -874,7 +886,7 @@ export default function CreateTenantPage() {
                     </p>
                     <p>
                       {data.selectedPlan === 'basic'
-                        ? `${data.slug}.rifasystem.com`
+                        ? getSubdomainUrl(data.slug)
                         : data.domain}
                     </p>
                   </div>
