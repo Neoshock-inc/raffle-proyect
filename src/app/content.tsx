@@ -225,7 +225,7 @@ const MyFortunaLanding = () => {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
               <button className="group bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-yellow-500 hover:to-orange-600 transition-all duration-300 flex items-center shadow-2xl">
-                Comenzar Gratis
+                Comenzar
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
               <button className="group bg-white/10 backdrop-blur-sm border border-white/20 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/20 transition-all duration-300 flex items-center">
@@ -320,7 +320,7 @@ const MyFortunaLanding = () => {
                   <div className="mb-4">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-white/70 text-sm">Progreso</span>
-                      <span className="text-white/70 text-sm">{raffle.soldNumbers}/{raffle.totalNumbers}</span>
+                      {/* <span className="text-white/70 text-sm">{raffle.soldNumbers}/{raffle.totalNumbers}</span> */}
                     </div>
                     <div className="w-full bg-white/20 rounded-full h-2">
                       <div
@@ -566,10 +566,6 @@ const MyFortunaLanding = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <button className="group bg-white text-orange-500 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all duration-300 flex items-center shadow-2xl">
-              Comenzar Gratis Ahora
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
             <button className="group bg-white/20 backdrop-blur-sm border border-white/30 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/30 transition-all duration-300 flex items-center">
               Hablar con Ventas
               <ChevronRight className="ml-2 w-5 h-5" />
