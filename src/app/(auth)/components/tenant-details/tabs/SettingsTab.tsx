@@ -14,6 +14,8 @@ interface SettingsTabProps {
     planManager: any // Replace with proper type from your hook
     onSaveSettings: () => Promise<any>
     onStatusChange: (status: 'active' | 'suspended' | 'deleted') => void
+    // NUEVO: Handler para el preview independiente
+    onLayoutPreview?: (layout: any) => void
 }
 
 export function SettingsTab({
@@ -22,7 +24,8 @@ export function SettingsTab({
     layoutManager,
     planManager,
     onSaveSettings,
-    onStatusChange
+    onStatusChange,
+    onLayoutPreview
 }: SettingsTabProps) {
     const handleSaveSettings = async () => {
         const result = await onSaveSettings()
@@ -155,7 +158,7 @@ export function SettingsTab({
                         )}
                     </div>
 
-                    {/* Layout Selector */}
+                    {/* Layout Selector - ACTUALIZADO */}
                     <div>
                         <div className="flex items-center justify-between mb-3">
                             <div>
@@ -166,14 +169,6 @@ export function SettingsTab({
                                     Personaliza la apariencia de tu tenant
                                 </p>
                             </div>
-                            {tenantSettings.isEditing && (
-                                <button
-                                    onClick={layoutManager.togglePreview}
-                                    className="text-sm text-blue-600 hover:text-blue-500 font-medium"
-                                >
-                                    Ver Preview
-                                </button>
-                            )}
                         </div>
 
                         {tenantSettings.isEditing ? (
@@ -181,10 +176,8 @@ export function SettingsTab({
                                 layouts={layoutManager.availableLayouts}
                                 selectedLayout={tenantSettings.formData.layout}
                                 onLayoutSelect={(layoutId) => tenantSettings.updateField('layout', layoutId)}
-                                onPreview={(layout) => {
-                                    layoutManager.selectLayout(layout.id)
-                                    layoutManager.togglePreview()
-                                }}
+                                // CORRECCIÓN: Usar el nuevo handler de preview independiente
+                                onPreview={onLayoutPreview}
                                 userPlan={tenant.plan}
                             />
                         ) : (
@@ -209,10 +202,7 @@ export function SettingsTab({
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => {
-                                        layoutManager.selectLayout(tenant.layout)
-                                        layoutManager.togglePreview()
-                                    }}
+                                    onClick={() => onLayoutPreview?.(layoutManager.currentLayout)}
                                     className="text-blue-600 hover:text-blue-500 text-sm font-medium"
                                 >
                                     Preview

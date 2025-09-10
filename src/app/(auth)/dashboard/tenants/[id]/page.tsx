@@ -1,4 +1,4 @@
-// 📁 page.tsx (Versión corregida con el import correcto)
+// 📁 page.tsx (Versión corregida con preview independiente)
 'use client'
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
@@ -45,6 +45,13 @@ export default function TenantDetailsPage({ params }: TenantDetailsPageProps) {
   const [error, setError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
+
+  // NUEVO: Estado para el preview independiente
+  const [previewState, setPreviewState] = useState({
+    isOpen: false,
+    layout: null as any, // LayoutTemplate | null
+    device: 'desktop' as 'desktop' | 'tablet' | 'mobile'
+  })
 
   // Custom hooks
   const tenantSettings = useTenantSettings({
@@ -144,6 +151,32 @@ export default function TenantDetailsPage({ params }: TenantDetailsPageProps) {
       setTenant(prev => prev ? { ...prev, ...result.data } : null)
     }
     return result
+  }
+
+  // NUEVO: Handlers para el preview independiente
+  const handleLayoutPreview = (layout: any) => {
+    console.log('📱 Abriendo preview para layout:', layout.name)
+    setPreviewState({
+      isOpen: true,
+      layout: layout,
+      device: 'desktop'
+    })
+  }
+
+  const handleClosePreview = () => {
+    console.log('❌ Cerrando preview')
+    setPreviewState({
+      isOpen: false,
+      layout: null,
+      device: 'desktop'
+    })
+  }
+
+  const handlePreviewDeviceChange = (device: 'desktop' | 'tablet' | 'mobile') => {
+    setPreviewState(prev => ({
+      ...prev,
+      device
+    }))
   }
 
   const tabs = [
@@ -271,6 +304,8 @@ export default function TenantDetailsPage({ params }: TenantDetailsPageProps) {
                 planManager={planManager}
                 onSaveSettings={handleSaveSettings}
                 onStatusChange={handleStatusChange}
+                // NUEVO: Pasar el handler de preview
+                onLayoutPreview={handleLayoutPreview}
               />
             )}
 
@@ -281,16 +316,18 @@ export default function TenantDetailsPage({ params }: TenantDetailsPageProps) {
         </div>
       </div>
 
-      {/* CORRECCIÓN: Cambiado LayoutPreviewModal por LayoutPreview */}
-      <LayoutPreview
-        layout={layoutManager.currentLayout}
-        isOpen={layoutManager.showPreview}
-        onClose={layoutManager.togglePreview}
-        device={layoutManager.previewMode}
-        onDeviceChange={layoutManager.setPreviewDevice}
-        tenantSlug={tenant.slug}
-        renderDirectly={true}
-      />
+      {/* CORRECCIÓN: Usar el estado independiente del preview */}
+      {previewState.layout && (
+        <LayoutPreview
+          layout={previewState.layout}
+          isOpen={previewState.isOpen}
+          onClose={handleClosePreview}
+          device={previewState.device}
+          onDeviceChange={handlePreviewDeviceChange}
+          tenantSlug={tenant.slug}
+          renderDirectly={true}
+        />
+      )}
 
       <PlanUpgradeModal
         isOpen={planManager.showUpgradeModal}
