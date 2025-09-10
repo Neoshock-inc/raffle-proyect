@@ -564,5 +564,349 @@ export const tenantService = {
         }
       }
     }
-  }
+  },
+  // ====== CONFIGURACIONES DE PAGO ======
+  
+  async getPaymentConfigs(tenantId: string) {
+    const { createClient } = await import('@supabase/supabase-js')
+    const directClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    try {
+      const { data, error } = await directClient
+        .from('payment_configs')
+        .select('*')
+        .eq('tenant_id', tenantId)
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error('Error fetching payment configs:', error)
+      return []
+    }
+  },
+
+  async upsertPaymentConfig(configData: {
+    tenant_id: string
+    provider: string
+    public_key: string
+    secret_key: string
+    extra?: any
+  }) {
+    const { createClient } = await import('@supabase/supabase-js')
+    const directClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    try {
+      // Verificar si ya existe una configuración para este tenant y proveedor
+      const { data: existing } = await directClient
+        .from('payment_configs')
+        .select('id')
+        .eq('tenant_id', configData.tenant_id)
+        .eq('provider', configData.provider)
+        .single()
+
+      if (existing) {
+        // Actualizar configuración existente
+        const { data, error } = await directClient
+          .from('payment_configs')
+          .update({
+            public_key: configData.public_key,
+            secret_key: configData.secret_key,
+            extra: configData.extra || null
+          })
+          .eq('id', existing.id)
+          .select()
+          .single()
+
+        if (error) throw error
+        
+        console.log('Payment config updated:', {
+          tenant_id: configData.tenant_id,
+          provider: configData.provider,
+          action: 'updated'
+        })
+
+        return data
+      } else {
+        // Crear nueva configuración
+        const { data, error } = await directClient
+          .from('payment_configs')
+          .insert({
+            tenant_id: configData.tenant_id,
+            provider: configData.provider,
+            public_key: configData.public_key,
+            secret_key: configData.secret_key,
+            extra: configData.extra || null
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+
+        console.log('Payment config created:', {
+          tenant_id: configData.tenant_id,
+          provider: configData.provider,
+          action: 'created'
+        })
+
+        return data
+      }
+    } catch (error) {
+      console.error('Error upserting payment config:', error)
+      throw new Error('Error al guardar la configuración de pago')
+    }
+  },
+
+  async deletePaymentConfig(tenantId: string, provider: string) {
+    const { createClient } = await import('@supabase/supabase-js')
+    const directClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    try {
+      const { error } = await directClient
+        .from('payment_configs')
+        .delete()
+        .eq('tenant_id', tenantId)
+        .eq('provider', provider)
+
+      if (error) throw error
+
+      console.log('Payment config deleted:', {
+        tenant_id: tenantId,
+        provider: provider,
+        action: 'deleted'
+      })
+
+      return { success: true }
+    } catch (error) {
+      console.error('Error deleting payment config:', error)
+      throw new Error('Error al eliminar la configuración de pago')
+    }
+  },
+
+  // ====== CONFIGURACIONES DE EMAIL ======
+
+  async getEmailConfigs(tenantId: string) {
+    const { createClient } = await import('@supabase/supabase-js')
+    const directClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    try {
+      const { data, error } = await directClient
+        .from('email_configs')
+        .select('*')
+        .eq('tenant_id', tenantId)
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error('Error fetching email configs:', error)
+      return []
+    }
+  },
+
+  async upsertEmailConfig(configData: {
+    tenant_id: string
+    provider: string
+    username?: string
+    password?: string
+    host?: string
+    port?: number
+    api_key?: string
+    from_email?: string
+    from_name?: string
+  }) {
+    const { createClient } = await import('@supabase/supabase-js')
+    const directClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    try {
+      // Verificar si ya existe una configuración para este tenant y proveedor
+      const { data: existing } = await directClient
+        .from('email_configs')
+        .select('id')
+        .eq('tenant_id', configData.tenant_id)
+        .eq('provider', configData.provider)
+        .single()
+
+      const emailConfigData = {
+        tenant_id: configData.tenant_id,
+        provider: configData.provider,
+        username: configData.username || null,
+        password: configData.password || null,
+        host: configData.host || null,
+        port: configData.port || null,
+        api_key: configData.api_key || null,
+        from_email: configData.from_email || null,
+        from_name: configData.from_name || null
+      }
+
+      if (existing) {
+        // Actualizar configuración existente
+        const { data, error } = await directClient
+          .from('email_configs')
+          .update(emailConfigData)
+          .eq('id', existing.id)
+          .select()
+          .single()
+
+        if (error) throw error
+
+        console.log('Email config updated:', {
+          tenant_id: configData.tenant_id,
+          provider: configData.provider,
+          action: 'updated'
+        })
+
+        return data
+      } else {
+        // Crear nueva configuración
+        const { data, error } = await directClient
+          .from('email_configs')
+          .insert(emailConfigData)
+          .select()
+          .single()
+
+        if (error) throw error
+
+        console.log('Email config created:', {
+          tenant_id: configData.tenant_id,
+          provider: configData.provider,
+          action: 'created'
+        })
+
+        return data
+      }
+    } catch (error) {
+      console.error('Error upserting email config:', error)
+      throw new Error('Error al guardar la configuración de email')
+    }
+  },
+
+  async deleteEmailConfig(tenantId: string, provider: string) {
+    const { createClient } = await import('@supabase/supabase-js')
+    const directClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    try {
+      const { error } = await directClient
+        .from('email_configs')
+        .delete()
+        .eq('tenant_id', tenantId)
+        .eq('provider', provider)
+
+      if (error) throw error
+
+      console.log('Email config deleted:', {
+        tenant_id: tenantId,
+        provider: provider,
+        action: 'deleted'
+      })
+
+      return { success: true }
+    } catch (error) {
+      console.error('Error deleting email config:', error)
+      throw new Error('Error al eliminar la configuración de email')
+    }
+  },
+
+  // ====== TESTING DE CONFIGURACIONES ======
+
+  async testConfiguration(tenantId: string, type: 'payment' | 'email', provider: string) {
+    try {
+      console.log('Testing configuration:', { tenantId, type, provider })
+
+      // Obtener la configuración según el tipo
+      let config: any = null
+
+      if (type === 'payment') {
+        const paymentConfigs = await this.getPaymentConfigs(tenantId)
+        config = paymentConfigs.find(c => c.provider === provider)
+      } else if (type === 'email') {
+        const emailConfigs = await this.getEmailConfigs(tenantId)
+        config = emailConfigs.find(c => c.provider === provider)
+      }
+
+      if (!config) {
+        throw new Error('Configuración no encontrada')
+      }
+
+      // Validaciones específicas por proveedor
+      if (type === 'payment') {
+        if (provider === 'stripe') {
+          if (!config.public_key || !config.secret_key) {
+            throw new Error('Faltan las claves de Stripe')
+          }
+          if (!config.public_key.startsWith('pk_')) {
+            throw new Error('La clave pública de Stripe debe comenzar con pk_')
+          }
+          if (!config.secret_key.startsWith('sk_')) {
+            throw new Error('La clave secreta de Stripe debe comenzar con sk_')
+          }
+        } else if (provider === 'paypal') {
+          if (!config.extra?.client_id || !config.extra?.client_secret) {
+            throw new Error('Faltan las credenciales de PayPal')
+          }
+        } else if (provider === 'bank_account') {
+          if (!config.extra?.bank_name || !config.extra?.account_number || !config.extra?.account_holder) {
+            throw new Error('Faltan datos bancarios requeridos')
+          }
+        }
+      } else if (type === 'email') {
+        if (provider === 'resend') {
+          if (!config.api_key) {
+            throw new Error('Falta la API key de Resend')
+          }
+          if (!config.api_key.startsWith('re_')) {
+            throw new Error('La API key de Resend debe comenzar con re_')
+          }
+          if (!config.from_email) {
+            throw new Error('Falta el email remitente')
+          }
+          // Validar formato de email
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+          if (!emailRegex.test(config.from_email)) {
+            throw new Error('El formato del email remitente no es válido')
+          }
+        }
+      }
+
+      // En un entorno real, aquí harías las validaciones específicas:
+      // - Para Stripe: hacer una llamada a la API de Stripe para validar las keys
+      // - Para PayPal: verificar las credenciales con PayPal API
+      // - Para Resend: enviar un email de prueba o validar la API key
+      // - Para cuenta bancaria: validar formato de números de cuenta
+
+      // Simulación de latencia de red
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      // Por ahora retornamos éxito si pasa las validaciones básicas
+      return {
+        success: true,
+        message: `Configuración de ${provider} válida`,
+        tested_at: new Date().toISOString()
+      }
+
+    } catch (error) {
+      console.error('Error testing configuration:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error desconocido al probar la configuración',
+        tested_at: new Date().toISOString()
+      }
+    }
+  },
 }

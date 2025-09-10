@@ -11,7 +11,7 @@ import { VibrantTemplate } from '../components/templates/VibrantTemplate';
 // Mapeo de templates con nombres más descriptivos
 const templates = {
   'default': DefaultTemplate,      // Diseño limpio y funcional
-  'vibrant': VibrantTemplate,      // Diseño llamativo con animaciones (antes luxury)
+  'latina': VibrantTemplate,      // Diseño llamativo con animaciones (antes luxury)
   'classic': DefaultTemplate,      // Alias para default
 } as const;
 

@@ -1,3 +1,4 @@
+// 📁 components/CheckoutForm.tsx (Actualizado)
 import React from 'react';
 import { PersonalDataForm } from './PersonalDataForm';
 import { OrderSummary } from './OrderSummary';
@@ -55,7 +56,10 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ token, reffer }) => 
         isProcessing,
         handleStripePayment,
         handlePayPhonePayment,
-        handleTransferPayment
+        handleTransferPayment,
+        handlePayPalPayment,
+        handlePayPalApprove,
+        handlePayPalError
     } = usePaymentMethods(
         orderNumber,
         purchaseData,
@@ -64,7 +68,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ token, reffer }) => 
         reffer,
         token,
         checkTokenValidity,
-        (expired) => { }, // setTokenExpired is handled in useTokenValidation
+        () => { }, // setTokenExpired is handled in useTokenValidation
         generateNewOrderNumber
     );
 
@@ -93,10 +97,10 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ token, reffer }) => 
     // Mostrar loading mientras se inicializa
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className="flex items-center justify-center min-h-screen bg-gray-50">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#800000] mx-auto mb-4"></div>
-                    <p>Validando datos de compra...</p>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Validando datos de compra...</p>
                 </div>
             </div>
         );
@@ -105,14 +109,14 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ token, reffer }) => 
     // Si no hay datos de compra válidos, mostrar error
     if (!purchaseData) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className="flex items-center justify-center min-h-screen bg-gray-50">
                 <div className="text-center p-8">
                     <div className="text-red-600 text-6xl mb-4">⚠️</div>
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">Error de validación</h2>
                     <p className="text-gray-600 mb-6">Los datos de compra no son válidos o han expirado.</p>
                     <button
                         onClick={() => window.history.back()}
-                        className="bg-[#800000] text-white px-6 py-3 rounded-md hover:bg-[#600000] transition"
+                        className="bg-sky-600 text-white px-6 py-3 rounded-md hover:bg-sky-700 transition"
                     >
                         Regresar
                     </button>
@@ -137,41 +141,79 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ token, reffer }) => 
 
             <Header />
 
-            <div className="max-w-6xl mx-auto px-4 py-8">
-                <div className="mb-8">
-                    <p className="text-center text-gray-600">Cumpliendo sueños.</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-                    {/* Columna izquierda: Datos de facturación (3 columnas) */}
-                    <div className="md:col-span-3">
-                        <PersonalDataForm
-                            formData={formData}
-                            onInputChange={handleInputChange}
-                            isProcessing={isProcessing}
-                        />
+            <div className="min-h-screen bg-gray-50">
+                <div className="max-w-6xl mx-auto px-4 py-8">
+                    {/* Header mejorado */}
+                    <div className="text-center mb-8">
+                        <div className="flex items-center justify-center mb-4">
+                            <div className="w-12 h-12 bg-sky-600 rounded-full flex items-center justify-center mr-3">
+                                <span className="text-white font-bold text-lg">FC</span>
+                            </div>
+                            <div>
+                                <h1 className="text-2xl font-bold text-gray-800">My Fortuna Cloud</h1>
+                                <p className="text-gray-600">Payment Gateway</p>
+                            </div>
+                        </div>
+                        <div className="w-24 h-1 bg-sky-600 rounded mx-auto"></div>
                     </div>
 
-                    {/* Columna derecha: Resumen y Métodos de pago (2 columnas) */}
-                    <div className="md:col-span-2 space-y-4">
-                        <OrderSummary
-                            purchaseData={purchaseData}
-                            orderNumber={orderNumber}
-                            reffer={reffer}
-                        />
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                        {/* Columna izquierda: Datos de facturación (3 columnas) */}
+                        <div className="lg:col-span-3">
+                            <PersonalDataForm
+                                formData={formData}
+                                onInputChange={handleInputChange}
+                                isProcessing={isProcessing}
+                            />
+                        </div>
 
-                        <PaymentMethods
-                            method={method}
-                            setMethod={setMethod}
-                            isProcessing={isProcessing}
-                            isOfLegalAge={isOfLegalAge}
-                            setIsOfLegalAge={setIsOfLegalAge}
-                            orderNumber={orderNumber}
-                            onStripePayment={handleStripePayment}
-                            onPayPhonePayment={handlePayPhonePayment}
-                            onTransferPayment={handleTransferPayment}
-                            purchaseData={purchaseData}
-                        />
+                        {/* Columna derecha: Resumen y Métodos de pago (2 columnas) */}
+                        <div className="lg:col-span-2 space-y-6">
+                            <OrderSummary
+                                purchaseData={purchaseData}
+                                orderNumber={orderNumber}
+                                reffer={reffer}
+                                tenantName={purchaseData.tenantName}
+                            />
+
+                            <PaymentMethods
+                                tenantId={purchaseData.tenantId} // 👈 NUEVO: Pasamos el tenantId
+                                method={method}
+                                setMethod={setMethod}
+                                isProcessing={isProcessing}
+                                isOfLegalAge={isOfLegalAge}
+                                setIsOfLegalAge={setIsOfLegalAge}
+                                orderNumber={orderNumber}
+                                onStripePayment={handleStripePayment}
+                                onPayPhonePayment={handlePayPhonePayment}
+                                onTransferPayment={handleTransferPayment}
+                                purchaseData={purchaseData}
+                                onPayPalPayment={handlePayPalPayment}
+                                onPayPalApprove={handlePayPalApprove}
+                                onPayPalError={handlePayPalError}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="mt-12 text-center py-6 border-t border-gray-200">
+                        <p className="text-sm text-gray-500">
+                            Procesado de forma segura por My Fortuna Cloud
+                        </p>
+                        <div className="flex justify-center items-center mt-2 space-x-4">
+                            <div className="flex items-center text-xs text-gray-400">
+                                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                </svg>
+                                SSL Seguro
+                            </div>
+                            <div className="flex items-center text-xs text-gray-400">
+                                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                                Pago Verificado
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

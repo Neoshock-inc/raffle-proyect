@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { PaymentMethod, PaymentStatus } from '../types/invoices';
-import { createInvoiceWithParticipant } from '../services/invoiceService';
+import { createInvoiceWithParticipant, generateRaffleNumbers } from '../services/invoiceService';
 import { PurchaseData, CheckoutFormData, PaymentMethodType } from '../types/checkout';
 import { validateCheckoutForm } from '../utils/validationUtils';
 
@@ -276,12 +276,104 @@ export const usePaymentMethods = (
         }
     };
 
+    const handlePayPalPayment = async (): Promise<{ success: boolean; error?: string }> => {
+        const validation = validateCheckoutForm(formData, isOfLegalAge);
+        if (!validation.isValid) {
+            return { success: false, error: validation.error };
+        }
+
+        const isValid = await checkTokenValidity();
+        if (!isValid) {
+            setTokenExpired(true);
+            return { success: false, error: 'Tu sesión ha expirado.' };
+        }
+
+        if (!token || !purchaseData) {
+            return { success: false, error: 'Token de compra no válido.' };
+        }
+
+        setIsProcessing(true);
+
+        return { success: true };  // solo valida y activa loading
+    };
+
+    const handlePayPalApprove = async (): Promise<{ success: boolean; error?: string }> => {
+        try {
+            // 1. Crear la factura primero
+            const invoice = await createInvoiceWithParticipant({
+                orderNumber,
+                fullName: `${formData.name} ${formData.lastName}`,
+                email: formData.email,
+                phone: formData.phone,
+                country: formData.country,
+                status: PaymentStatus.COMPLETED,
+                paymentMethod: PaymentMethod.PAYPAL,
+                province: formData.province,
+                city: formData.city,
+                address: formData.address,
+                amount: purchaseData!.amount,
+                totalPrice: purchaseData!.price,
+                referral_code: reffer || undefined
+            });
+
+            // 2. Generar números de rifa después de crear la factura
+            const raffleResult = await generateRaffleNumbers({
+                name: `${formData.name} ${formData.lastName}`,
+                email: formData.email,
+                amount: purchaseData!.amount,
+                orderNumber: orderNumber
+            });
+
+            if (!raffleResult.success) {
+                console.error('Error al generar números de rifa:', raffleResult.error);
+                // Opcional: Marcar la factura como problemática o enviar notificación
+                throw new Error(`Error al asignar números: ${raffleResult.error}`);
+            }
+
+            console.log('Números asignados:', raffleResult.assigned);
+            console.log('Total números:', raffleResult.total_assigned);
+
+            // 3. Redireccionar incluyendo información de los números asignados
+            const queryParams = new URLSearchParams({
+                email: formData.email,
+                amount: purchaseData!.amount.toString(),
+                numbers: raffleResult.assigned?.join(',') || '',
+                totalNumbers: raffleResult.total_assigned?.toString() || '0'
+            });
+
+            window.location.href = `/success?${queryParams.toString()}`;
+
+            return { success: true };
+
+        } catch (error: any) {
+            console.error('Error al procesar PayPal y generar números:', error);
+            await generateNewOrderNumber();
+            return {
+                success: false,
+                error: error.message || 'Error al procesar el pago y generar números'
+            };
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handlePayPalError = async (error: any): Promise<void> => {
+        console.error('Error en PayPal:', error);
+        setIsProcessing(false);
+        alert('Hubo un error al procesar tu pago con PayPal.');
+        await generateNewOrderNumber();
+    };
+    
+
     return {
         method,
         setMethod,
         isProcessing,
         handleStripePayment,
         handlePayPhonePayment,
-        handleTransferPayment
+        handleTransferPayment,
+        handlePayPalPayment,
+        handlePayPalApprove,
+        handlePayPalError
     };
 };

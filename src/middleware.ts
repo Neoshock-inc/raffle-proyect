@@ -49,7 +49,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Rutas globales
-  const globalPaths = ["/checkout", "/login", "/signup"];
+  const globalPaths = ["/checkout", "/login", "/signup", "/success", "/cancel", "/transfer-success"];
   if (globalPaths.some(path => url.pathname.startsWith(path))) {
     return NextResponse.next();
   }

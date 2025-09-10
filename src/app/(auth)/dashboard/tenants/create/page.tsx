@@ -8,6 +8,7 @@ import React from 'react'
 import { useTenantManagement } from '@/app/(auth)/hooks/useTenantManagement'
 import { useTenantValidation } from '@/app/(auth)/hooks/useTenantValidation'
 import { CreateTenantData } from '@/app/(auth)/services/tenantService'
+import { PLANS } from '@/app/(auth)/utils/tenant'
 
 interface StepData {
   // Paso 1: Datos básicos
@@ -40,57 +41,6 @@ const INITIAL_DATA: StepData = {
   ownerEmail: '',
   ownerName: '',
   ownerPhone: ''
-}
-
-const PLANS = {
-  basic: {
-    name: 'Basic',
-    price: '$199',
-    description: 'Plan básico con funcionalidades esenciales',
-    features: {
-      'Rifas Ilimitadas': true,
-      'Dominio Personalizado': false,
-      'Reportes Avanzados': false,
-      'API Acceso': false,
-      'Soporte Prioritario': false,
-      'Branding Personalizado': false
-    },
-    tenantCount: '45 tenants',
-    color: 'gray',
-    subdomain: true
-  },
-  pro: {
-    name: 'Pro',
-    price: '$1000',
-    description: 'Plan profesional para pequeñas empresas',
-    features: {
-      'Rifas Ilimitadas': true,
-      'Dominio Personalizado': true,
-      'Reportes Avanzados': true,
-      'API Acceso': false,
-      'Soporte Prioritario': false,
-      'Branding Personalizado': false
-    },
-    tenantCount: '78 tenants',
-    color: 'blue',
-    subdomain: false
-  },
-  enterprise: {
-    name: 'Enterprise',
-    price: '$1299',
-    description: 'Plan empresarial con todas las funcionalidades',
-    features: {
-      'Rifas Ilimitadas': true,
-      'Dominio Personalizado': true,
-      'Reportes Avanzados': true,
-      'API Acceso': true,
-      'Soporte Prioritario': true,
-      'Branding Personalizado': true
-    },
-    tenantCount: '22 tenants',
-    color: 'purple',
-    subdomain: false
-  }
 }
 
 const TEMPLATES = {

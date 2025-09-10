@@ -80,6 +80,8 @@ export const useTokenValidation = (token: string | null) => {
                 amount: validatedData.amount,
                 price: validatedData.price,
                 raffleId: validatedData.raffleId,
+                tenantId: validatedData.tenantId,
+                tenantName: validatedData.tenantName,
                 expiresAt: payload?.exp ? payload.exp * 1000 : undefined
             };
 

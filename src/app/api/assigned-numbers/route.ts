@@ -15,6 +15,8 @@ export async function GET(req: NextRequest) {
         .eq('email', email)
         .single();
 
+    console.log(participant, participantError);
+
     if (participantError || !participant) {
         return NextResponse.json({ error: 'Participante no encontrado' }, { status: 404 });
     }
