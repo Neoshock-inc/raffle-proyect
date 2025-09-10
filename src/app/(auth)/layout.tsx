@@ -218,7 +218,7 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
             {/* Main Content - Con margen para el sidebar fijo */}
             <div className={`flex-1 flex flex-col ${sidebarOpen ? 'ml-64' : 'ml-20'} transition-all duration-300`}>
                 {/* Header */}
-                <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-2 sticky top-0 z-9999">
+                <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-2 sticky top-0 z-20">
                     <div className="flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <h1 className="text-2xl font-semibold text-gray-800">

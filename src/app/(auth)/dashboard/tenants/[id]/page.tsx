@@ -1,4 +1,4 @@
-// 📁 page.tsx (Versión final refactorizada con todos los imports)
+// 📁 page.tsx (Versión corregida con el import correcto)
 'use client'
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
@@ -12,7 +12,9 @@ import { raffleService } from '@/app/(auth)/services/rafflesService'
 import { useTenantSettings } from '@/app/(auth)/hooks/useTenantSettings'
 import { useLayoutManager } from '@/app/(auth)/hooks/useLayoutManager'
 import { usePlanManagement } from '@/app/(auth)/hooks/usePlanManagement'
-import { LayoutPreviewModal } from '@/app/(auth)/components/tenant-details/modals/LayoutPreviewModal'
+
+// CORRECCIÓN: Cambiado de LayoutPreviewModal a LayoutPreview
+import { LayoutPreview } from '@/app/(auth)/components/LayoutPreview'
 import { PlanUpgradeModal } from '@/app/(auth)/components/tenant-details/modals/PlanUpgradeModal'
 import { StatsCards } from '@/app/(auth)/components/tenant-details/StatsCards'
 import { TabNavigation } from '@/app/(auth)/components/tenant-details/TabNavigation'
@@ -26,7 +28,6 @@ import { TenantDetails, BasicRaffle } from '@/app/(auth)/types/tenant'
 import { getStatusBadge, getPlanInfo, getBaseUrl, getRaffleStatusBadge } from '@/app/(auth)/utils/tenant'
 import { formatDate } from '@/app/utils/templateHelpers'
 import { ConfigurationsTab } from '@/app/(auth)/components/tenant-details/tabs/ConfigurationsTab'
-
 
 interface TenantDetailsPageProps {
   params: Promise<{ id: string }>
@@ -280,14 +281,15 @@ export default function TenantDetailsPage({ params }: TenantDetailsPageProps) {
         </div>
       </div>
 
-      {/* Modals */}
-      <LayoutPreviewModal
+      {/* CORRECCIÓN: Cambiado LayoutPreviewModal por LayoutPreview */}
+      <LayoutPreview
         layout={layoutManager.currentLayout}
         isOpen={layoutManager.showPreview}
         onClose={layoutManager.togglePreview}
         device={layoutManager.previewMode}
         onDeviceChange={layoutManager.setPreviewDevice}
         tenantSlug={tenant.slug}
+        renderDirectly={true}
       />
 
       <PlanUpgradeModal

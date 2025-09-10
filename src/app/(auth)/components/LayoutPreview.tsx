@@ -1,4 +1,4 @@
-// components/LayoutPreview.tsx
+// components/LayoutPreview.tsx - Corrección de z-index
 'use client'
 import { useState, useEffect } from 'react'
 import { Monitor, Smartphone, Tablet, X, RefreshCw, ExternalLink, Eye, Lock, Maximize2, Code } from 'lucide-react'
@@ -40,7 +40,7 @@ export const LayoutPreview = ({
     device = 'desktop',
     onDeviceChange,
     tenantSlug = 'demo',
-    renderDirectly = true // Por defecto usar componentes directos
+    renderDirectly = true
 }: LayoutPreviewProps) => {
     const [loading, setLoading] = useState(true)
     const [currentDevice, setCurrentDevice] = useState(device)
@@ -67,15 +67,23 @@ export const LayoutPreview = ({
     useEffect(() => {
         if (isOpen) {
             setLoading(true)
+            // Prevenir scroll del body cuando el modal está abierto
+            document.body.style.overflow = 'hidden'
 
             if (renderMode === 'iframe') {
-                // Solo generar URL si vamos a usar iframe
                 const url = getPreviewUrl(layout, tenantSlug)
                 setPreviewUrl(url)
             }
 
             const timer = setTimeout(() => setLoading(false), renderMode === 'component' ? 500 : 1200)
-            return () => clearTimeout(timer)
+            return () => {
+                clearTimeout(timer)
+                // Restaurar scroll del body cuando se cierra
+                document.body.style.overflow = 'auto'
+            }
+        } else {
+            // Asegurar que se restaure el scroll al cerrar
+            document.body.style.overflow = 'auto'
         }
     }, [isOpen, layout, tenantSlug, renderMode])
 
@@ -88,10 +96,8 @@ export const LayoutPreview = ({
         setLoading(true)
 
         if (renderMode === 'component') {
-            // Para componentes directos, simplemente resetear
             setTimeout(() => setLoading(false), 500)
         } else {
-            // Para iframes, recargar
             const iframe = document.getElementById('layout-preview-iframe') as HTMLIFrameElement
             if (iframe) {
                 iframe.src = iframe.src
@@ -106,6 +112,12 @@ export const LayoutPreview = ({
 
     const toggleRenderMode = () => {
         setRenderMode(prev => prev === 'component' ? 'iframe' : 'component')
+    }
+
+    const handleClose = () => {
+        // Restaurar scroll del body antes de cerrar
+        document.body.style.overflow = 'auto'
+        onClose()
     }
 
     // Renderizar el componente directamente
@@ -152,7 +164,8 @@ export const LayoutPreview = ({
     const currentSize = deviceSizes[currentDevice]
 
     return (
-        <div className={`fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center ${isFullscreen ? 'p-0' : 'p-4'}`}>
+        // CORRECCIÓN: Aumentado z-index de z-50 a z-[99999] para estar por encima del header
+        <div className={`fixed inset-0 bg-black bg-opacity-50 z-[99999] flex items-center justify-center ${isFullscreen ? 'p-0' : 'p-4'}`}>
             <div className={`bg-white rounded-lg shadow-xl ${isFullscreen ? 'w-full h-full rounded-none' : 'max-w-7xl w-full max-h-[90vh]'} flex flex-col`}>
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
@@ -223,7 +236,7 @@ export const LayoutPreview = ({
                             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                         </button>
 
-                        <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600">
+                        <button onClick={handleClose} className="p-2 text-gray-400 hover:text-gray-600">
                             <X className="h-4 w-4" />
                         </button>
                     </div>
@@ -253,12 +266,10 @@ export const LayoutPreview = ({
                             {/* Preview Content */}
                             <div className="w-full h-full overflow-auto">
                                 {renderMode === 'component' ? (
-                                    // Renderizar componente directamente
                                     <div className="w-full h-full">
                                         {renderComponent()}
                                     </div>
                                 ) : previewUrl ? (
-                                    // Usar iframe para URL externa
                                     <iframe
                                         id="layout-preview-iframe"
                                         src={previewUrl}
@@ -270,7 +281,6 @@ export const LayoutPreview = ({
                                         }}
                                     />
                                 ) : (
-                                    // Fallback content
                                     <div className="w-full h-full flex items-center justify-center bg-gray-100">
                                         <div className="text-center p-8">
                                             <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center mb-4 mx-auto">
@@ -341,7 +351,7 @@ export const LayoutPreview = ({
                         </button>
 
                         <button
-                            onClick={onClose}
+                            onClick={handleClose}
                             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
                         >
                             Cerrar Preview
@@ -353,7 +363,7 @@ export const LayoutPreview = ({
     )
 }
 
-// Componente selector actualizado (sin cambios principales)
+// El resto del código permanece igual...
 export const LayoutSelector = ({
     layouts,
     selectedLayout,
@@ -482,7 +492,7 @@ export const LayoutSelector = ({
                                         <span
                                             key={plan}
                                             className={`inline-block w-2 h-2 rounded-full ${plan === 'basic' ? 'bg-gray-400' :
-                                                    plan === 'pro' ? 'bg-blue-400' : 'bg-purple-400'
+                                                plan === 'pro' ? 'bg-blue-400' : 'bg-purple-400'
                                                 }`}
                                             title={`Plan ${plan}`}
                                         />
