@@ -46,7 +46,7 @@ export const TicketsGrid: React.FC<TicketsGridProps> = ({
         <section id="packages" className="w-full py-8">
             <h2
                 className="text-3xl font-bold text-center mb-8"
-                style={{ color: tenantConfig.theme.colors.primary }}
+                style={{ color: tenantConfig.primary_color }}
             >
                 Paquetes de Tickets
             </h2>

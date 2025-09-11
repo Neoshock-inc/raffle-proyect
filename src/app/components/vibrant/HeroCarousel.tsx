@@ -60,7 +60,7 @@ export const HeroCarousel = ({
                 <div className="relative z-10 h-full flex items-center justify-center px-12">
                   <div className="text-center text-white">
                     <h3 className="text-5xl font-black mb-4 drop-shadow-lg">
-                      {tenantConfig.name}
+                      {tenantConfig.company_name}
                     </h3>
                     <p className="text-xl text-yellow-200 mb-6">
                       ¡Próximamente nuevas rifas increíbles!

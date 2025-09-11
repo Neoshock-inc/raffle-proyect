@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase";
 import { BlessedNumber, Raffle, RaffleMedia } from "../types/database";
 import { RaffleData, Product, Testimonial } from "../types/template";
 import { TicketPackage, TicketPackageTimeOffer, CalculatedTicketPackage } from "../types/ticketPackages";
+import { RafflePrizeService } from "./rafflePrizeService";
 
 export async function getActiveRaffle() {
     const { data, error } = await supabase
@@ -337,7 +338,7 @@ export class RaffleService {
             return [];
         }
     }
-
+    // En la clase RaffleService, actualizar el método buildRaffleData
     static async buildRaffleData(
         raffle: Raffle,
         soldTickets: number,
@@ -350,11 +351,27 @@ export class RaffleService {
             .map(m => m.file_url);
 
         const progress = raffle.total_numbers > 0
-            ? Math.min((soldTickets / raffle.total_numbers) * 100, 100) + (raffle.MARKETING_BOOST_PERCENTAGE ? raffle.MARKETING_BOOST_PERCENTAGE : 0)
+            ? Math.min((soldTickets / raffle.total_numbers) * 100, 100) + (raffle.MARKETING_BOOST_PERCENTAGE || 0)
             : 0;
 
         // Calculate time remaining
         const timeRemaining = this.calculateTimeRemaining(raffle.draw_date);
+
+        // Obtener premios de la rifa
+        let prizes = await RafflePrizeService.getRafflePrizes(raffle.id);
+
+        // Si no hay premios configurados, crear premios por defecto
+        if (prizes.length === 0) {
+            prizes = RafflePrizeService.createDefaultPrizes(raffle);
+        }
+
+        // Organizar premios por tipo
+        const prizesByType = {
+            main: prizes.filter(p => p.prize.prize_type === 'main'),
+            secondary: prizes.filter(p => p.prize.prize_type === 'secondary'),
+            blessed: prizes.filter(p => p.prize.prize_type === 'blessed'),
+            consolation: prizes.filter(p => p.prize.prize_type === 'consolation')
+        };
 
         // Build products for luxury template (all raffles as products)
         const products: Product[] = (allRaffles || [raffle]).map(r => ({
@@ -364,44 +381,44 @@ export class RaffleService {
             originalPrice: r.price * r.total_numbers,
             ticketPrice: r.price,
             totalTickets: r.total_numbers,
-            soldTickets: r.id === raffle.id ? soldTickets : 0, 
+            soldTickets: r.id === raffle.id ? soldTickets : 0,
             endDate: r.draw_date,
             featured: r.id === raffle.id,
             category: 'raffle',
             progress: r.id === raffle.id ? progress : 0
         }));
 
-        // Mock testimonials for luxury template
+        // Testimonials adaptados a los premios
         const testimonials: Testimonial[] = [
             {
                 id: 1,
                 name: "María González",
-                location: "Madrid, España",
+                location: "Quito, Ecuador",
                 product: raffle.title,
                 comment: "¡No puedo creer que gané! El proceso fue muy transparente y confiable.",
                 rating: 5,
                 avatar: "https://plus.unsplash.com/premium_photo-1690086519096-0594592709d3?q=80&w=1742&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-                prize_value: raffle.price * raffle.total_numbers * 0.1
+                prize_value: prizesByType.main[0]?.prize.value * 0.1 || raffle.price * raffle.total_numbers * 0.1
             },
             {
                 id: 2,
                 name: "Juan Pérez",
-                location: "Barcelona, España",
+                location: "Guayaquil, Ecuador",
                 product: raffle.title,
                 comment: "La experiencia fue increíble. ¡Definitivamente participaré de nuevo!",
                 rating: 4,
                 avatar: "https://plus.unsplash.com/premium_photo-1679888488670-4b4bf8e05bfc?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-                prize_value: raffle.price * raffle.total_numbers * 0.1
+                prize_value: prizesByType.main[0]?.prize.value * 0.1 || raffle.price * raffle.total_numbers * 0.1
             },
             {
                 id: 3,
                 name: "Laura Martínez",
-                location: "Valencia, España",
+                location: "Cuenca, Ecuador",
                 product: raffle.title,
                 comment: "Una experiencia única. ¡Gracias por la oportunidad!",
                 rating: 5,
                 avatar: "https://plus.unsplash.com/premium_photo-1670884441012-c5cf195c062a?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-                prize_value: raffle.price * raffle.total_numbers * 0.1
+                prize_value: prizesByType.main[0]?.prize.value * 0.1 || raffle.price * raffle.total_numbers * 0.1
             }
         ];
 
@@ -411,6 +428,15 @@ export class RaffleService {
             images,
             blessedNumbers: blessedNumbers.map(bn => bn.number),
             media,
+
+            // Nuevos campos de premios
+            prizes,
+            mainPrize: prizesByType.main[0] || undefined,
+            secondaryPrizes: prizesByType.secondary,
+            blessedPrizes: prizesByType.blessed,
+            consolationPrizes: prizesByType.consolation,
+
+            // Campos existentes
             products,
             testimonials,
             progress,

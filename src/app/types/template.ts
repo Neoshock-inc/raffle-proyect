@@ -1,5 +1,5 @@
 // src/types/template.ts - Remover la definición duplicada y usar la de ticketPackages
-import { Raffle, RaffleMedia } from "./database";
+import { Raffle, RaffleMedia, RafflePrizeComplete } from "./database";
 
 export interface TemplateTheme {
     colors: {
@@ -33,15 +33,56 @@ export interface TemplateFeatures {
 }
 
 export interface TenantConfig {
-    id: string;
-    name: string;
+    // Información básica
+    company_name: string;
+    company_description?: string;
+    logo_url?: string;
     slug: string;
-    layout: string;
-    features: TemplateFeatures;
-    theme: TemplateTheme;
-    branding: {
-        logo?: string;
-        banner?: string;
+
+    // Colores y branding
+    primary_color: string;
+    secondary_color: string;
+    accent_color: string;
+
+    // Información de contacto
+    contact_info: {
+        phone?: string;
+        email?: string;
+        hours?: string;
+        location?: string;
+        address?: string;
+        support_email?: string;
+        support_phone?: string;
+    };
+
+    // Redes sociales
+    social_media: {
+        facebook?: string;
+        instagram?: string;
+        twitter?: string;
+        youtube?: string;
+        tiktok?: string;
+        whatsapp?: string;
+        telegram?: string;
+        linkedin?: string;
+    };
+
+    // Características
+    features: {
+        countdown: boolean;
+        progressBar: boolean;
+        testimonials: boolean;
+        blessedNumbers: boolean;
+        referrals: boolean;
+        notifications: boolean;
+        guestCheckout: boolean;
+    };
+
+    // Configuración de tickets
+    ticket_limits: {
+        max_per_purchase: number;
+        min_per_purchase: number;
+        max_per_user?: number;
     };
 }
 
@@ -78,6 +119,15 @@ export interface RaffleData extends Raffle {
     images: string[];
     blessedNumbers: string[];
     media: RaffleMedia[];
+
+    // Nuevos campos para premios
+    prizes: RafflePrizeComplete[];
+    mainPrize?: RafflePrizeComplete;
+    secondaryPrizes: RafflePrizeComplete[];
+    blessedPrizes: RafflePrizeComplete[];
+    consolationPrizes: RafflePrizeComplete[];
+
+    // Campos existentes
     products?: Product[];
     testimonials?: Testimonial[];
     progress: number;

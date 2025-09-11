@@ -1,10 +1,89 @@
 // src/types/database.ts
+
 export interface Tenant {
   id: string;
   name: string;
   slug: string;
-  layout: 'default' | 'luxury' | 'minimal';
+  layout: 'default' | 'latina' | 'offroad' | 'minimal';
+  status: 'active' | 'suspended' | 'deleted';
+  description?: string;
+  plan: 'basic' | 'pro' | 'enterprise';
+  owner_name?: string;
+  owner_email?: string;
+  owner_phone?: string;
   created_at: string;
+  updated_at: string;
+  deleted_at?: string;
+}
+
+export interface TenantConfig {
+  id: string;
+  tenant_id: string;
+  company_name?: string;
+  company_description?: string;
+  logo_url?: string;
+  favicon_url?: string;
+  primary_color: string;
+  secondary_color: string;
+  accent_color: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TenantContactInfo {
+  id: string;
+  tenant_id: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  postal_code?: string;
+  business_hours?: string;
+  support_email?: string;
+  support_phone?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TenantSocialMedia {
+  id: string;
+  tenant_id: string;
+  facebook_url?: string;
+  instagram_url?: string;
+  twitter_url?: string;
+  youtube_url?: string;
+  tiktok_url?: string;
+  whatsapp_number?: string;
+  telegram_url?: string;
+  linkedin_url?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TenantFeatures {
+  id: string;
+  tenant_id: string;
+  show_countdown: boolean;
+  show_progress_bar: boolean;
+  show_testimonials: boolean;
+  show_blessed_numbers: boolean;
+  enable_referrals: boolean;
+  enable_notifications: boolean;
+  allow_guest_checkout: boolean;
+  max_tickets_per_purchase: number;
+  min_tickets_per_purchase: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Tipo compuesto para toda la configuración del tenant
+export interface TenantFullConfig {
+  tenant: Tenant;
+  config: TenantConfig;
+  contact_info: TenantContactInfo;
+  social_media: TenantSocialMedia;
+  features: TenantFeatures;
 }
 
 export interface Raffle {
@@ -30,8 +109,7 @@ export interface Raffle {
   tenant_id: string;
   created_at: string;
   updated_at: string;
-
-  MARKETING_BOOST_PERCENTAGE?: number
+  MARKETING_BOOST_PERCENTAGE?: number;
 }
 
 export interface RaffleMedia {
@@ -44,53 +122,6 @@ export interface RaffleMedia {
   caption?: string;
   display_order: number;
   is_featured: boolean;
-  is_active: boolean;
-}
-
-export interface TicketPackage {
-  id: string;
-  raffle_id: string;
-  name: string;
-  amount: number;
-  price_multiplier: number;
-  fixed_price?: number;
-  badge_text?: string;
-  badge_color: string;
-  gradient_from: string;
-  gradient_via?: string;
-  gradient_to: string;
-  is_limited_offer: boolean;
-  is_best_seller: boolean;
-  is_featured: boolean;
-  discount_percentage: number;
-  bonus_entries: number;
-  subtitle?: string;
-  description?: string;
-  button_text: string;
-  display_order: number;
-  is_active: boolean;
-  max_purchases_per_user?: number;
-  stock_limit?: number;
-  current_stock: number;
-  available_from?: string;
-  available_until?: string;
-}
-
-export interface TicketPackageTimeOffer {
-  id: string;
-  ticket_package_id: string;
-  offer_name: string;
-  start_date: string;
-  end_date: string;
-  special_discount_percentage: number;
-  special_bonus_entries: number;
-  special_badge_text?: string;
-  special_badge_color?: string;
-  special_gradient_from?: string;
-  special_gradient_via?: string;
-  special_gradient_to?: string;
-  max_purchases_during_offer?: number;
-  stock_limit_for_offer?: number;
   is_active: boolean;
 }
 
@@ -121,4 +152,53 @@ export interface Participant {
   name: string;
   tenant_id: string;
   created_at: string;
+}
+
+// src/types/database.ts - Agregar estas interfaces
+
+export interface RafflePrize {
+  id: string;
+  raffle_id: string;
+  prize_type: 'main' | 'secondary' | 'blessed' | 'consolation';
+  title: string;
+  description?: string;
+  value: number;
+  currency: string;
+  quantity: number;
+  image_url?: string;
+  is_cash: boolean;
+  is_physical_item: boolean;
+  delivery_method?: string;
+  terms_and_conditions?: string;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RafflePrizeSpecification {
+  id: string;
+  prize_id: string;
+  specification_name: string;
+  specification_value: string;
+  display_order: number;
+  created_at: string;
+}
+
+export interface RafflePrizeImage {
+  id: string;
+  prize_id: string;
+  image_url: string;
+  alt_text?: string;
+  caption?: string;
+  display_order: number;
+  is_featured: boolean;
+  created_at: string;
+}
+
+// Tipo completo con relaciones
+export interface RafflePrizeComplete {
+  prize: RafflePrize;
+  specifications: RafflePrizeSpecification[];
+  images: RafflePrizeImage[];
 }

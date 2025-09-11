@@ -19,3 +19,7 @@ export interface LuxuryTemplateProps extends BaseTemplateProps {
 export interface DefaultTemplateProps extends BaseTemplateProps {
     simpleMode?: boolean;
 }
+
+export interface OffroadTemplateProps extends BaseTemplateProps {
+    // Puedes agregar propiedades específicas para OffroadTemplate aquí si es necesario
+}

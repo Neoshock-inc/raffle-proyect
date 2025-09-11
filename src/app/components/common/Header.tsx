@@ -10,57 +10,57 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ tenantConfig }) => {
   return (
-    <header 
+    <header
       className="shadow-lg"
-      style={{ backgroundColor: tenantConfig.theme.colors.primary }}
+      style={{ backgroundColor: tenantConfig.primary_color }}
     >
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            {tenantConfig.branding.logo && (
-              <img 
-                src={tenantConfig.branding.logo} 
-                alt={`${tenantConfig.name} Logo`}
+            {tenantConfig.logo_url && (
+              <img
+                src={tenantConfig.logo_url}
+                alt={`${tenantConfig.company_name} Logo`}
                 className="h-10 w-auto"
               />
             )}
-            <div 
+            <div
               className="text-2xl font-bold"
-              style={{ color: tenantConfig.theme.colors.text }}
+              style={{ color: tenantConfig.accent_color }}
             >
-              {tenantConfig.name}
+              {tenantConfig.company_name}
             </div>
           </div>
-          
+
           <nav className="hidden md:flex space-x-6">
-            <a 
-              href="#prizes" 
+            <a
+              href="#prizes"
               className="hover:opacity-80 transition-opacity"
-              style={{ color: tenantConfig.theme.colors.text }}
+              style={{ color: tenantConfig.accent_color }}
             >
               Premios
             </a>
-            <a 
-              href="#packages" 
+            <a
+              href="#packages"
               className="hover:opacity-80 transition-opacity"
-              style={{ color: tenantConfig.theme.colors.text }}
+              style={{ color: tenantConfig.accent_color }}
             >
               Paquetes
             </a>
-            <a 
-              href="#search" 
+            <a
+              href="#search"
               className="hover:opacity-80 transition-opacity"
-              style={{ color: tenantConfig.theme.colors.text }}
+              style={{ color: tenantConfig.accent_color }}
             >
               Buscar Tickets
             </a>
           </nav>
 
-          <button 
+          <button
             className="px-6 py-2 rounded-lg font-semibold hover:opacity-90 transition-opacity"
-            style={{ 
-              backgroundColor: tenantConfig.theme.colors.secondary,
-              color: tenantConfig.theme.colors.background 
+            style={{
+              backgroundColor: tenantConfig.secondary_color,
+              color: tenantConfig.accent_color
             }}
           >
             Participar

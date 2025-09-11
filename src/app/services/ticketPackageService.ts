@@ -35,19 +35,23 @@ export class TicketPackageService {
     }
   }
 
-  static calculatePackages(packages: TicketPackage[]): CalculatedTicketPackage[] {
-    const currentTime = new Date();
-
+  static calculatePackages(packages: TicketPackage[], rafflePrice: number): CalculatedTicketPackage[] {
     return packages.map(pkg => {
-      const final_price = calculateFinalPrice(pkg);
+      // CORRECCIÓN: Calcular precio correcto basado en cantidad × precio por boleto
+      const correct_base_price = pkg.amount * rafflePrice;
+
+      const final_price = calculateFinalPrice({ ...pkg, base_price: correct_base_price });
       const final_amount = calculateTotalTickets(pkg);
-      const original_price = pkg.base_price;
-      const total_discount = pkg.promotion_type === 'discount' ? pkg.promotion_value : 0;
+      const original_price = correct_base_price;
+
+      const total_discount = pkg.promotion_type === 'discount' ?
+        (correct_base_price * (pkg.promotion_value || 0) / 100) : 0;
 
       const is_available = pkg.is_active && (pkg.stock_limit ? pkg.current_stock < pkg.stock_limit : true);
 
       return {
         ...pkg,
+        base_price: correct_base_price, // Actualizar el base_price
         final_price,
         final_amount,
         original_price,
@@ -84,7 +88,7 @@ export class TicketPackageService {
         updated_at: now,
       };
 
-      return this.calculatePackages([pkg])[0];
+      return this.calculatePackages([pkg], 1.5)[0];
     });
   }
 }

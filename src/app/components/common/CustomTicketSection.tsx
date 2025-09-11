@@ -52,7 +52,7 @@ export const CustomTicketSection: React.FC<CustomTicketSectionProps> = ({
       <div className="max-w-md mx-auto bg-white rounded-2xl shadow-lg p-6">
         <h3 
           className="text-2xl font-bold text-center mb-6"
-          style={{ color: tenantConfig.theme.colors.primary }}
+          style={{ color: tenantConfig.primary_color }}
         >
           Cantidad Personalizada
         </h3>
@@ -60,7 +60,7 @@ export const CustomTicketSection: React.FC<CustomTicketSectionProps> = ({
         <div className="mb-6">
           <label 
             className="block text-sm font-medium mb-2"
-            style={{ color: tenantConfig.theme.colors.text }}
+            style={{ color: tenantConfig.accent_color }}
           >
             Cantidad de tickets
           </label>
@@ -73,7 +73,7 @@ export const CustomTicketSection: React.FC<CustomTicketSectionProps> = ({
             onChange={(e) => setCustomAmount(Math.max(1, Math.min(parseInt(e.target.value) || 1, maxTickets)))}
             className="w-full p-3 border-2 rounded-lg text-center text-xl font-bold focus:outline-none focus:ring-2"
             style={{ 
-              borderColor: tenantConfig.theme.colors.primary
+              borderColor: tenantConfig.primary_color
             }}
           />
           <p className="text-xs text-gray-500 mt-1">
@@ -84,7 +84,7 @@ export const CustomTicketSection: React.FC<CustomTicketSectionProps> = ({
         <div className="text-center mb-6">
           <p 
             className="text-3xl font-black"
-            style={{ color: tenantConfig.theme.colors.secondary }}
+            style={{ color: tenantConfig.secondary_color }}
           >
             ${totalPrice.toLocaleString()}
           </p>
@@ -97,7 +97,7 @@ export const CustomTicketSection: React.FC<CustomTicketSectionProps> = ({
           onClick={handleCustomPurchase}
           disabled={loading || customAmount <= 0}
           className="w-full py-4 rounded-xl font-bold text-white transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ backgroundColor: tenantConfig.theme.colors.primary }}
+          style={{ backgroundColor: tenantConfig.primary_color }}
         >
           {loading ? 'Procesando...' : 'Comprar Ahora'}
         </button>

@@ -1,4 +1,4 @@
-// src/components/luxury/Header.tsx
+// src/components/offroad/Header.tsx
 'use client';
 
 import { TenantConfig } from '@/app/types/template';
@@ -8,7 +8,7 @@ interface HeaderProps {
   tenantConfig: TenantConfig;
 }
 
-export const Header: React.FC<HeaderProps> = ({ tenantConfig }) => {
+export function Header({ tenantConfig }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -31,23 +31,25 @@ export const Header: React.FC<HeaderProps> = ({ tenantConfig }) => {
 
   const navItems = [
     { label: 'Inicio', action: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
-    { label: 'Rifas', action: () => scrollToSection('prize-section') },
+    { label: 'Premio', action: () => scrollToSection('prize-section') },
     { label: 'Paquetes', action: () => scrollToSection('packages-section') },
-    { label: 'Ganadores', action: () => scrollToSection('testimonials-section') },
+    { label: 'Testimonios', action: () => scrollToSection('testimonials-section') },
+    { label: 'Ganadores', action: () => scrollToSection('winners-section') },
     { label: 'FAQ', action: () => scrollToSection('faq-section') }
   ];
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-          ? 'bg-gradient-to-r from-red-500/95 via-pink-500/95 to-orange-500/95 backdrop-blur-md shadow-lg'
-          : 'bg-gradient-to-r from-red-500 via-pink-500 to-orange-500 shadow-lg'
-        }`}
+    <header 
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled 
+          ? 'bg-gray-900/95 backdrop-blur-md border-b border-gray-700' 
+          : 'bg-transparent'
+      }`}
     >
-      <div className="container mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center">
             {tenantConfig.logo_url ? (
               <img
                 src={tenantConfig.logo_url}
@@ -55,12 +57,9 @@ export const Header: React.FC<HeaderProps> = ({ tenantConfig }) => {
                 className="h-8 md:h-10 w-auto"
               />
             ) : (
-              <>
-                <div className="text-3xl md:text-4xl">🌴</div>
-                <div className="text-2xl md:text-3xl font-black text-white">
-                  {tenantConfig.company_name || 'RIFA LUXURY'}
-                </div>
-              </>
+              <div className="text-white font-black text-xl md:text-2xl">
+                🏎️ {tenantConfig.company_name || 'RIFA EXTREMA'}
+              </div>
             )}
           </div>
 
@@ -70,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({ tenantConfig }) => {
               <button
                 key={index}
                 onClick={item.action}
-                className="text-white hover:text-yellow-300 font-semibold transition-colors duration-200"
+                className="text-white hover:text-yellow-400 font-bold transition-colors duration-200"
               >
                 {item.label}
               </button>
@@ -81,7 +80,7 @@ export const Header: React.FC<HeaderProps> = ({ tenantConfig }) => {
           <div className="hidden md:flex items-center space-x-4">
             <button
               onClick={() => scrollToSection('packages-section')}
-              className="bg-white text-red-500 font-bold px-6 py-3 rounded-full hover:bg-yellow-100 transition-all duration-300 transform hover:scale-105 shadow-lg"
+              className="bg-yellow-400 hover:bg-yellow-300 text-black font-black px-6 py-2 rounded-full transition-all duration-300 transform hover:scale-105"
             >
               PARTICIPAR
             </button>
@@ -103,19 +102,9 @@ export const Header: React.FC<HeaderProps> = ({ tenantConfig }) => {
                   href={tenantConfig.social_media.instagram}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-white hover:text-yellow-300 text-xl transition-colors"
+                  className="text-pink-400 hover:text-pink-300 text-xl transition-colors"
                 >
                   📸
-                </a>
-              )}
-              {tenantConfig.social_media?.facebook && (
-                <a
-                  href={tenantConfig.social_media.facebook}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-200 hover:text-blue-100 text-xl transition-colors"
-                >
-                  📘
                 </a>
               )}
             </div>
@@ -127,37 +116,40 @@ export const Header: React.FC<HeaderProps> = ({ tenantConfig }) => {
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             <div className="w-6 h-6 flex flex-col justify-center space-y-1">
-              <span className={`block h-0.5 bg-white transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''
-                }`}></span>
-              <span className={`block h-0.5 bg-white transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''
-                }`}></span>
-              <span className={`block h-0.5 bg-white transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''
-                }`}></span>
+              <span className={`block h-0.5 bg-white transition-all duration-300 ${
+                isMobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''
+              }`}></span>
+              <span className={`block h-0.5 bg-white transition-all duration-300 ${
+                isMobileMenuOpen ? 'opacity-0' : ''
+              }`}></span>
+              <span className={`block h-0.5 bg-white transition-all duration-300 ${
+                isMobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''
+              }`}></span>
             </div>
           </button>
         </div>
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-gradient-to-r from-red-600/95 via-pink-600/95 to-orange-600/95 backdrop-blur-md border-t border-white/20">
+          <div className="md:hidden bg-gray-900/95 backdrop-blur-md border-t border-gray-700">
             <div className="px-4 py-6 space-y-4">
               {navItems.map((item, index) => (
                 <button
                   key={index}
                   onClick={item.action}
-                  className="block w-full text-left text-white hover:text-yellow-300 font-semibold py-2 transition-colors"
+                  className="block w-full text-left text-white hover:text-yellow-400 font-bold py-2 transition-colors"
                 >
                   {item.label}
                 </button>
               ))}
-
-              <div className="pt-4 border-t border-white/20">
+              
+              <div className="pt-4 border-t border-gray-700">
                 <button
                   onClick={() => {
                     scrollToSection('packages-section');
                     setIsMobileMenuOpen(false);
                   }}
-                  className="w-full bg-white text-red-500 font-bold py-3 rounded-full hover:bg-yellow-100 transition-all duration-300 shadow-lg"
+                  className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black py-3 rounded-full transition-all duration-300"
                 >
                   PARTICIPAR AHORA
                 </button>
@@ -179,7 +171,7 @@ export const Header: React.FC<HeaderProps> = ({ tenantConfig }) => {
                       href={tenantConfig.social_media.instagram}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-white hover:text-yellow-300 text-2xl transition-colors"
+                      className="text-pink-400 hover:text-pink-300 text-2xl transition-colors"
                     >
                       📸
                     </a>
@@ -189,7 +181,7 @@ export const Header: React.FC<HeaderProps> = ({ tenantConfig }) => {
                       href={tenantConfig.social_media.facebook}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-200 hover:text-blue-100 text-2xl transition-colors"
+                      className="text-blue-400 hover:text-blue-300 text-2xl transition-colors"
                     >
                       📘
                     </a>
@@ -202,4 +194,4 @@ export const Header: React.FC<HeaderProps> = ({ tenantConfig }) => {
       </div>
     </header>
   );
-};
+}

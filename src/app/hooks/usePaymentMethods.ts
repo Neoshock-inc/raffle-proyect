@@ -212,7 +212,7 @@ export const usePaymentMethods = (
             setIsProcessing(false);
         }
     };
-
+    
     const handleTransferPayment = async (): Promise<void> => {
         const validation = validateCheckoutForm(formData, isOfLegalAge);
         if (!validation.isValid) {
@@ -248,6 +248,7 @@ export const usePaymentMethods = (
 
             const validatedData = await tokenValidation.json();
 
+            // Pasar el tenantId obtenido de la validación del token
             await createInvoiceWithParticipant({
                 orderNumber: orderNumber,
                 fullName: `${formData.name} ${formData.lastName}`,
@@ -262,7 +263,7 @@ export const usePaymentMethods = (
                 amount: validatedData.amount,
                 totalPrice: validatedData.price,
                 referral_code: reffer || undefined
-            });
+            }, validatedData.tenantId); // Pasar tenantId como segundo parámetro
 
             await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -299,8 +300,22 @@ export const usePaymentMethods = (
 
     const handlePayPalApprove = async (): Promise<{ success: boolean; error?: string }> => {
         try {
-            // 1. Crear la factura primero
-            const invoice = await createInvoiceWithParticipant({
+            // Validar token para obtener tenantId
+            const tokenValidation = await fetch('/api/validate-purchase', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token })
+            });
+
+            if (!tokenValidation.ok) {
+                const errorData = await tokenValidation.json();
+                throw new Error(errorData.error || 'Token inválido o expirado');
+            }
+
+            const validatedData = await tokenValidation.json();
+
+            // 1. Crear la factura primero con el tenantId
+            await createInvoiceWithParticipant({
                 orderNumber,
                 fullName: `${formData.name} ${formData.lastName}`,
                 email: formData.email,
@@ -314,7 +329,7 @@ export const usePaymentMethods = (
                 amount: purchaseData!.amount,
                 totalPrice: purchaseData!.price,
                 referral_code: reffer || undefined
-            });
+            }, validatedData.tenantId); // Pasar tenantId como segundo parámetro
 
             // 2. Generar números de rifa después de crear la factura
             const raffleResult = await generateRaffleNumbers({
@@ -363,7 +378,7 @@ export const usePaymentMethods = (
         alert('Hubo un error al procesar tu pago con PayPal.');
         await generateNewOrderNumber();
     };
-    
+
 
     return {
         method,

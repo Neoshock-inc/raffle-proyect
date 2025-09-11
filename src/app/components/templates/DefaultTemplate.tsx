@@ -32,7 +32,7 @@ export const DefaultTemplate: React.FC<DefaultTemplateProps> = ({
     }
 
     return (
-        <div className="min-h-screen" style={{ backgroundColor: tenantConfig.theme.colors.background }}>
+        <div className="min-h-screen" style={{ backgroundColor: tenantConfig.accent_color }}>
             <Header tenantConfig={tenantConfig} />
 
             <PrizeSection
@@ -64,12 +64,12 @@ export const DefaultTemplate: React.FC<DefaultTemplateProps> = ({
                             />
                         )}
 
-                        {tenantConfig.features.customTickets && (
+                        {/* {tenantConfig.features.customTickets && (
                             <CustomTicketSection
                                 raffleData={raffleData}
                                 tenantConfig={tenantConfig}
                             />
-                        )}
+                        )} */}
 
                         <InstructionsSection
                             onVideoClick={
@@ -86,7 +86,7 @@ export const DefaultTemplate: React.FC<DefaultTemplateProps> = ({
             </main>
 
             <Footer tenantConfig={tenantConfig} />
-            <WhatsAppButton />
+            {/* <WhatsAppButton /> */}
         </div>
     );
 };

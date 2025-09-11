@@ -9,9 +9,9 @@ interface PrizeSectionProps {
   tenantConfig: TenantConfig;
 }
 
-export const PrizeSection: React.FC<PrizeSectionProps> = ({ 
-  raffleData, 
-  tenantConfig 
+export const PrizeSection: React.FC<PrizeSectionProps> = ({
+  raffleData,
+  tenantConfig
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const images = raffleData.images.length > 0 ? raffleData.images : [raffleData.banner_url || '/default-prize.jpg'];
@@ -25,22 +25,22 @@ export const PrizeSection: React.FC<PrizeSectionProps> = ({
   };
 
   return (
-    <section 
+    <section
       id="prizes"
       className="py-16"
-      style={{ backgroundColor: tenantConfig.theme.colors.background }}
+      style={{ backgroundColor: tenantConfig.accent_color }}
     >
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h1 
+          <h1
             className="text-4xl md:text-6xl font-bold mb-4"
-            style={{ color: tenantConfig.theme.colors.primary }}
+            style={{ color: tenantConfig.primary_color }}
           >
             {raffleData.title}
           </h1>
-          <p 
+          <p
             className="text-xl max-w-3xl mx-auto"
-            style={{ color: tenantConfig.theme.colors.text }}
+            style={{ color: tenantConfig.accent_color }}
           >
             {raffleData.description}
           </p>
@@ -51,10 +51,9 @@ export const PrizeSection: React.FC<PrizeSectionProps> = ({
             {images.map((image, index) => (
               <div
                 key={index}
-                className={`absolute inset-0 transition-transform duration-1000 ease-in-out ${
-                  index === currentImageIndex ? 'translate-x-0' : 
-                  index < currentImageIndex ? '-translate-x-full' : 'translate-x-full'
-                }`}
+                className={`absolute inset-0 transition-transform duration-1000 ease-in-out ${index === currentImageIndex ? 'translate-x-0' :
+                    index < currentImageIndex ? '-translate-x-full' : 'translate-x-full'
+                  }`}
               >
                 <img
                   src={image}
@@ -72,13 +71,13 @@ export const PrizeSection: React.FC<PrizeSectionProps> = ({
                 onClick={prevImage}
                 className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 p-3 rounded-full shadow-lg hover:bg-white transition-all"
               >
-                <ChevronLeft className="w-6 h-6" style={{ color: tenantConfig.theme.colors.primary }} />
+                <ChevronLeft className="w-6 h-6" style={{ color: tenantConfig.primary_color }} />
               </button>
               <button
                 onClick={nextImage}
                 className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 p-3 rounded-full shadow-lg hover:bg-white transition-all"
               >
-                <ChevronRight className="w-6 h-6" style={{ color: tenantConfig.theme.colors.primary }} />
+                <ChevronRight className="w-6 h-6" style={{ color: tenantConfig.primary_color }} />
               </button>
 
               <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex space-x-3">
@@ -86,11 +85,10 @@ export const PrizeSection: React.FC<PrizeSectionProps> = ({
                   <button
                     key={index}
                     onClick={() => setCurrentImageIndex(index)}
-                    className={`w-3 h-3 rounded-full transition-all ${
-                      index === currentImageIndex 
-                        ? 'bg-white shadow-lg scale-125' 
+                    className={`w-3 h-3 rounded-full transition-all ${index === currentImageIndex
+                        ? 'bg-white shadow-lg scale-125'
                         : 'bg-white/50'
-                    }`}
+                      }`}
                   />
                 ))}
               </div>
@@ -99,9 +97,9 @@ export const PrizeSection: React.FC<PrizeSectionProps> = ({
         </div>
 
         <div className="text-center mt-8">
-          <p 
+          <p
             className="text-3xl font-bold"
-            style={{ color: tenantConfig.theme.colors.secondary }}
+            style={{ color: tenantConfig.accent_color }}
           >
             Precio por ticket: ${raffleData.price}
           </p>

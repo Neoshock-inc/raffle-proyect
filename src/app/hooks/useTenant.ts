@@ -33,8 +33,8 @@ export const useTenant = (slug: string): UseTenantReturn => {
                 setTenant(tenantData);
 
                 // Build tenant config (will be completed when we have raffle data)
-                const config = await TenantService.getTenantConfig(tenantData);
-                setTenantConfig(config);
+                const config = await TenantService.getTenantConfig(tenantData.id);
+                setTenantConfig(config as TenantConfig | null);
 
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Error loading tenant');

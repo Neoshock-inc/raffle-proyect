@@ -128,20 +128,36 @@ export const findOrCreateParticipant = async (email: string, name?: string): Pro
         throw error;
     }
 };
-
 /**
  * Crea una nueva factura, primero asegurándose de que exista el participante
  * @param invoiceData Datos de la factura a crear
+ * @param tenantId ID del tenant (opcional, se usa el del contexto si no se proporciona)
  * @returns La factura creada
  */
-export const createInvoiceWithParticipant = async (invoiceData: Omit<InvoiceCreationData, 'participantId'>): Promise<Invoice> => {
+export const createInvoiceWithParticipant = async (
+    invoiceData: Omit<InvoiceCreationData, 'participantId'>,
+    tenantId?: string
+): Promise<Invoice> => {
     try {
         console.log('📝 Creating invoice with participant for:', invoiceData.email);
-        const { tenantId, isAdmin } = supabase.getTenantContext();
-        console.log('🔍 Current context during creation:', { tenantId, isAdmin });
+
+        // Usar tenantId proporcionado o del contexto
+        let currentTenantId = tenantId;
+        let isAdmin = false;
+
+        if (!currentTenantId) {
+            const context = supabase.getTenantContext();
+            currentTenantId = context.tenantId!;
+            isAdmin = context.isAdmin;
+        }
+
+        console.log('🔍 Current context during creation:', { tenantId: currentTenantId, isAdmin });
 
         // Encontrar o crear el participante primero
-        const participantId = await findOrCreateParticipant(invoiceData.email, invoiceData.fullName);
+        const participantId = await findOrCreateParticipant(
+            invoiceData.email,
+            invoiceData.fullName,
+        );
 
         // Luego crear la factura con el ID del participante
         const completeInvoiceData = {
@@ -149,7 +165,7 @@ export const createInvoiceWithParticipant = async (invoiceData: Omit<InvoiceCrea
             participantId
         };
 
-        const result = await createInvoice(completeInvoiceData);
+        const result = await createInvoice(completeInvoiceData, currentTenantId);
         console.log('✅ Invoice with participant created:', result.id);
         return result;
     } catch (error) {
@@ -161,13 +177,27 @@ export const createInvoiceWithParticipant = async (invoiceData: Omit<InvoiceCrea
 /**
  * Crea una nueva factura con contexto de tenant
  * @param invoiceData Datos de la factura a crear
+ * @param tenantId ID del tenant (opcional, se usa el del contexto si no se proporciona)
  * @returns La factura creada
  */
-export const createInvoice = async (invoiceData: InvoiceCreationData): Promise<Invoice> => {
+export const createInvoice = async (
+    invoiceData: InvoiceCreationData,
+    tenantId?: string
+): Promise<Invoice> => {
     try {
         console.log('📝 Creating invoice...');
-        const { tenantId, isAdmin } = supabase.getTenantContext();
-        console.log('🔍 Current context during invoice creation:', { tenantId, isAdmin });
+
+        // Usar tenantId proporcionado o del contexto
+        let currentTenantId = tenantId;
+        let isAdmin = false;
+
+        if (!currentTenantId) {
+            const context = supabase.getTenantContext();
+            currentTenantId = context.tenantId!;
+            isAdmin = context.isAdmin;
+        }
+
+        console.log('🔍 Current context during invoice creation:', { tenantId: currentTenantId, isAdmin });
 
         let referralId: string | null = null;
 
@@ -176,6 +206,7 @@ export const createInvoice = async (invoiceData: InvoiceCreationData): Promise<I
                 .from("referrals")
                 .select("id")
                 .eq("referral_code", invoiceData.referral_code.toUpperCase())
+                .eq("tenant_id", currentTenantId) // Filtrar por tenant
                 .single();
 
             if (referralError) {
@@ -200,7 +231,8 @@ export const createInvoice = async (invoiceData: InvoiceCreationData): Promise<I
             amount: invoiceData.amount,
             total_price: invoiceData.totalPrice,
             participant_id: invoiceData.participantId,
-            referral_id: referralId
+            referral_id: referralId,
+            tenant_id: currentTenantId // Agregar tenant_id explícitamente
         };
 
         const { data, error } = await supabase

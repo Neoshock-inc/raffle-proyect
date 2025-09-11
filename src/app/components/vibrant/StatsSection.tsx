@@ -65,7 +65,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ tenantConfig }) => {
               ¡Únete a la Comunidad Ganadora!
             </h3>
             <p className="text-orange-700">
-              Miles de personas ya han cumplido sus sueños con {tenantConfig.name}. 
+              Miles de personas ya han cumplido sus sueños con {tenantConfig.company_name}. 
               ¡Tu momento puede ser ahora!
             </p>
           </div>

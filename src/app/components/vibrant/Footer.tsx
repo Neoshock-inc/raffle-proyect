@@ -17,8 +17,8 @@ export const Footer: React.FC<FooterProps> = ({ tenantConfig }) => {
                         <div className="flex items-center space-x-3 mb-6">
                             <div className="text-4xl">🌴</div>
                             <div className="text-2xl font-black">
-                                <span className="text-white">{tenantConfig.name.split(' ')[0]}</span>{' '}
-                                <span className="text-yellow-300">{tenantConfig.name.split(' ')[1] || ''}</span>
+                                <span className="text-white">{tenantConfig.company_name.split(' ')[0]}</span>{' '}
+                                <span className="text-yellow-300">{tenantConfig.company_name.split(' ')[1] || ''}</span>
                             </div>
                         </div>
                         <p className="text-gray-400 leading-relaxed">
@@ -65,7 +65,7 @@ export const Footer: React.FC<FooterProps> = ({ tenantConfig }) => {
 
                 <div className="border-t border-gray-700 pt-8 text-center">
                     <p className="text-gray-400">
-                        © 2024 {tenantConfig.name}. Todos los derechos reservados.
+                        © 2024 {tenantConfig.company_name}. Todos los derechos reservados.
                         <span className="text-yellow-300"> Hecho con ❤️ para Latinoamérica</span>
                     </p>
                 </div>
