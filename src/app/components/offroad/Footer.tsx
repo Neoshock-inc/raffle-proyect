@@ -171,26 +171,6 @@ export function Footer({ raffleData, tenantConfig }: FooterProps) {
                             ✅ 100% Legal y Transparente
                         </p>
                     </div>
-
-                    {/* Información adicional de la rifa */}
-                    <div className="mt-6 bg-gray-800 p-4 rounded-lg">
-                        <div className="grid md:grid-cols-3 gap-4 text-center text-sm">
-                            <div>
-                                <div className="text-yellow-400 font-bold">🎟️ Total Números</div>
-                                <div className="text-white text-lg">{raffleData.total_numbers.toLocaleString()}</div>
-                            </div>
-                            <div>
-                                <div className="text-green-400 font-bold">✅ Vendidos</div>
-                                <div className="text-white text-lg">{raffleData.soldTickets.toLocaleString()}</div>
-                            </div>
-                            <div>
-                                <div className="text-blue-400 font-bold">⏳ Restantes</div>
-                                <div className="text-white text-lg">
-                                    {(raffleData.total_numbers - raffleData.soldTickets).toLocaleString()}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </footer>

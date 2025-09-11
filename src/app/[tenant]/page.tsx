@@ -127,21 +127,20 @@ export default async function TenantPage({ params }: PageProps) {
     // 2. Obtener configuración completa del tenant
     const tenantFullConfig = await TenantService.getTenantFullConfig(tenant.id);
 
-    if (!tenantFullConfig) {
-      console.error('Tenant config not found for:', tenant.id);
-      // Intentar crear configuración por defecto
-      const configCreated = await TenantService.createDefaultConfig(tenant.id);
-      if (configCreated) {
-        // Volver a intentar obtener la configuración
-        const retryConfig = await TenantService.getTenantFullConfig(tenant.id);
-        if (!retryConfig) {
-          console.error('Failed to create or retrieve tenant config');
-          notFound();
-        }
-      } else {
-        notFound();
-      }
-    }
+    // if (!tenantFullConfig) {
+    //   // Intentar crear configuración por defecto
+    //   const configCreated = await TenantService.createDefaultConfig(tenant.id);
+    //   if (configCreated) {
+    //     // Volver a intentar obtener la configuración
+    //     const retryConfig = await TenantService.getTenantFullConfig(tenant.id);
+    //     if (!retryConfig) {
+    //       console.error('Failed to create or retrieve tenant config');
+    //       notFound();
+    //     }
+    //   } else {
+    //     notFound();
+    //   }
+    // }
 
     // 3. Obtener TODAS las rifas activas del tenant
     const raffles = await RaffleService.getRafflesByTenant(tenant.id);
@@ -149,7 +148,6 @@ export default async function TenantPage({ params }: PageProps) {
     if (raffles.length === 0) {
       // Usar configuración del tenant si está disponible
       const companyName = tenantFullConfig?.config?.company_name || tenant.name;
-
       return (
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">

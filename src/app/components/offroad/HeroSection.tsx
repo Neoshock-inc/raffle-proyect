@@ -179,34 +179,6 @@ export function HeroSection({ raffleData, tenantConfig }: HeroSectionProps) {
                         </div>
                     )}
 
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
-                        <div className="bg-white/20 backdrop-blur-sm px-8 py-4 rounded-full border border-white/30">
-                            <span className="font-black text-2xl">
-                                Premio: ${prizeValue.toLocaleString()} USD
-                            </span>
-                        </div>
-                        <div className="bg-green-500 text-white px-8 py-4 rounded-full font-black text-xl animate-pulse">
-                            ✅ Sorteo Supervisado
-                        </div>
-                    </div>
-
-                    {/* Progreso si está habilitado */}
-                    {/* {tenantConfig.features.progressBar && (
-                        <div className="mb-3 max-w-[100%] mx-auto">
-                            <div className="bg-black/30 backdrop-blur-sm rounded-full px-6 py-4 max-w-lg mx-auto">
-                                <div className="bg-gray-700 rounded-full h-4 overflow-hidden">
-                                    <div
-                                        className="bg-gradient-to-r from-yellow-400 to-orange-500 h-full transition-all duration-1000"
-                                        style={{ width: `${Math.min(raffleData.progress || 0, 100)}%` }}
-                                    />
-                                </div>
-                                <div className="text-center mt-2 font-bold">
-                                    {Math.round(raffleData.progress || 0)}% vendido
-                                </div>
-                            </div>
-                        </div>
-                    )} */}
-
                     <button
                         onClick={scrollToPackages}
                         className="bg-yellow-400 hover:bg-yellow-300 text-black font-black text-xl px-12 py-4 rounded-full transition-all duration-300 transform hover:scale-105 shadow-2xl"

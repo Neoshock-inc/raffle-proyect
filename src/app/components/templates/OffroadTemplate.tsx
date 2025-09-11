@@ -34,14 +34,12 @@ export const OffroadTemplate: React.FC<OffroadTemplateProps> = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800">
-      {/* Hero Section con Carrusel */}
-      <HeroSection
-        raffleData={raffleData}
+      {/* Header */}
+      <Header
         tenantConfig={tenantConfig}
       />
-
-      {/* Estadísticas */}
-      <StatsSection
+      {/* Hero Section con Carrusel */}
+      <HeroSection
         raffleData={raffleData}
         tenantConfig={tenantConfig}
       />
@@ -55,6 +53,12 @@ export const OffroadTemplate: React.FC<OffroadTemplateProps> = ({
       {/* Paquetes de Tickets */}
       <PackagesSection
         ticketOptions={ticketOptions}
+        raffleData={raffleData}
+        tenantConfig={tenantConfig}
+      />
+
+      {/* Estadísticas */}
+      <StatsSection
         raffleData={raffleData}
         tenantConfig={tenantConfig}
       />

@@ -9,6 +9,7 @@ interface HeaderProps {
 }
 
 export function Header({ tenantConfig }: HeaderProps) {
+  console.log('Tenant Config:', tenantConfig);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 

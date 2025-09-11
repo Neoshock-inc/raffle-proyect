@@ -224,37 +224,6 @@ export function PackagesSection({ ticketOptions, raffleData, tenantConfig }: Pac
                         </p>
                     </div>
                 </div>
-
-                {/* Información adicional del sorteo */}
-                <div className="mt-16 text-center">
-                    <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 max-w-2xl mx-auto">
-                        <h3 className="text-2xl font-black text-white mb-4">📋 Información del Sorteo</h3>
-                        <div className="grid md:grid-cols-2 gap-4 text-left">
-                            <div>
-                                <p className="text-gray-300">
-                                    <span className="text-yellow-400 font-bold">📅 Fecha:</span> {
-                                        new Date(raffleData.draw_date).toLocaleDateString('es-ES', {
-                                            year: 'numeric',
-                                            month: 'long',
-                                            day: 'numeric'
-                                        })
-                                    }
-                                </p>
-                                <p className="text-gray-300">
-                                    <span className="text-yellow-400 font-bold">🎟️ Total números:</span> {raffleData.total_numbers.toLocaleString()}
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-gray-300">
-                                    <span className="text-yellow-400 font-bold">✅ Vendidos:</span> {raffleData.soldTickets.toLocaleString()}
-                                </p>
-                                <p className="text-gray-300">
-                                    <span className="text-yellow-400 font-bold">💰 Precio por número:</span> ${raffleData.price}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </section>
     );

@@ -49,9 +49,9 @@ function CountdownTimer({ endDate }: { endDate: string }) {
             {value.toString().padStart(2, '0')}
           </div>
           <div className="text-xs uppercase tracking-wider">
-            {unit === 'days' ? 'días' : 
-             unit === 'hours' ? 'hrs' : 
-             unit === 'minutes' ? 'min' : 'seg'}
+            {unit === 'days' ? 'días' :
+              unit === 'hours' ? 'hrs' :
+                unit === 'minutes' ? 'min' : 'seg'}
           </div>
         </div>
       ))}
@@ -75,9 +75,9 @@ export function CallToActionSection({ raffleData, tenantConfig }: CallToActionSe
         <h2 className="text-4xl sm:text-6xl font-black mb-8">
           ⏰ ¡NO PIERDAS ESTA OPORTUNIDAD!
         </h2>
-        
+
         <p className="text-2xl mb-8 opacity-90">
-          {isLowStock 
+          {isLowStock
             ? `¡Solo quedan ${remainingTickets.toLocaleString()} números disponibles!`
             : 'El sorteo se acerca y los números se están agotando'
           }
@@ -100,7 +100,7 @@ export function CallToActionSection({ raffleData, tenantConfig }: CallToActionSe
                 <span>Restantes: {remainingTickets.toLocaleString()}</span>
               </div>
               <div className="bg-gray-700 rounded-full h-4 overflow-hidden">
-                <div 
+                <div
                   className="bg-gradient-to-r from-yellow-400 to-orange-500 h-full transition-all duration-1000"
                   style={{ width: `${Math.min(raffleData.progress || 0, 100)}%` }}
                 />
@@ -129,7 +129,7 @@ export function CallToActionSection({ raffleData, tenantConfig }: CallToActionSe
             <div className="text-3xl mb-2">🏆</div>
             <div className="font-bold">Premio Garantizado</div>
             <div className="text-sm opacity-80">
-              ${(raffleData.price * raffleData.total_numbers).toLocaleString()}
+              ${((raffleData.price * raffleData.total_numbers) - 50000).toLocaleString()}
             </div>
           </div>
           <div className="bg-black/30 backdrop-blur-sm p-4 rounded-xl">
@@ -145,7 +145,7 @@ export function CallToActionSection({ raffleData, tenantConfig }: CallToActionSe
         </div>
 
         {/* Botón principal */}
-        <button 
+        <button
           onClick={scrollToPackages}
           className="bg-yellow-400 hover:bg-yellow-300 text-black font-black text-2xl px-16 py-6 rounded-full transition-all duration-300 transform hover:scale-105 shadow-2xl mb-6"
         >
@@ -156,33 +156,6 @@ export function CallToActionSection({ raffleData, tenantConfig }: CallToActionSe
         <p className="text-lg opacity-75 mb-4">
           Únete a los cientos de ganadores que ya confiaron en nosotros
         </p>
-
-        {/* Información del sorteo */}
-        {/* <div className="bg-black/40 backdrop-blur-sm p-6 rounded-xl border border-white/20 max-w-2xl mx-auto">
-          <h3 className="text-xl font-bold mb-4">📋 Detalles del Sorteo</h3>
-          <div className="grid md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p><span className="font-bold">📅 Fecha:</span> {
-                new Date(raffleData.draw_date).toLocaleDateString('es-ES', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })
-              }</p>
-              <p><span className="font-bold">🕐 Hora:</span> {
-                new Date(raffleData.draw_date).toLocaleTimeString('es-ES', {
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })
-              }</p>
-            </div>
-            <div>
-              <p><span className="font-bold">📱 Transmisión:</span> Instagram Live</p>
-              <p><span className="font-bold">👨‍⚖️ Supervisor:</span> Notario Público</p>
-            </div>
-          </div>
-        </div> */}
       </div>
     </section>
   );
