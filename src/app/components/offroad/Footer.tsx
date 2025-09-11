@@ -117,16 +117,44 @@ export function Footer({ raffleData, tenantConfig }: FooterProps) {
                         <h4 className="font-bold text-white mb-4 text-xl">Síguenos</h4>
                         <div className="space-y-2 text-lg">
                             {tenantConfig.social_media?.instagram && (
-                                <p>📸 @{tenantConfig.social_media.instagram.split('/').pop()}</p>
+                                <a
+                                    href={tenantConfig.social_media.instagram}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block text-pink-400 hover:underline"
+                                >
+                                    📸 Instagram
+                                </a>
                             )}
                             {tenantConfig.social_media?.facebook && (
-                                <p>📘 /{tenantConfig.social_media.facebook.split('/').pop()}</p>
+                                <a
+                                    href={tenantConfig.social_media.facebook}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block text-blue-400 hover:underline"
+                                >
+                                    📘 Facebook
+                                </a>
                             )}
                             {tenantConfig.social_media?.youtube && (
-                                <p>📺 YouTube: {tenantConfig.company_name}</p>
+                                <a
+                                    href={tenantConfig.social_media.youtube}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block text-red-400 hover:underline"
+                                >
+                                    📺 YouTube
+                                </a>
                             )}
                             {tenantConfig.social_media?.tiktok && (
-                                <p>🎵 TikTok: @{tenantConfig.social_media.tiktok.split('/').pop()}</p>
+                                <a
+                                    href={tenantConfig.social_media.tiktok}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block text-gray-200 hover:underline"
+                                >
+                                    🎵 TikTok
+                                </a>
                             )}
                         </div>
                     </div>
@@ -138,8 +166,7 @@ export function Footer({ raffleData, tenantConfig }: FooterProps) {
                             <p className="text-yellow-400 font-bold">📅 {drawInfo.date}</p>
                             <p>🕐 {drawInfo.time}</p>
                             <p>📍 Live Instagram</p>
-                            <p>👨‍⚖️ Con Notario</p>
-                            <p>💰 ${(raffleData.price * raffleData.total_numbers).toLocaleString()}</p>
+                            <p>💰 ${(raffleData.price * raffleData.total_numbers - 50000).toLocaleString()}</p>
                         </div>
                     </div>
                 </div>

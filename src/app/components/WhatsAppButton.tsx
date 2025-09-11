@@ -18,7 +18,7 @@ export function WhatsAppButton({ tenantConfig, className = "" }: WhatsAppButtonP
             href={tenantConfig.social_media.whatsapp}
             target="_blank"
             rel="noopener noreferrer"
-            className={`fixed bottom-4 right-4 bg-green-500 text-white p-3 rounded-full shadow-lg hover:bg-green-600 transition-all duration-300 transform hover:scale-110 z-50 ${className}`}
+            className={`fixed bottom-4 right-4 bg-green-500 text-white p-3 rounded-full shadow-lg hover:bg-green-600 transition-all duration-300 transform hover:scale-110 z-99 ${className}`}
             aria-label={`Contactar por WhatsApp - ${tenantConfig.company_name}`}
         >
             <Image

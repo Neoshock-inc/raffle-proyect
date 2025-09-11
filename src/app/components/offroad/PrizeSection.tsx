@@ -73,16 +73,6 @@ export function PrizeSection({ raffleData, tenantConfig }: PrizeSectionProps) {
                             ))}
                         </div>
 
-                        {/* Descripción del premio */}
-                        {mainPrize.description && (
-                            <div className="mt-8 p-6 bg-gray-800 rounded-xl border border-gray-700">
-                                <h4 className="text-xl font-bold mb-4 text-yellow-400">Descripción</h4>
-                                <p className="text-gray-300 leading-relaxed">
-                                    {mainPrize.description}
-                                </p>
-                            </div>
-                        )}
-
                         {/* Valor del premio */}
                         <div className="mt-8 p-6 bg-gradient-to-r from-yellow-600 to-orange-600 rounded-xl">
                             <p className="text-2xl font-black">
@@ -98,19 +88,11 @@ export function PrizeSection({ raffleData, tenantConfig }: PrizeSectionProps) {
                             </p>
                         </div>
 
-                        {/* Información de entrega */}
-                        {mainPrize.delivery_method && (
-                            <div className="mt-6 p-4 bg-blue-900/50 rounded-lg border border-blue-700">
-                                <h5 className="text-lg font-bold text-blue-300 mb-2">📦 Entrega</h5>
-                                <p className="text-blue-100">{mainPrize.delivery_method}</p>
-                            </div>
-                        )}
-
                         {/* Términos y condiciones */}
                         {mainPrize.terms_and_conditions && (
                             <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-600">
                                 <h5 className="text-lg font-bold text-gray-300 mb-2">📋 Términos</h5>
-                                <p className="text-gray-400 text-sm">{mainPrize.terms_and_conditions}</p>
+                                <p className="text-gray-400 text-sm"><strong>Importante:</strong> {mainPrize.terms_and_conditions}</p>
                             </div>
                         )}
 
@@ -231,43 +213,53 @@ export function PrizeSection({ raffleData, tenantConfig }: PrizeSectionProps) {
                         <h3 className="text-3xl font-black text-white text-center mb-8">
                             ✨ NÚMEROS BENDECIDOS
                         </h3>
-                        <div className="bg-gradient-to-r from-purple-800 to-blue-800 p-8 rounded-xl">
-                            {raffleData.blessedPrizes.map((prizeComplete, index) => (
-                                <div key={prizeComplete.prize.id} className="text-center">
-                                    <h4 className="text-yellow-300 font-black text-2xl mb-4">
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {raffleData.blessedPrizes.map((prizeComplete) => (
+                                <div
+                                    key={prizeComplete.prize.id}
+                                    className="bg-gradient-to-r from-purple-800 to-blue-800 p-6 rounded-xl border border-purple-600 text-center"
+                                >
+                                    <h4 className="text-yellow-300 font-black text-2xl mb-3">
                                         {prizeComplete.prize.title}
                                     </h4>
-                                    <p className="text-white text-3xl font-black mb-4">
-                                        {prizeComplete.prize.currency} {prizeComplete.prize.value.toLocaleString()}
+
+                                    <p className="text-white text-3xl font-black mb-3">
+                                        {prizeComplete.prize.currency}{" "}
+                                        {prizeComplete.prize.value.toLocaleString()}
                                     </p>
+
                                     {prizeComplete.prize.description && (
-                                        <p className="text-purple-200 text-lg mb-4">
+                                        <p className="text-purple-200 text-sm mb-3">
                                             {prizeComplete.prize.description}
                                         </p>
                                     )}
+
                                     {prizeComplete.prize.quantity > 1 && (
-                                        <p className="text-green-300 font-bold">
+                                        <p className="text-green-300 font-bold text-sm">
                                             {prizeComplete.prize.quantity} números bendecidos disponibles
                                         </p>
                                     )}
                                 </div>
                             ))}
-                            {raffleData.blessedNumbers.length > 0 && (
-                                <div className="mt-6">
-                                    <p className="text-white mb-4">Números bendecidos activos:</p>
-                                    <div className="flex flex-wrap justify-center gap-2">
-                                        {raffleData.blessedNumbers.map((number, index) => (
-                                            <span
-                                                key={index}
-                                                className="bg-yellow-400 text-black px-3 py-1 rounded-full font-bold"
-                                            >
-                                                {number}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
                         </div>
+
+                        {raffleData.blessedNumbers.length > 0 && (
+                            <div className="mt-10 text-center">
+                                <p className="text-white mb-4 text-lg font-semibold">
+                                    Números bendecidos activos:
+                                </p>
+                                <div className="flex flex-wrap justify-center gap-2">
+                                    {raffleData.blessedNumbers.map((number, index) => (
+                                        <span
+                                            key={index}
+                                            className="bg-yellow-400 text-black px-3 py-1 rounded-full font-bold"
+                                        >
+                                            {number}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 

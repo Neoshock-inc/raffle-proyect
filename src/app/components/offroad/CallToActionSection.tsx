@@ -70,7 +70,7 @@ export function CallToActionSection({ raffleData, tenantConfig }: CallToActionSe
   const isLowStock = remainingTickets < raffleData.total_numbers * 0.2; // Menos del 20%
 
   return (
-    <section className="py-20 px-4 bg-gradient-to-r from-orange-600 via-red-600 to-orange-700">
+    <section className="py-10 px-4 bg-gradient-to-r from-orange-600 via-red-600 to-orange-700">
       <div className="max-w-4xl mx-auto text-center text-white">
         <h2 className="text-4xl sm:text-6xl font-black mb-8">
           ⏰ ¡NO PIERDAS ESTA OPORTUNIDAD!
@@ -138,16 +138,16 @@ export function CallToActionSection({ raffleData, tenantConfig }: CallToActionSe
             <div className="text-sm opacity-80">100% Transparente</div>
           </div>
           <div className="bg-black/30 backdrop-blur-sm p-4 rounded-xl">
-            <div className="text-3xl mb-2">🚚</div>
-            <div className="font-bold">Entrega Garantizada</div>
-            <div className="text-sm opacity-80">A cualquier parte del país</div>
+            <div className="text-3xl mb-2">📑</div>
+            <div className="font-bold">Documentos al Día</div>
+            <div className="text-sm opacity-80">Cumplimos con toda la normativa vigente</div>
           </div>
         </div>
 
         {/* Botón principal */}
         <button
           onClick={scrollToPackages}
-          className="bg-yellow-400 hover:bg-yellow-300 text-black font-black text-2xl px-16 py-6 rounded-full transition-all duration-300 transform hover:scale-105 shadow-2xl mb-6"
+          className="bg-yellow-400 hover:bg-yellow-300 text-black font-black text-xl px-6 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-2xl mb-6"
         >
           🚀 ¡COMPRAR NÚMEROS AHORA!
         </button>

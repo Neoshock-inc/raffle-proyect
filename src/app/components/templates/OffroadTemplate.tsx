@@ -77,9 +77,9 @@ export const OffroadTemplate: React.FC<OffroadTemplateProps> = ({
       /> */}
 
       {/* FAQ */}
-      <FAQSection
+      {/* <FAQSection
         tenantConfig={tenantConfig}
-      />
+      /> */}
 
       {/* Call to Action Final */}
       <CallToActionSection

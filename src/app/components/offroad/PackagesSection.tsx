@@ -69,20 +69,18 @@ function TicketCard({ option, raffleData, tenantConfig, tenantSlug }: TicketCard
 
     return (
         <div
-            className={`relative w-full max-w-[300px] h-60 sm:h-65 mx-auto rounded-xl cursor-pointer transition-all duration-300 ${
-                loading ? 'opacity-50 pointer-events-none' : 'hover:scale-[1.02] hover:shadow-xl'
-            } bg-gray-900 ${getBorderStyle()}`}
+            className={`relative w-full max-w-[300px] h-60 sm:h-65 mx-auto rounded-xl cursor-pointer transition-all duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'hover:scale-[1.02] hover:shadow-xl'
+                } bg-gray-900 ${getBorderStyle()}`}
             onClick={() => setSelectedPackage(option.id)}
         >
             {/* Badge superior */}
             {badgeText && (
-                <div className={`absolute -top-2 left-1/2 -translate-x-1/2 ${
-                    isMegaPack
+                <div className={`absolute -top-2 left-1/2 -translate-x-1/2 ${isMegaPack
                         ? 'bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-black text-base font-extrabold px-8 py-2 border border-yellow-300'
                         : isBestSeller
                             ? 'bg-green-500 text-white text-sm font-black px-1 py-1'
                             : 'bg-red-600 text-white text-sm font-black px-1 py-1'
-                } rounded-full shadow-lg animate-bounce min-w-[180px] text-center z-10 tracking-wider uppercase`}>
+                    } rounded-full shadow-lg animate-bounce min-w-[180px] text-center z-10 tracking-wider uppercase`}>
                     {badgeText}
                 </div>
             )}
@@ -139,9 +137,8 @@ function TicketCard({ option, raffleData, tenantConfig, tenantSlug }: TicketCard
                 )}
 
                 <button
-                    className={`${getButtonStyle()} text-sm sm:text-base py-2 px-6 sm:px-8 rounded-full transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 ${
-                        loading ? 'animate-pulse' : ''
-                    }`}
+                    className={`${getButtonStyle()} text-sm sm:text-base py-2 px-6 sm:px-8 rounded-full transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 ${loading ? 'animate-pulse' : ''
+                        }`}
                     onClick={(e) => {
                         e.stopPropagation();
                         handlePurchase();
@@ -178,7 +175,7 @@ export function PackagesSection({ ticketOptions, raffleData, tenantConfig }: Pac
     }
 
     return (
-        <section id="packages-section" className="py-20 px-4 bg-black">
+        <section id="packages-section" className="py-10 px-4 bg-black">
             <div className="max-w-6xl mx-auto">
                 <h2 className="text-4xl sm:text-6xl font-black text-center text-white mb-8">
                     🎯 ELIGE TU PAQUETE
@@ -198,31 +195,6 @@ export function PackagesSection({ ticketOptions, raffleData, tenantConfig }: Pac
                             tenantSlug={tenantConfig.slug}
                         />
                     ))}
-                </div>
-
-                {/* Garantías */}
-                <div className="grid md:grid-cols-3 gap-8 text-center text-white">
-                    <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 hover:border-green-400 transition-colors">
-                        <div className="text-5xl mb-6">🔒</div>
-                        <h3 className="font-black text-2xl mb-4">100% Seguro</h3>
-                        <p className="text-gray-300 text-lg">
-                            Pagos protegidos con certificación SSL. Tu dinero está seguro.
-                        </p>
-                    </div>
-                    <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 hover:border-yellow-400 transition-colors">
-                        <div className="text-5xl mb-6">⚡</div>
-                        <h3 className="font-black text-2xl mb-4">Sorteo Garantizado</h3>
-                        <p className="text-gray-300 text-lg">
-                            Se realiza con o sin venta total. Tu participación está asegurada.
-                        </p>
-                    </div>
-                    <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 hover:border-red-400 transition-colors">
-                        <div className="text-5xl mb-6">📱</div>
-                        <h3 className="font-black text-2xl mb-4">Transmisión Live</h3>
-                        <p className="text-gray-300 text-lg">
-                            Sorteo en vivo por Instagram y Facebook. Transparencia total.
-                        </p>
-                    </div>
                 </div>
             </div>
         </section>

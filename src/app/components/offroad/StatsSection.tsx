@@ -10,54 +10,13 @@ interface StatsSectionProps {
 }
 
 export function StatsSection({ raffleData, tenantConfig }: StatsSectionProps) {
-  // Calcular estadísticas dinámicas basadas en datos reales
-  const stats = [
-    {
-      value: raffleData.soldTickets.toLocaleString(),
-      label: 'Números Vendidos',
-      color: 'text-yellow-400',
-      icon: '🎯'
-    },
-    {
-      value: `$${(raffleData.price * raffleData.total_numbers).toLocaleString()}`,
-      label: 'Valor del Premio',
-      color: 'text-green-400',
-      icon: '💰'
-    },
-    {
-      value: raffleData.total_numbers.toLocaleString(),
-      label: 'Total de Números',
-      color: 'text-blue-400',
-      icon: '🎟️'
-    },
-    {
-      value: '100%',
-      label: 'Transparencia',
-      color: 'text-red-400',
-      icon: '✅'
-    }
-  ];
 
   return (
     <section className="py-6 px-4 bg-gray-800">
       <div className="max-w-6xl mx-auto">
-        {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center text-white">
-          {stats.map((stat, index) => (
-            <div key={index} className="group hover:scale-105 transition-transform duration-300">
-              <div className="text-4xl mb-2">{stat.icon}</div>
-              <div className={`text-4xl sm:text-5xl font-black ${stat.color} mb-2 group-hover:animate-pulse`}>
-                {stat.value}
-              </div>
-              <div className="text-sm sm:text-base text-gray-300">
-                {stat.label}
-              </div>
-            </div>
-          ))}
-        </div> */}
-
         {/* Progreso adicional si está habilitado */}
         {tenantConfig.features.progressBar && (
-          <div className="mt-12 max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             <div className="bg-gradient-to-br from-gray-800 via-gray-700 to-gray-600 rounded-2xl p-8 shadow-2xl border border-gray-600">
               {/* Título Principal */}
               <h2 className="text-white font-black text-3xl md:text-4xl mb-6 text-center bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 bg-clip-text text-transparent">

@@ -1,3 +1,4 @@
+// src/app/participants/page.tsx - MIGRACIÓN MULTI-TENANT
 'use client'
 import React, { useState, useCallback } from 'react'
 import { Users, Plus, RefreshCw, AlertCircle, Edit, Trash2, Eye } from 'lucide-react'
@@ -68,6 +69,7 @@ export default function ParticipantesPage() {
     const handleFormSubmit = async (data: any) => {
         try {
             if (selectedParticipant) {
+                // CAMBIO: Usar nueva signature sin el ID separado
                 await updateExisting(selectedParticipant.id, data)
             } else {
                 await createNew(data)
@@ -175,7 +177,7 @@ export default function ParticipantesPage() {
             {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-2">
                     <AlertCircle className="h-5 w-5 text-red-500" />
-                    <p className="text-red-700">{error.message}</p>
+                    <p className="text-red-700">{error}</p>
                 </div>
             )}
 

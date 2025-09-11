@@ -1,3 +1,4 @@
+// src/app/blessed-numbers/page.tsx - MIGRACIÓN MULTI-TENANT
 'use client'
 
 import { useState, useCallback } from 'react'
@@ -196,8 +197,8 @@ export default function BlessedNumbersPage() {
             {/* Información de la Rifa Seleccionada */}
             {selectedRaffle && (
                 <div className={`border rounded-lg p-4 ${selectedRaffle.is_active
-                        ? 'bg-green-50 border-green-200'
-                        : 'bg-gray-50 border-gray-200'
+                    ? 'bg-green-50 border-green-200'
+                    : 'bg-gray-50 border-gray-200'
                     }`}>
                     <div className="flex justify-between items-start">
                         <div>
@@ -233,7 +234,7 @@ export default function BlessedNumbersPage() {
             {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-2">
                     <AlertCircle className="h-5 w-5 text-red-500" />
-                    <p className="text-red-700">{error.message}</p>
+                    <p className="text-red-700">{error}</p>
                 </div>
             )}
 
@@ -288,8 +289,8 @@ export default function BlessedNumbersPage() {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.is_minor_prize
-                                                        ? 'bg-yellow-100 text-yellow-800'
-                                                        : 'bg-green-100 text-green-800'
+                                                    ? 'bg-yellow-100 text-yellow-800'
+                                                    : 'bg-green-100 text-green-800'
                                                     }`}>
                                                     {item.is_minor_prize ? 'Premio Menor' : 'Premio Mayor'}
                                                 </span>
@@ -341,7 +342,7 @@ export default function BlessedNumbersPage() {
             {selectedRaffleId && filteredBlessed.length > ITEMS_PER_PAGE && (
                 <div className="flex justify-end items-center space-x-2 mt-2">
                     <button
-                        onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                        onClick={() => setPage(Math.max(pagination.page - 1, 1))}
                         disabled={pagination.page === 1}
                         className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-50"
                     >
@@ -351,7 +352,7 @@ export default function BlessedNumbersPage() {
                         Página {pagination.page} de {pagination.totalPages}
                     </span>
                     <button
-                        onClick={() => setPage((p) => Math.min(p + 1, pagination.totalPages))}
+                        onClick={() => setPage(Math.min(pagination.page + 1, pagination.totalPages))}
                         disabled={pagination.page >= pagination.totalPages}
                         className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-50"
                     >
