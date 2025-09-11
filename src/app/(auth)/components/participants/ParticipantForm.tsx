@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { CreateParticipantData, UpdateParticipantData, ParticipantWithStats } from '../../services/participantsService'
+import { CreateParticipantData, ParticipantWithStats, UpdateParticipantInput } from '../../services/participantsService'
 
 interface ParticipantFormProps {
     isOpen: boolean
     onClose: () => void
-    onSubmit: (data: CreateParticipantData | UpdateParticipantData) => Promise<void>
+    onSubmit: (data: CreateParticipantData | UpdateParticipantInput) => Promise<void>
     participant?: ParticipantWithStats | null
     loading: boolean
 }

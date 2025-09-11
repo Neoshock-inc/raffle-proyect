@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 
 import { toast } from 'sonner'
-import { setTenantContext } from '../services/blessedService'
 import { Referido, getReferidos, ReferidoInput, createReferido, updateReferido, deleteReferido, toggleReferidoStatus } from '../services/referidoService'
 import { useTenantContext } from './useTenantContext'
 
@@ -23,15 +22,12 @@ export function useReferidos() {
 
         try {
             setLoading(true)
-            
+
             console.log('📋 [REFERIDOS-HOOK] Loading referidos for tenant:', currentTenant?.name || 'Global')
-            
-            // CRÍTICO: Establecer contexto antes de las consultas
-            setTenantContext(currentTenant?.id || null, isAdmin)
-            
+
             const data = await getReferidos()
             setReferidos(data)
-            
+
             console.log('✅ [REFERIDOS-HOOK] Referidos loaded:', data.length)
         } catch (error) {
             console.error('❌ [REFERIDOS-HOOK] Error loading referidos:', error)
@@ -45,20 +41,17 @@ export function useReferidos() {
     const handleCreate = useCallback(async (input: ReferidoInput) => {
         try {
             setCreating(true)
-            
+
             console.log('➕ [REFERIDOS-HOOK] Creating referido for tenant:', currentTenant?.name || 'Global')
-            
-            // Establecer contexto antes de crear
-            setTenantContext(currentTenant?.id || null, isAdmin)
-            
+
             await createReferido(input)
             toast.success('Referido creado correctamente')
-            
+
             // Recargar lista
             await loadReferidos()
         } catch (error: any) {
             console.error('❌ [REFERIDOS-HOOK] Error creating referido:', error)
-            
+
             if (error.message === 'email_already_exists') {
                 toast.error('Ya existe un referido con ese email')
             } else if (error.message === 'duplicate_referral_code') {
@@ -76,20 +69,17 @@ export function useReferidos() {
     const handleUpdate = useCallback(async (id: string, input: ReferidoInput) => {
         try {
             setUpdating(true)
-            
+
             console.log('✏️ [REFERIDOS-HOOK] Updating referido for tenant:', currentTenant?.name || 'Global')
-            
-            // Establecer contexto antes de actualizar
-            setTenantContext(currentTenant?.id || null, isAdmin)
-            
+
             await updateReferido(id, input)
             toast.success('Referido actualizado correctamente')
-            
+
             // Recargar lista
             await loadReferidos()
         } catch (error: any) {
             console.error('❌ [REFERIDOS-HOOK] Error updating referido:', error)
-            
+
             if (error.message === 'duplicate_referral_code') {
                 toast.error('El código de referido ya existe')
             } else {
@@ -105,15 +95,12 @@ export function useReferidos() {
     const handleDelete = useCallback(async (id: string) => {
         try {
             setDeleting(true)
-            
+
             console.log('🗑️ [REFERIDOS-HOOK] Deleting referido for tenant:', currentTenant?.name || 'Global')
-            
-            // Establecer contexto antes de eliminar
-            setTenantContext(currentTenant?.id || null, isAdmin)
-            
+
             await deleteReferido(id)
             toast.success('Referido eliminado correctamente')
-            
+
             // Actualizar lista local sin recargar
             setReferidos(prev => prev.filter(r => r.id !== id))
         } catch (error) {
@@ -129,21 +116,18 @@ export function useReferidos() {
     const handleToggleStatus = useCallback(async (id: string, currentStatus: boolean) => {
         try {
             console.log('🔄 [REFERIDOS-HOOK] Toggling status for tenant:', currentTenant?.name || 'Global')
-            
-            // Establecer contexto antes de actualizar
-            setTenantContext(currentTenant?.id || null, isAdmin)
-            
+
             await toggleReferidoStatus(id, currentStatus)
-            
+
             // Actualizar estado local
-            setReferidos(prev => 
-                prev.map(r => 
-                    r.id === id 
+            setReferidos(prev =>
+                prev.map(r =>
+                    r.id === id
                         ? { ...r, is_active: !currentStatus }
                         : r
                 )
             )
-            
+
             toast.success(`Referido ${currentStatus ? 'desactivado' : 'activado'} correctamente`)
         } catch (error) {
             console.error('❌ [REFERIDOS-HOOK] Error toggling status:', error)
@@ -155,12 +139,12 @@ export function useReferidos() {
     // Copiar enlace de referido
     const copyReferralLink = useCallback(async (code: string) => {
         // Usar el dominio del tenant si está disponible
-        const baseUrl = currentTenant?.slug 
+        const baseUrl = currentTenant?.slug
             ? `https://${currentTenant.slug}`
             : window.location.origin
-            
+
         const link = `${baseUrl}/?ref=${code}`
-        
+
         try {
             await navigator.clipboard.writeText(link)
             toast.success('Enlace copiado al portapapeles')
@@ -171,10 +155,10 @@ export function useReferidos() {
 
     // Abrir enlace de referido
     const openReferralLink = useCallback((code: string) => {
-        const baseUrl = currentTenant?.slug 
+        const baseUrl = currentTenant?.slug
             ? `https://${currentTenant.slug}`
             : window.location.origin
-            
+
         const link = `${baseUrl}/?ref=${code}`
         window.open(link, '_blank')
     }, [currentTenant])
@@ -213,13 +197,13 @@ export function useReferidos() {
         // Datos
         referidos,
         stats,
-        
+
         // Estados
         loading: loading || tenantLoading,
         creating,
         updating,
         deleting,
-        
+
         // Acciones
         loadReferidos,
         handleCreate,
@@ -229,7 +213,7 @@ export function useReferidos() {
         copyReferralLink,
         openReferralLink,
         refreshData,
-        
+
         // Info del tenant
         currentTenant,
         isAdmin
