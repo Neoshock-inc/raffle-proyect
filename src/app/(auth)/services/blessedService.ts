@@ -219,7 +219,7 @@ export async function generateRandomBlessedNumbers(quantity: number, raffleId: s
   }
 
   const totalNumbers = raffle.total_numbers
-  const digits = totalNumbers.toString().length - 1
+  const digits = totalNumbers.toString().length
 
   // Obtener números ya existentes PARA ESTA RIFA
   let existingQuery = supabase.directQuery('blessed_numbers')
