@@ -35,8 +35,14 @@ async function getTenantSlugByDomain(domain: string): Promise<string | null> {
   }
 }
 
+function normalizeDomain(domain: string): string {
+  return domain.replace(/^www\./, "").toLowerCase();
+}
+
+
 export async function middleware(request: NextRequest) {
-  const host = request.headers.get("host") || "";
+  const rawHost = request.headers.get("host") || "";
+  const host = normalizeDomain(rawHost);  // 👈 aplicar aquí
   const url = request.nextUrl.clone();
 
   // Ignorar rutas técnicas

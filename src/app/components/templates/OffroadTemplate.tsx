@@ -45,6 +45,12 @@ export const OffroadTemplate: React.FC<OffroadTemplateProps> = ({
         tenantConfig={tenantConfig}
       />
 
+      {/* Estadísticas */}
+      <StatsSection
+        raffleData={raffleData}
+        tenantConfig={tenantConfig}
+      />
+      
       {/* Premio Principal */}
       <PrizeSection
         raffleData={raffleData}
@@ -54,12 +60,6 @@ export const OffroadTemplate: React.FC<OffroadTemplateProps> = ({
       {/* Paquetes de Tickets */}
       <PackagesSection
         ticketOptions={ticketOptions}
-        raffleData={raffleData}
-        tenantConfig={tenantConfig}
-      />
-
-      {/* Estadísticas */}
-      <StatsSection
         raffleData={raffleData}
         tenantConfig={tenantConfig}
       />

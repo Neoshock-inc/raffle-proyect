@@ -99,7 +99,7 @@ export function PrizeSection({ raffleData, tenantConfig }: PrizeSectionProps) {
                         {/* Información adicional del sorteo */}
                         <div className="mt-6 grid grid-cols-2 gap-4 text-sm">
                             <div className="bg-gray-800 p-4 rounded-lg">
-                                <div className="text-yellow-400 font-bold">📅 Fecha del Sorteo</div>
+                                <div className="text-yellow-400 font-bold">📅 Fecha de lanzamiento</div>
                                 <div className="text-white">
                                     {new Date(raffleData.draw_date).toLocaleDateString('es-ES', {
                                         weekday: 'long',
