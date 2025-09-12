@@ -338,6 +338,7 @@ export class RaffleService {
             return [];
         }
     }
+    
     // En la clase RaffleService, actualizar el método buildRaffleData
     static async buildRaffleData(
         raffle: Raffle,

@@ -33,6 +33,7 @@ export interface TemplateFeatures {
 }
 
 export interface TenantConfig {
+    id: string;
     // Información básica
     company_name: string;
     company_description?: string;

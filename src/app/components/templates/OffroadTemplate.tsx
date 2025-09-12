@@ -15,6 +15,7 @@ import { CallToActionSection } from '../offroad/CallToActionSection';
 import { Footer } from '../offroad/Footer';
 import { OffroadTemplateProps } from '@/app/types/template-props';
 import { WhatsAppButton } from '../WhatsAppButton';
+import { MyNumbersSection } from '../offroad/MyNumbersSection';
 
 export const OffroadTemplate: React.FC<OffroadTemplateProps> = ({
   raffleData,
@@ -59,6 +60,12 @@ export const OffroadTemplate: React.FC<OffroadTemplateProps> = ({
 
       {/* Estadísticas */}
       <StatsSection
+        raffleData={raffleData}
+        tenantConfig={tenantConfig}
+      />
+
+      {/* Consultar Mis Números */}
+      <MyNumbersSection
         raffleData={raffleData}
         tenantConfig={tenantConfig}
       />

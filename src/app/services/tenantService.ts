@@ -222,6 +222,7 @@ export class TenantService {
         const { tenant, config, contact_info, social_media, features } = fullConfig;
 
         return {
+            id: tenant.id,
             // Información básica
             company_name: config.company_name || tenant.name,
             company_description: config.company_description || tenant.description,
