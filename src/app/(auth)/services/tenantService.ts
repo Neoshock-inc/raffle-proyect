@@ -566,7 +566,7 @@ export const tenantService = {
     }
   },
   // ====== CONFIGURACIONES DE PAGO ======
-  
+
   async getPaymentConfigs(tenantId: string) {
     const { createClient } = await import('@supabase/supabase-js')
     const directClient = createClient(
@@ -624,7 +624,7 @@ export const tenantService = {
           .single()
 
         if (error) throw error
-        
+
         console.log('Payment config updated:', {
           tenant_id: configData.tenant_id,
           provider: configData.provider,
@@ -824,7 +824,6 @@ export const tenantService = {
   },
 
   // ====== TESTING DE CONFIGURACIONES ======
-
   async testConfiguration(tenantId: string, type: 'payment' | 'email', provider: string) {
     try {
       console.log('Testing configuration:', { tenantId, type, provider })
@@ -834,7 +833,14 @@ export const tenantService = {
 
       if (type === 'payment') {
         const paymentConfigs = await this.getPaymentConfigs(tenantId)
-        config = paymentConfigs.find(c => c.provider === provider)
+
+        // Manejar casos especiales para cuentas bancarias con ID específico
+        if (provider.startsWith('bank_account_')) {
+          const accountId = provider.replace('bank_account_', '')
+          config = paymentConfigs.find(c => c.provider === 'bank_account' && c.id === accountId)
+        } else {
+          config = paymentConfigs.find(c => c.provider === provider)
+        }
       } else if (type === 'email') {
         const emailConfigs = await this.getEmailConfigs(tenantId)
         config = emailConfigs.find(c => c.provider === provider)
@@ -860,9 +866,23 @@ export const tenantService = {
           if (!config.extra?.client_id || !config.extra?.client_secret) {
             throw new Error('Faltan las credenciales de PayPal')
           }
-        } else if (provider === 'bank_account') {
+        } else if (provider.startsWith('bank_account')) {
+          // Validación para cuentas bancarias individuales
           if (!config.extra?.bank_name || !config.extra?.account_number || !config.extra?.account_holder) {
             throw new Error('Faltan datos bancarios requeridos')
+          }
+
+          // Validaciones adicionales para cuentas bancarias
+          if (config.extra.account_number.length < 8) {
+            throw new Error('El número de cuenta debe tener al menos 8 dígitos')
+          }
+
+          if (config.extra.routing_number && config.extra.routing_number.length !== 9) {
+            throw new Error('El routing number debe tener exactamente 9 dígitos')
+          }
+
+          if (config.extra.swift_code && config.extra.swift_code.length < 8) {
+            throw new Error('El código SWIFT debe tener al menos 8 caracteres')
           }
         }
       } else if (type === 'email') {
@@ -884,19 +904,13 @@ export const tenantService = {
         }
       }
 
-      // En un entorno real, aquí harías las validaciones específicas:
-      // - Para Stripe: hacer una llamada a la API de Stripe para validar las keys
-      // - Para PayPal: verificar las credenciales con PayPal API
-      // - Para Resend: enviar un email de prueba o validar la API key
-      // - Para cuenta bancaria: validar formato de números de cuenta
-
       // Simulación de latencia de red
       await new Promise(resolve => setTimeout(resolve, 1000))
 
       // Por ahora retornamos éxito si pasa las validaciones básicas
       return {
         success: true,
-        message: `Configuración de ${provider} válida`,
+        message: `Configuración de ${provider.replace('bank_account_', 'cuenta bancaria ')} válida`,
         tested_at: new Date().toISOString()
       }
 
@@ -907,6 +921,112 @@ export const tenantService = {
         error: error instanceof Error ? error.message : 'Error desconocido al probar la configuración',
         tested_at: new Date().toISOString()
       }
+    }
+  },
+  
+  async upsertBankAccount(accountData: {
+    id?: string
+    tenant_id: string
+    bank_name: string
+    account_number: string
+    account_holder: string
+    routing_number?: string
+    swift_code?: string
+  }) {
+    const { createClient } = await import('@supabase/supabase-js')
+    const directClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    try {
+      const configData = {
+        tenant_id: accountData.tenant_id,
+        provider: 'bank_account',
+        public_key: 'N/A', // Campo requerido pero no aplica
+        secret_key: 'N/A',
+        extra: {
+          bank_name: accountData.bank_name,
+          account_number: accountData.account_number,
+          account_holder: accountData.account_holder,
+          routing_number: accountData.routing_number || '',
+          swift_code: accountData.swift_code || ''
+        }
+      }
+
+      if (accountData.id) {
+        // Actualizar cuenta existente
+        const { data, error } = await directClient
+          .from('payment_configs')
+          .update({
+            public_key: configData.public_key,
+            secret_key: configData.secret_key,
+            extra: configData.extra
+          })
+          .eq('id', accountData.id)
+          .select()
+          .single()
+
+        if (error) throw error
+
+        console.log('Bank account updated:', {
+          tenant_id: accountData.tenant_id,
+          account_id: accountData.id,
+          action: 'updated'
+        })
+
+        return data
+      } else {
+        // Crear nueva cuenta
+        const { data, error } = await directClient
+          .from('payment_configs')
+          .insert(configData)
+          .select()
+          .single()
+
+        if (error) throw error
+
+        console.log('Bank account created:', {
+          tenant_id: accountData.tenant_id,
+          account_id: data.id,
+          action: 'created'
+        })
+
+        return data
+      }
+    } catch (error) {
+      console.error('Error upserting bank account:', error)
+      throw new Error('Error al guardar la cuenta bancaria')
+    }
+  },
+
+  async deleteBankAccount(tenantId: string, accountId: string) {
+    const { createClient } = await import('@supabase/supabase-js')
+    const directClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    try {
+      const { error } = await directClient
+        .from('payment_configs')
+        .delete()
+        .eq('id', accountId)
+        .eq('tenant_id', tenantId)
+        .eq('provider', 'bank_account')
+
+      if (error) throw error
+
+      console.log('Bank account deleted:', {
+        tenant_id: tenantId,
+        account_id: accountId,
+        action: 'deleted'
+      })
+
+      return { success: true }
+    } catch (error) {
+      console.error('Error deleting bank account:', error)
+      throw new Error('Error al eliminar la cuenta bancaria')
     }
   },
 }

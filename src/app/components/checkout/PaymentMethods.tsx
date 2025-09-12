@@ -199,9 +199,10 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
             </div>
 
             {/* Información bancaria dinámica */}
-            {method === 'transfer' && config.bankInfo && (
+            {method === 'transfer' && (config.bankAccounts?.length > 0 || config.bankInfo) && (
                 <BankTransferInfo
                     orderNumber={orderNumber}
+                    bankAccounts={config.bankAccounts || []}
                     bankInfo={config.bankInfo}
                 />
             )}
@@ -330,10 +331,20 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
     )
 }
 
-// Componente para información bancaria dinámica
+// Componente para información bancaria dinámica con múltiples cuentas
 interface BankTransferInfoProps {
     orderNumber: string
-    bankInfo: {
+    bankAccounts: {
+        id?: string // Cambiado de string a string | undefined para coincidir con el hook
+        bank_name: string
+        account_number: string
+        account_holder: string
+        routing_number?: string
+        swift_code?: string
+    }[]
+    // Mantener bankInfo para retrocompatibilidad
+    bankInfo?: {
+        id?: string // También agregado aquí para consistencia
         bank_name: string
         account_number: string
         account_holder: string
@@ -344,34 +355,80 @@ interface BankTransferInfoProps {
 
 const BankTransferInfo: React.FC<BankTransferInfoProps> = ({
     orderNumber,
+    bankAccounts = [], // Valor por defecto
     bankInfo
-}) => (
-    <div className="mt-4 bg-sky-50 p-4 rounded-lg border border-sky-200">
-        <p className="font-medium mb-3 text-sky-900">Detalles de transferencia:</p>
-        <div className="space-y-2 text-sm">
-            <p><span className="font-semibold text-gray-700">Banco:</span> {bankInfo.bank_name}</p>
-            <p><span className="font-semibold text-gray-700">Titular:</span> {bankInfo.account_holder}</p>
-            <p><span className="font-semibold text-gray-700">N° de cuenta:</span> {bankInfo.account_number}</p>
-            {bankInfo.routing_number && (
-                <p><span className="font-semibold text-gray-700">Routing:</span> {bankInfo.routing_number}</p>
-            )}
-            {bankInfo.swift_code && (
-                <p><span className="font-semibold text-gray-700">SWIFT:</span> {bankInfo.swift_code}</p>
-            )}
-        </div>
+}) => {
+    // Usar bankAccounts si está disponible, sino usar bankInfo para retrocompatibilidad
+    const accounts = bankAccounts && bankAccounts.length > 0 ? bankAccounts : (bankInfo ? [bankInfo] : [])
 
-        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
-            <p className="font-semibold text-amber-800 mb-2">IMPORTANTE:</p>
-            <div className="text-sm text-amber-700 space-y-1">
-                <p>• NO PROCEDAS SI NO ESTÁS SEGURO de que quieres realizar la compra</p>
-                <p>• Usa el número de pedido <strong>{orderNumber}</strong> como referencia</p>
-                <p>• Tu pedido se procesará una vez confirmado el pago</p>
-                <p>• Guarda el comprobante de transferencia</p>
+    if (accounts.length === 0) {
+        return (
+            <div className="mt-4 bg-red-50 p-4 rounded-lg border border-red-200">
+                <p className="text-red-600 font-medium">No hay cuentas bancarias configuradas</p>
+            </div>
+        )
+    }
+
+    return (
+        <div className="mt-4 bg-sky-50 p-4 rounded-lg border border-sky-200">
+            <p className="font-medium mb-3 text-sky-900">
+                {accounts.length === 1 ? 'Detalles de transferencia:' : 'Elige una cuenta para transferir:'}
+            </p>
+
+            {accounts.length === 1 ? (
+                // Una sola cuenta - mostrar directamente
+                <div className="space-y-2 text-sm">
+                    <p><span className="font-semibold text-gray-700">Banco:</span> {accounts[0].bank_name}</p>
+                    <p><span className="font-semibold text-gray-700">Titular:</span> {accounts[0].account_holder}</p>
+                    <p><span className="font-semibold text-gray-700">N° de cuenta:</span> {accounts[0].account_number}</p>
+                    {accounts[0].routing_number && (
+                        <p><span className="font-semibold text-gray-700">Routing:</span> {accounts[0].routing_number}</p>
+                    )}
+                    {accounts[0].swift_code && (
+                        <p><span className="font-semibold text-gray-700">SWIFT:</span> {accounts[0].swift_code}</p>
+                    )}
+                </div>
+            ) : (
+                // Múltiples cuentas - mostrar en acordeón o tabs
+                <div className="space-y-3">
+                    {accounts.map((account, index) => (
+                        <div key={account.id || `account-${index}`} className="bg-white border border-gray-200 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-2">
+                                <h4 className="font-medium text-gray-900">{account.bank_name}</h4>
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                    Opción {index + 1}
+                                </span>
+                            </div>
+                            <div className="space-y-1 text-sm text-gray-600">
+                                <p><span className="font-medium">Titular:</span> {account.account_holder}</p>
+                                <p><span className="font-medium">N° de cuenta:</span> {account.account_number}</p>
+                                {account.routing_number && (
+                                    <p><span className="font-medium">Routing:</span> {account.routing_number}</p>
+                                )}
+                                {account.swift_code && (
+                                    <p><span className="font-medium">SWIFT:</span> {account.swift_code}</p>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                <p className="font-semibold text-amber-800 mb-2">IMPORTANTE:</p>
+                <div className="text-sm text-amber-700 space-y-1">
+                    <p>• NO PROCEDAS SI NO ESTÁS SEGURO de que quieres realizar la compra</p>
+                    <p>• Usa el número de pedido <strong>{orderNumber}</strong> como referencia</p>
+                    <p>• Tu pedido se procesará una vez confirmado el pago</p>
+                    <p>• Guarda el comprobante de transferencia</p>
+                    {accounts.length > 1 && (
+                        <p>• Puedes transferir a cualquiera de las cuentas mostradas arriba</p>
+                    )}
+                </div>
             </div>
         </div>
-    </div>
-)
-
+    )
+}
 // Iconos
 const CreditCardIcon = ({ className }: { className?: string }) => (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">

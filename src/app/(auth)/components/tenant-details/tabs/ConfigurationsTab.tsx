@@ -12,16 +12,23 @@ interface ConfigurationsTabProps {
 
 export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
     // Usar el hook que ya creamos
+    // Usar el hook que ya creamos
     const {
         loading,
         saving,
         paymentForms,
         emailForm,
+        bankAccounts, // NUEVO
         setPaymentForms,
         setEmailForm,
         updatePaymentConfig,
         updateEmailConfig,
-        testConfiguration
+        testConfiguration,
+        // Nuevas funciones para cuentas bancarias
+        addBankAccount,
+        updateBankAccount,
+        removeBankAccount,
+        saveBankAccount
     } = useTenantConfigurations({ tenantId })
 
     const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({})
@@ -60,7 +67,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
     }
 
     // Handler para activar/desactivar configuraciones
-    const handleTogglePaymentConfig = async (provider: 'stripe' | 'paypal' | 'bank_account', enabled: boolean) => {
+    const handleTogglePaymentConfig = async (provider: 'stripe' | 'paypal', enabled: boolean) => {
         const result = await updatePaymentConfig(provider, enabled)
         if (!result.success) {
             // Mostrar error si es necesario
@@ -198,8 +205,8 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                 </div>
                                 {testResults.payment_stripe && (
                                     <div className={`p-3 rounded-md text-sm ${testResults.payment_stripe.success
-                                            ? 'bg-green-50 text-green-700 border border-green-200'
-                                            : 'bg-red-50 text-red-700 border border-red-200'
+                                        ? 'bg-green-50 text-green-700 border border-green-200'
+                                        : 'bg-red-50 text-red-700 border border-red-200'
                                         }`}>
                                         <div className="flex items-center">
                                             {testResults.payment_stripe.success ? (
@@ -312,8 +319,8 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                 </div>
                                 {testResults.payment_paypal && (
                                     <div className={`p-3 rounded-md text-sm ${testResults.payment_paypal.success
-                                            ? 'bg-green-50 text-green-700 border border-green-200'
-                                            : 'bg-red-50 text-red-700 border border-red-200'
+                                        ? 'bg-green-50 text-green-700 border border-green-200'
+                                        : 'bg-red-50 text-red-700 border border-red-200'
                                         }`}>
                                         <div className="flex items-center">
                                             {testResults.payment_paypal.success ? (
@@ -329,7 +336,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                         )}
                     </div>
 
-                    {/* Cuenta Bancaria */}
+                    {/* Cuentas Bancarias */}
                     <div className="border rounded-lg p-4">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center">
@@ -337,98 +344,176 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                     <Building2 className="h-5 w-5 text-green-600" />
                                 </div>
                                 <div>
-                                    <h5 className="font-medium text-gray-900">Cuenta Bancaria</h5>
+                                    <h5 className="font-medium text-gray-900">Cuentas Bancarias</h5>
                                     <p className="text-sm text-gray-500">Transferencias bancarias directas</p>
                                 </div>
                             </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={paymentForms.bank_account.enabled}
-                                    onChange={(e) => handleTogglePaymentConfig('bank_account', e.target.checked)}
-                                    disabled={saving}
-                                    className="sr-only peer"
-                                />
-                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                            </label>
+                            <button
+                                onClick={addBankAccount}
+                                disabled={saving}
+                                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                            >
+                                <Building2 className="h-4 w-4 mr-2" />
+                                Agregar Cuenta
+                            </button>
                         </div>
 
-                        {paymentForms.bank_account.enabled && (
-                            <div className="space-y-3">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Nombre del Banco *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={paymentForms.bank_account.bank_name}
-                                            onChange={(e) => handlePaymentConfigChange('bank_account', 'bank_name', e.target.value)}
-                                            placeholder="Ej: Banco Nacional"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                                            required
-                                        />
+                        {bankAccounts.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500">
+                                <Building2 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                                <p className="text-sm">No hay cuentas bancarias configuradas</p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    Haz clic en "Agregar Cuenta" para configurar tu primera cuenta bancaria
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {bankAccounts.map((account, index) => (
+                                    <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center">
+                                                <div className={`h-3 w-3 rounded-full mr-2 ${account.enabled ? 'bg-green-500' : 'bg-gray-300'
+                                                    }`} />
+                                                <span className="text-sm font-medium text-gray-900">
+                                                    {account.bank_name || `Cuenta Bancaria ${index + 1}`}
+                                                </span>
+                                                {account.id && (
+                                                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                                        Guardada
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <button
+                                                onClick={() => removeBankAccount(index)}
+                                                disabled={saving}
+                                                className="p-1 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-md"
+                                                title="Eliminar cuenta"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        Nombre del Banco *
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={account.bank_name}
+                                                        onChange={(e) => updateBankAccount(index, 'bank_name', e.target.value)}
+                                                        placeholder="Ej: Banco Nacional"
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        Titular de la Cuenta *
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={account.account_holder}
+                                                        onChange={(e) => updateBankAccount(index, 'account_holder', e.target.value)}
+                                                        placeholder="Nombre completo del titular"
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        Número de Cuenta *
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={account.account_number}
+                                                        onChange={(e) => updateBankAccount(index, 'account_number', e.target.value)}
+                                                        placeholder="Número de cuenta"
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        Routing Number
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={account.routing_number}
+                                                        onChange={(e) => updateBankAccount(index, 'routing_number', e.target.value)}
+                                                        placeholder="Routing number (US)"
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                                    />
+                                                </div>
+                                                <div className="md:col-span-2">
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        SWIFT Code (Internacional)
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={account.swift_code}
+                                                        onChange={(e) => updateBankAccount(index, 'swift_code', e.target.value)}
+                                                        placeholder="Código SWIFT para transferencias internacionales"
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="flex justify-end">
+                                                <button
+                                                    onClick={() => saveBankAccount(index)}
+                                                    disabled={
+                                                        saving ||
+                                                        !account.bank_name ||
+                                                        !account.account_holder ||
+                                                        !account.account_number
+                                                    }
+                                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    {saving ? (
+                                                        <>
+                                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                            Guardando...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Save className="h-4 w-4 mr-2" />
+                                                            {account.id ? 'Actualizar Cuenta' : 'Guardar Cuenta'}
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+
+                                            {/* Información de estado para cuentas guardadas */}
+                                            {account.id && (
+                                                <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                                                    <div className="flex items-center">
+                                                        <Check className="h-4 w-4 text-green-600 mr-2" />
+                                                        <span className="text-sm text-green-700">
+                                                            Cuenta bancaria configurada correctamente
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs text-green-600 mt-1">
+                                                        Los clientes podrán utilizar esta cuenta para transferencias bancarias
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {/* Validación de campos requeridos */}
+                                            {(!account.bank_name || !account.account_holder || !account.account_number) && (
+                                                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                                                    <div className="flex items-center">
+                                                        <AlertCircle className="h-4 w-4 text-yellow-600 mr-2" />
+                                                        <span className="text-sm text-yellow-700">
+                                                            Completa todos los campos requeridos (*) para guardar la cuenta
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Titular de la Cuenta *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={paymentForms.bank_account.account_holder}
-                                            onChange={(e) => handlePaymentConfigChange('bank_account', 'account_holder', e.target.value)}
-                                            placeholder="Nombre completo del titular"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Número de Cuenta *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={paymentForms.bank_account.account_number}
-                                            onChange={(e) => handlePaymentConfigChange('bank_account', 'account_number', e.target.value)}
-                                            placeholder="Número de cuenta"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Routing Number
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={paymentForms.bank_account.routing_number}
-                                            onChange={(e) => handlePaymentConfigChange('bank_account', 'routing_number', e.target.value)}
-                                            placeholder="Routing number (US)"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                                        />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            SWIFT Code (Internacional)
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={paymentForms.bank_account.swift_code}
-                                            onChange={(e) => handlePaymentConfigChange('bank_account', 'swift_code', e.target.value)}
-                                            placeholder="Código SWIFT para transferencias internacionales"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="flex justify-end">
-                                    <button
-                                        onClick={() => handleTogglePaymentConfig('bank_account', true)}
-                                        disabled={saving || !paymentForms.bank_account.bank_name || !paymentForms.bank_account.account_holder || !paymentForms.bank_account.account_number}
-                                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
-                                    >
-                                        {saving ? 'Guardando...' : 'Guardar Cuenta'}
-                                    </button>
-                                </div>
+                                ))}
                             </div>
                         )}
                     </div>
@@ -547,8 +632,8 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                 </div>
                                 {testResults.email_resend && (
                                     <div className={`p-3 rounded-md text-sm ${testResults.email_resend.success
-                                            ? 'bg-green-50 text-green-700 border border-green-200'
-                                            : 'bg-red-50 text-red-700 border border-red-200'
+                                        ? 'bg-green-50 text-green-700 border border-green-200'
+                                        : 'bg-red-50 text-red-700 border border-red-200'
                                         }`}>
                                         <div className="flex items-center">
                                             {testResults.email_resend.success ? (

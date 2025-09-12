@@ -7,26 +7,31 @@ interface UseTenantConfigurationsProps {
   tenantId: string
 }
 
+interface BankAccount {
+  id?: string
+  bank_name: string
+  account_number: string
+  account_holder: string
+  routing_number: string
+  swift_code: string
+  enabled: boolean
+}
+
 export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsProps) => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [paymentConfigs, setPaymentConfigs] = useState<PaymentConfig[]>([])
   const [emailConfigs, setEmailConfigs] = useState<EmailConfig[]>([])
-  
-  // Estados para los formularios
+
+  // Estados para los formularios (sin bank_account)
   const [paymentForms, setPaymentForms] = useState({
     stripe: { public_key: '', secret_key: '', enabled: false },
-    paypal: { client_id: '', client_secret: '', sandbox: true, enabled: false },
-    bank_account: { 
-      bank_name: '', 
-      account_number: '', 
-      account_holder: '', 
-      routing_number: '',
-      swift_code: '',
-      enabled: false 
-    }
+    paypal: { client_id: '', client_secret: '', sandbox: true, enabled: false }
   })
-  
+
+  // Nuevo estado para cuentas bancarias como array
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([])
+
   const [emailForm, setEmailForm] = useState({
     resend: { api_key: '', from_email: '', from_name: '', enabled: false }
   })
@@ -39,15 +44,19 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
         tenantService.getPaymentConfigs(tenantId),
         tenantService.getEmailConfigs(tenantId)
       ])
-      
+
       setPaymentConfigs(paymentData)
       setEmailConfigs(emailData)
-      
+
       // Rellenar formularios con datos existentes
-      const newPaymentForms = { ...paymentForms }
+      const newPaymentForms = {
+        stripe: { public_key: '', secret_key: '', enabled: false },
+        paypal: { client_id: '', client_secret: '', sandbox: true, enabled: false }
+      }
+      const newBankAccounts: BankAccount[] = []
       const newEmailForm = { ...emailForm }
-      
-      paymentData.forEach((config: { provider: string; public_key: any; secret_key: any; extra: { client_id: any; client_secret: any; sandbox: any; bank_name: any; account_number: any; account_holder: any; routing_number: any; swift_code: any } }) => {
+
+      paymentData.forEach((config: any) => {
         if (config.provider === 'stripe') {
           newPaymentForms.stripe = {
             public_key: config.public_key,
@@ -62,18 +71,20 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
             enabled: true
           }
         } else if (config.provider === 'bank_account') {
-          newPaymentForms.bank_account = {
+          // Agregar cada cuenta bancaria a la lista
+          newBankAccounts.push({
+            id: config.id,
             bank_name: config.extra?.bank_name || '',
             account_number: config.extra?.account_number || '',
             account_holder: config.extra?.account_holder || '',
             routing_number: config.extra?.routing_number || '',
             swift_code: config.extra?.swift_code || '',
             enabled: true
-          }
+          })
         }
       })
-      
-      emailData.forEach(config => {
+
+      emailData.forEach((config: any) => {
         if (config.provider === 'resend') {
           newEmailForm.resend = {
             api_key: config.api_key || '',
@@ -83,8 +94,9 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
           }
         }
       })
-      
+
       setPaymentForms(newPaymentForms)
+      setBankAccounts(newBankAccounts)
       setEmailForm(newEmailForm)
     } catch (error) {
       console.error('Error loading configurations:', error)
@@ -97,8 +109,8 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
     loadConfigurations()
   }, [loadConfigurations])
 
-  // Actualizar configuración de pago
-  const updatePaymentConfig = useCallback(async (provider: 'stripe' | 'paypal' | 'bank_account', enabled: boolean) => {
+  // Actualizar configuración de pago (solo stripe y paypal)
+  const updatePaymentConfig = useCallback(async (provider: 'stripe' | 'paypal', enabled: boolean) => {
     setSaving(true)
     try {
       if (enabled) {
@@ -124,19 +136,6 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
               sandbox: paymentForms.paypal.sandbox
             }
           }
-        } else if (provider === 'bank_account') {
-          configData = {
-            ...configData,
-            public_key: 'N/A', // Campo requerido pero no aplica
-            secret_key: 'N/A',
-            extra: {
-              bank_name: paymentForms.bank_account.bank_name,
-              account_number: paymentForms.bank_account.account_number,
-              account_holder: paymentForms.bank_account.account_holder,
-              routing_number: paymentForms.bank_account.routing_number,
-              swift_code: paymentForms.bank_account.swift_code
-            }
-          }
         }
 
         await tenantService.upsertPaymentConfig(configData)
@@ -146,13 +145,13 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
 
       // Recargar configuraciones
       await loadConfigurations()
-      
+
       return { success: true }
     } catch (error) {
       console.error('Error updating payment config:', error)
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Error al actualizar configuración de pago' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error al actualizar configuración de pago'
       }
     } finally {
       setSaving(false)
@@ -179,18 +178,105 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
 
       // Recargar configuraciones
       await loadConfigurations()
-      
+
       return { success: true }
     } catch (error) {
       console.error('Error updating email config:', error)
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Error al actualizar configuración de email' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error al actualizar configuración de email'
       }
     } finally {
       setSaving(false)
     }
   }, [tenantId, emailForm, loadConfigurations])
+
+  // ======= FUNCIONES PARA CUENTAS BANCARIAS =======
+
+  // Agregar nueva cuenta bancaria
+  const addBankAccount = useCallback(() => {
+    setBankAccounts(prev => [...prev, {
+      bank_name: '',
+      account_number: '',
+      account_holder: '',
+      routing_number: '',
+      swift_code: '',
+      enabled: false
+    }])
+  }, [])
+
+  // Actualizar campo de cuenta bancaria específica
+  const updateBankAccount = useCallback((index: number, field: string, value: any) => {
+    setBankAccounts(prev => prev.map((account, i) =>
+      i === index ? { ...account, [field]: value } : account
+    ))
+  }, [])
+
+  // Eliminar cuenta bancaria
+  const removeBankAccount = useCallback(async (index: number) => {
+    const account = bankAccounts[index]
+
+    try {
+      setSaving(true)
+
+      if (account.id) {
+        // Si tiene ID, eliminar de la base de datos
+        await tenantService.deleteBankAccount(tenantId, account.id)
+      }
+
+      // Eliminar del estado local
+      setBankAccounts(prev => prev.filter((_, i) => i !== index))
+
+      return { success: true }
+    } catch (error) {
+      console.error('Error removing bank account:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error al eliminar la cuenta bancaria'
+      }
+    } finally {
+      setSaving(false)
+    }
+  }, [bankAccounts, tenantId])
+
+  // Guardar cuenta bancaria específica
+  const saveBankAccount = useCallback(async (index: number) => {
+    const account = bankAccounts[index]
+
+    if (!account.bank_name || !account.account_number || !account.account_holder) {
+      throw new Error('Faltan campos requeridos: Nombre del banco, Número de cuenta y Titular')
+    }
+
+    setSaving(true)
+    try {
+      const result = await tenantService.upsertBankAccount({
+        id: account.id,
+        tenant_id: tenantId,
+        bank_name: account.bank_name,
+        account_number: account.account_number,
+        account_holder: account.account_holder,
+        routing_number: account.routing_number,
+        swift_code: account.swift_code
+      })
+
+      // Actualizar el ID si es una cuenta nueva
+      if (result.id && !account.id) {
+        setBankAccounts(prev => prev.map((acc, i) =>
+          i === index ? { ...acc, id: result.id, enabled: true } : acc
+        ))
+      }
+
+      return { success: true, data: result }
+    } catch (error) {
+      console.error('Error saving bank account:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error al guardar la cuenta bancaria'
+      }
+    } finally {
+      setSaving(false)
+    }
+  }, [bankAccounts, tenantId])
 
   // Testear configuraciones
   const testConfiguration = useCallback(async (type: 'payment' | 'email', provider: string) => {
@@ -199,9 +285,9 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
       const result = await tenantService.testConfiguration(tenantId, type, provider)
       return result
     } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Error al probar configuración' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error al probar configuración'
       }
     } finally {
       setSaving(false)
@@ -216,13 +302,21 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
     emailConfigs,
     paymentForms,
     emailForm,
+    bankAccounts, // NUEVO
 
     // Acciones
     setPaymentForms,
     setEmailForm,
+    setBankAccounts, // NUEVO
     updatePaymentConfig,
     updateEmailConfig,
     testConfiguration,
-    loadConfigurations
+    loadConfigurations,
+
+    // Nuevas acciones para cuentas bancarias
+    addBankAccount,
+    updateBankAccount,
+    removeBankAccount,
+    saveBankAccount
   }
 }

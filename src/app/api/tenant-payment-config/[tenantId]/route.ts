@@ -16,21 +16,42 @@ export async function GET(
         const { tenantId } = await params
 
         // Obtener configuraciones de pago del tenant
-        const { data: paymentConfigs, error } = await supabase
+        const { data: paymentConfigs, error: paymentError } = await supabase
             .from('payment_configs')
             .select('*')
             .eq('tenant_id', tenantId)
 
-        if (error) {
-            throw error
+        if (paymentError) {
+            throw paymentError
+        }
+
+        // Intentar obtener cuentas bancarias de la nueva tabla (si existe)
+        let bankAccountsFromNewTable: any[] = []
+        try {
+            const { data: bankAccountsData, error: bankError } = await supabase
+                .from('bank_accounts')
+                .select('*')
+                .eq('tenant_id', tenantId)
+
+            if (!bankError) {
+                bankAccountsFromNewTable = bankAccountsData || []
+            }
+        } catch (error) {
+            // Si la tabla no existe, continuar sin error
+            console.log('bank_accounts table does not exist, using legacy payment_configs')
         }
 
         // Procesar configuraciones
         const config: any = {
             availableMethods: [],
-            bankInfo: null
+            bankAccounts: [],
+            bankInfo: null // Para retrocompatibilidad
         }
 
+        // Arrays para recolectar cuentas bancarias del sistema legacy
+        const legacyBankAccounts: any[] = []
+
+        // Procesar configuraciones de pago
         paymentConfigs?.forEach(paymentConfig => {
             if (paymentConfig.provider === 'stripe') {
                 config.stripe = paymentConfig
@@ -39,11 +60,43 @@ export async function GET(
                 config.paypal = paymentConfig
                 config.availableMethods.push('paypal')
             } else if (paymentConfig.provider === 'bank_account') {
-                config.bank_account = paymentConfig
-                config.availableMethods.push('transfer')
-                config.bankInfo = paymentConfig.extra
+                // Sistema legacy: múltiples cuentas bancarias en payment_configs
+                legacyBankAccounts.push({
+                    id: paymentConfig.id,
+                    bank_name: paymentConfig.extra?.bank_name,
+                    account_number: paymentConfig.extra?.account_number,
+                    account_holder: paymentConfig.extra?.account_holder,
+                    routing_number: paymentConfig.extra?.routing_number,
+                    swift_code: paymentConfig.extra?.swift_code
+                })
             }
         })
+
+        // Determinar qué cuentas bancarias usar
+        let finalBankAccounts: any[] = []
+
+        if (bankAccountsFromNewTable.length > 0) {
+            // Usar la nueva tabla si tiene datos
+            finalBankAccounts = bankAccountsFromNewTable
+        } else if (legacyBankAccounts.length > 0) {
+            // Usar el sistema legacy si no hay datos en la nueva tabla
+            finalBankAccounts = legacyBankAccounts
+        }
+
+        // Configurar cuentas bancarias finales
+        if (finalBankAccounts.length > 0) {
+            config.bankAccounts = finalBankAccounts
+            config.availableMethods.push('transfer')
+
+            // Para retrocompatibilidad, usar la primera cuenta bancaria como bankInfo
+            config.bankInfo = {
+                bank_name: finalBankAccounts[0].bank_name,
+                account_number: finalBankAccounts[0].account_number,
+                account_holder: finalBankAccounts[0].account_holder,
+                routing_number: finalBankAccounts[0].routing_number,
+                swift_code: finalBankAccounts[0].swift_code
+            }
+        }
 
         return NextResponse.json(config)
     } catch (error) {

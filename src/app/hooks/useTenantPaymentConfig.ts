@@ -18,18 +18,21 @@ interface PaymentConfig {
     }
 }
 
+interface BankAccount {
+    id?: string // Opcional para retrocompatibilidad
+    bank_name: string
+    account_number: string
+    account_holder: string
+    routing_number?: string
+    swift_code?: string
+}
+
 interface TenantPaymentConfig {
     stripe?: PaymentConfig
     paypal?: PaymentConfig
-    bank_account?: PaymentConfig
+    bankAccounts: BankAccount[] // Cambiado de bank_account a bankAccounts array
     availableMethods: string[]
-    bankInfo?: {
-        bank_name: string
-        account_number: string
-        account_holder: string
-        routing_number?: string
-        swift_code?: string
-    }
+    bankInfo?: BankAccount // Para retrocompatibilidad, usar la primera cuenta bancaria
 }
 
 export const useTenantPaymentConfig = (tenantId: string) => {
