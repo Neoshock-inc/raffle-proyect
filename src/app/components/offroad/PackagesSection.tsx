@@ -69,44 +69,49 @@ function TicketCard({ option, raffleData, tenantConfig, tenantSlug }: TicketCard
 
     return (
         <div
-            className={`relative w-full max-w-[300px] h-60 sm:h-65 mx-auto rounded-xl cursor-pointer transition-all duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'hover:scale-[1.02] hover:shadow-xl'
+            className={`relative w-full max-w-[300px] h-65 sm:h-75 mx-auto rounded-xl cursor-pointer transition-all duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'hover:scale-[1.02] hover:shadow-xl'
                 } bg-gray-900 ${getBorderStyle()}`}
             onClick={() => setSelectedPackage(option.id)}
         >
             {/* Badge superior */}
             {badgeText && (
                 <div className={`absolute -top-2 left-1/2 -translate-x-1/2 ${isMegaPack
-                        ? 'bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-black text-base font-extrabold px-8 py-2 border border-yellow-300'
-                        : isBestSeller
-                            ? 'bg-green-500 text-white text-sm font-black px-1 py-1'
-                            : 'bg-red-600 text-white text-sm font-black px-1 py-1'
+                    ? 'bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-black text-base font-extrabold px-8 py-2 border border-yellow-300'
+                    : isBestSeller
+                        ? 'bg-green-500 text-white text-sm font-black px-1 py-1'
+                        : 'bg-red-600 text-white text-sm font-black px-1 py-1'
                     } rounded-full shadow-lg animate-bounce min-w-[180px] text-center z-10 tracking-wider uppercase`}>
                     {badgeText}
                 </div>
             )}
 
             <div className="h-full flex flex-col items-center justify-center p-3 sm:p-4 text-center relative z-10">
-                {/* Nombre del paquete */}
-                <div className="text-white font-black text-lg sm:text-xl mb-2 tracking-wide">
-                    {option.name || `X${option.amount} NÚMEROS`}
-                </div>
 
-                {/* Información de precio - USANDO VALORES QUE YA VIENEN DEL BACKEND */}
+                {/* Información de precio - CANTIDAD COMO PRINCIPAL */}
                 <div className="mb-3">
+                    {/* Cantidad de números como elemento principal */}
+                    <div className={`text-4xl sm:text-5xl font-black mb-2 ${isBestSeller ? 'text-green-400' : 'text-yellow-500'}`}>
+                        {option.final_amount}
+                    </div>
+                    <div className="text-white text-base font-semibold mb-2">
+                        NÚMEROS
+                    </div>
+
+                    {/* Precio como elemento secundario */}
                     {option.total_discount > 0 ? (
                         <div className="space-y-1">
-                            <div className="text-gray-400 line-through text-lg">
+                            <div className="text-gray-400 line-through text-sm">
                                 ${option.original_price.toFixed(2)}
                             </div>
-                            <div className={`text-3xl sm:text-4xl font-black ${isBestSeller ? 'text-green-400' : 'text-yellow-500'}`}>
+                            <div className="text-white text-lg font-bold">
                                 ${option.final_price.toFixed(2)}
                             </div>
-                            <div className="text-red-400 text-sm font-bold">
+                            <div className="text-red-400 text-xs font-bold">
                                 Ahorras ${option.total_discount.toFixed(2)}
                             </div>
                         </div>
                     ) : (
-                        <div className={`text-3xl sm:text-4xl font-black ${isBestSeller ? 'text-green-400' : 'text-yellow-500'}`}>
+                        <div className="text-white text-lg font-bold">
                             ${option.final_price.toFixed(2)}
                         </div>
                     )}
