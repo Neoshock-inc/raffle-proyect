@@ -15,6 +15,7 @@ export interface Invoice {
     total_price: number;
     created_at: string;
     participant_id: string;
+    tenant_id: string;
 }
 
 // Interfaz para creación de facturas - usamos camelCase para la API

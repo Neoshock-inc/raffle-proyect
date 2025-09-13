@@ -1,4 +1,4 @@
-// 📁 hooks/useTenantConfigurations.ts
+// 📁 hooks/useTenantConfigurations.ts - VERSIÓN ACTUALIZADA
 import { useState, useCallback, useEffect } from 'react'
 import { tenantService } from '@/app/(auth)/services/tenantService'
 import { PaymentConfig, EmailConfig } from '../types/tenant'
@@ -23,20 +23,21 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
   const [paymentConfigs, setPaymentConfigs] = useState<PaymentConfig[]>([])
   const [emailConfigs, setEmailConfigs] = useState<EmailConfig[]>([])
 
-  // Estados para los formularios (sin bank_account)
+  // Estados para los formularios
   const [paymentForms, setPaymentForms] = useState({
     stripe: { public_key: '', secret_key: '', enabled: false },
     paypal: { client_id: '', client_secret: '', sandbox: true, enabled: false }
   })
 
-  // Nuevo estado para cuentas bancarias como array
+  // Estado para cuentas bancarias
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([])
 
+  // Estado para email - CORREGIDO para manejar el mapeo de campos
   const [emailForm, setEmailForm] = useState({
     resend: { api_key: '', from_email: '', from_name: '', enabled: false }
   })
 
-  // Cargar configuraciones existentes
+  // Cargar configuraciones existentes - ACTUALIZADO
   const loadConfigurations = useCallback(async () => {
     try {
       setLoading(true)
@@ -54,8 +55,11 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
         paypal: { client_id: '', client_secret: '', sandbox: true, enabled: false }
       }
       const newBankAccounts: BankAccount[] = []
-      const newEmailForm = { ...emailForm }
+      const newEmailForm = {
+        resend: { api_key: '', from_email: '', from_name: '', enabled: false }
+      }
 
+      // Procesar configuraciones de pago
       paymentData.forEach((config: any) => {
         if (config.provider === 'stripe') {
           newPaymentForms.stripe = {
@@ -65,13 +69,12 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
           }
         } else if (config.provider === 'paypal') {
           newPaymentForms.paypal = {
-            client_id: config.extra?.client_id || '',
-            client_secret: config.extra?.client_secret || '',
+            client_id: config.extra?.client_id || config.public_key || '',
+            client_secret: config.extra?.client_secret || config.secret_key || '',
             sandbox: config.extra?.sandbox ?? true,
             enabled: true
           }
         } else if (config.provider === 'bank_account') {
-          // Agregar cada cuenta bancaria a la lista
           newBankAccounts.push({
             id: config.id,
             bank_name: config.extra?.bank_name || '',
@@ -84,12 +87,14 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
         }
       })
 
+      // Procesar configuraciones de email - CORREGIDO
       emailData.forEach((config: any) => {
         if (config.provider === 'resend') {
           newEmailForm.resend = {
-            api_key: config.api_key || '',
-            from_email: config.from_email || '',
-            from_name: config.from_name || '',
+            // IMPORTANTE: Mapear correctamente los campos
+            api_key: config.password || '', // La API key está guardada en el campo password
+            from_email: config.username || '', // El from_email está en username
+            from_name: config.from_name || '', // Este campo debería existir en el esquema
             enabled: true
           }
         }
@@ -98,6 +103,13 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
       setPaymentForms(newPaymentForms)
       setBankAccounts(newBankAccounts)
       setEmailForm(newEmailForm)
+
+      console.log('Configuraciones cargadas:', {
+        payment: newPaymentForms,
+        email: newEmailForm,
+        bankAccounts: newBankAccounts.length
+      })
+
     } catch (error) {
       console.error('Error loading configurations:', error)
     } finally {
@@ -109,7 +121,7 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
     loadConfigurations()
   }, [loadConfigurations])
 
-  // Actualizar configuración de pago (solo stripe y paypal)
+  // Actualizar configuración de pago
   const updatePaymentConfig = useCallback(async (provider: 'stripe' | 'paypal', enabled: boolean) => {
     setSaving(true)
     try {
@@ -120,15 +132,21 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
         }
 
         if (provider === 'stripe') {
+          if (!paymentForms.stripe.public_key || !paymentForms.stripe.secret_key) {
+            throw new Error('Faltan las claves de Stripe')
+          }
           configData = {
             ...configData,
             public_key: paymentForms.stripe.public_key,
             secret_key: paymentForms.stripe.secret_key
           }
         } else if (provider === 'paypal') {
+          if (!paymentForms.paypal.client_id || !paymentForms.paypal.client_secret) {
+            throw new Error('Faltan las credenciales de PayPal')
+          }
           configData = {
             ...configData,
-            public_key: paymentForms.paypal.client_id, // Usar public_key para client_id
+            public_key: paymentForms.paypal.client_id,
             secret_key: paymentForms.paypal.client_secret,
             extra: {
               client_id: paymentForms.paypal.client_id,
@@ -143,9 +161,7 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
         await tenantService.deletePaymentConfig(tenantId, provider)
       }
 
-      // Recargar configuraciones
       await loadConfigurations()
-
       return { success: true }
     } catch (error) {
       console.error('Error updating payment config:', error)
@@ -158,26 +174,43 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
     }
   }, [tenantId, paymentForms, loadConfigurations])
 
-  // Actualizar configuración de email
+  // Actualizar configuración de email - CORREGIDO SIMPLE
   const updateEmailConfig = useCallback(async (enabled: boolean) => {
     setSaving(true)
     try {
       if (enabled) {
-        const configData = {
-          provider: 'resend' as const,
-          tenant_id: tenantId,
-          api_key: emailForm.resend.api_key,
-          from_email: emailForm.resend.from_email,
-          from_name: emailForm.resend.from_name
+        // Solo validar si está habilitando Y tiene campos llenos
+        // Si está habilitando pero los campos están vacíos, solo cambiar el estado del checkbox
+        if (emailForm.resend.api_key && emailForm.resend.from_email) {
+          const configData = {
+            provider: 'resend' as const,
+            tenant_id: tenantId,
+            password: emailForm.resend.api_key, // Directamente al campo password
+            username: emailForm.resend.from_email, // Directamente al campo username
+            from_name: emailForm.resend.from_name || null
+          }
+
+          console.log('Enviando configuración de email:', configData)
+          await tenantService.upsertEmailConfig({
+            ...configData,
+            from_name: configData.from_name ?? undefined, // convierte null en undefined
+          })
+        } else {
+          // Solo cambiar el estado del formulario si no hay datos
+          setEmailForm(prev => ({
+            ...prev,
+            resend: { ...prev.resend, enabled: true }
+          }))
+          return { success: true }
         }
-
-        await tenantService.upsertEmailConfig(configData)
       } else {
+        // Si está deshabilitando, eliminar la configuración
         await tenantService.deleteEmailConfig(tenantId, 'resend')
+        setEmailForm(prev => ({
+          ...prev,
+          resend: { ...prev.resend, enabled: false }
+        }))
       }
-
-      // Recargar configuraciones
-      await loadConfigurations()
 
       return { success: true }
     } catch (error) {
@@ -191,9 +224,7 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
     }
   }, [tenantId, emailForm, loadConfigurations])
 
-  // ======= FUNCIONES PARA CUENTAS BANCARIAS =======
-
-  // Agregar nueva cuenta bancaria
+  // Funciones para cuentas bancarias (sin cambios)
   const addBankAccount = useCallback(() => {
     setBankAccounts(prev => [...prev, {
       bank_name: '',
@@ -205,14 +236,12 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
     }])
   }, [])
 
-  // Actualizar campo de cuenta bancaria específica
   const updateBankAccount = useCallback((index: number, field: string, value: any) => {
     setBankAccounts(prev => prev.map((account, i) =>
       i === index ? { ...account, [field]: value } : account
     ))
   }, [])
 
-  // Eliminar cuenta bancaria
   const removeBankAccount = useCallback(async (index: number) => {
     const account = bankAccounts[index]
 
@@ -220,13 +249,10 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
       setSaving(true)
 
       if (account.id) {
-        // Si tiene ID, eliminar de la base de datos
         await tenantService.deleteBankAccount(tenantId, account.id)
       }
 
-      // Eliminar del estado local
       setBankAccounts(prev => prev.filter((_, i) => i !== index))
-
       return { success: true }
     } catch (error) {
       console.error('Error removing bank account:', error)
@@ -239,7 +265,6 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
     }
   }, [bankAccounts, tenantId])
 
-  // Guardar cuenta bancaria específica
   const saveBankAccount = useCallback(async (index: number) => {
     const account = bankAccounts[index]
 
@@ -259,7 +284,6 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
         swift_code: account.swift_code
       })
 
-      // Actualizar el ID si es una cuenta nueva
       if (result.id && !account.id) {
         setBankAccounts(prev => prev.map((acc, i) =>
           i === index ? { ...acc, id: result.id, enabled: true } : acc
@@ -278,10 +302,27 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
     }
   }, [bankAccounts, tenantId])
 
-  // Testear configuraciones
+  // Testear configuraciones - ACTUALIZADO
   const testConfiguration = useCallback(async (type: 'payment' | 'email', provider: string) => {
     try {
       setSaving(true)
+
+      // Validaciones locales antes de enviar al servidor
+      if (type === 'email' && provider === 'resend') {
+        if (!emailForm.resend.api_key) {
+          return {
+            success: false,
+            error: 'Falta la API key de Resend'
+          }
+        }
+        if (!emailForm.resend.from_email) {
+          return {
+            success: false,
+            error: 'Falta el email remitente'
+          }
+        }
+      }
+
       const result = await tenantService.testConfiguration(tenantId, type, provider)
       return result
     } catch (error) {
@@ -292,7 +333,7 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
     } finally {
       setSaving(false)
     }
-  }, [tenantId])
+  }, [tenantId, emailForm])
 
   return {
     // Estados
@@ -302,18 +343,18 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
     emailConfigs,
     paymentForms,
     emailForm,
-    bankAccounts, // NUEVO
+    bankAccounts,
 
     // Acciones
     setPaymentForms,
     setEmailForm,
-    setBankAccounts, // NUEVO
+    setBankAccounts,
     updatePaymentConfig,
     updateEmailConfig,
     testConfiguration,
     loadConfigurations,
 
-    // Nuevas acciones para cuentas bancarias
+    // Acciones para cuentas bancarias
     addBankAccount,
     updateBankAccount,
     removeBankAccount,

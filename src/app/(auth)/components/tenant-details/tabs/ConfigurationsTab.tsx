@@ -58,6 +58,21 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
         }))
     }
 
+    // Nueva función para guardar la configuración - CON VALIDACIÓN
+    const handleSaveEmailConfig = async () => {
+        if (!emailForm.resend.api_key || !emailForm.resend.from_email) {
+            // Mostrar error en el UI en lugar de console
+            alert('Faltan la API key o el email remitente')
+            return
+        }
+
+        const result = await updateEmailConfig(true)
+        if (!result.success) {
+            console.error('Error updating email config:', result.error)
+            alert('Error al guardar: ' + result.error)
+        }
+    }
+
     const handleTest = async (type: 'payment' | 'email', provider: string) => {
         const result = await testConfiguration(type, provider)
         setTestResults(prev => ({
@@ -76,11 +91,11 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
     }
 
     const handleToggleEmailConfig = async (enabled: boolean) => {
-        const result = await updateEmailConfig(enabled)
-        if (!result.success) {
-            // Mostrar error si es necesario
-            console.error('Error updating email config:', result.error)
-        }
+        // Solo cambiar el estado local del formulario
+        setEmailForm(prev => ({
+            ...prev,
+            resend: { ...prev.resend, enabled }
+        }))
     }
 
     if (loading) {
@@ -623,7 +638,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                 </div>
                                 <div className="flex justify-end">
                                     <button
-                                        onClick={() => handleToggleEmailConfig(true)}
+                                        onClick={handleSaveEmailConfig} // Cambiar esta línea
                                         disabled={saving || !emailForm.resend.api_key || !emailForm.resend.from_email}
                                         className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 disabled:opacity-50"
                                     >

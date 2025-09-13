@@ -714,6 +714,9 @@ export const tenantService = {
     }
   },
 
+  // ====== CONFIGURACIONES DE EMAIL - VERSIÓN CORREGIDA ======
+
+  // Y también simplificar el upsertEmailConfig en el servicio:
   async upsertEmailConfig(configData: {
     tenant_id: string
     provider: string
@@ -721,8 +724,6 @@ export const tenantService = {
     password?: string
     host?: string
     port?: number
-    api_key?: string
-    from_email?: string
     from_name?: string
   }) {
     const { createClient } = await import('@supabase/supabase-js')
@@ -732,7 +733,7 @@ export const tenantService = {
     )
 
     try {
-      // Verificar si ya existe una configuración para este tenant y proveedor
+      // Verificar si ya existe
       const { data: existing } = await directClient
         .from('email_configs')
         .select('id')
@@ -743,17 +744,14 @@ export const tenantService = {
       const emailConfigData = {
         tenant_id: configData.tenant_id,
         provider: configData.provider,
-        username: configData.username || null,
-        password: configData.password || null,
-        host: configData.host || null,
-        port: configData.port || null,
-        api_key: configData.api_key || null,
-        from_email: configData.from_email || null,
-        from_name: configData.from_name || null
+        username: configData.username || '',
+        password: configData.password || '',
+        host: configData.host || 'api.resend.com',
+        port: configData.port || 443,
+        from_name: configData.from_name
       }
 
       if (existing) {
-        // Actualizar configuración existente
         const { data, error } = await directClient
           .from('email_configs')
           .update(emailConfigData)
@@ -762,16 +760,8 @@ export const tenantService = {
           .single()
 
         if (error) throw error
-
-        console.log('Email config updated:', {
-          tenant_id: configData.tenant_id,
-          provider: configData.provider,
-          action: 'updated'
-        })
-
         return data
       } else {
-        // Crear nueva configuración
         const { data, error } = await directClient
           .from('email_configs')
           .insert(emailConfigData)
@@ -779,18 +769,46 @@ export const tenantService = {
           .single()
 
         if (error) throw error
-
-        console.log('Email config created:', {
-          tenant_id: configData.tenant_id,
-          provider: configData.provider,
-          action: 'created'
-        })
-
         return data
       }
     } catch (error) {
       console.error('Error upserting email config:', error)
       throw new Error('Error al guardar la configuración de email')
+    }
+  },
+
+  // Método helper para obtener configuración de email de un tenant
+  async getEmailConfigForTenant(tenantId: string, provider: string = 'resend') {
+    const { createClient } = await import('@supabase/supabase-js')
+    const directClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    try {
+      const { data, error } = await directClient
+        .from('email_configs')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .eq('provider', provider)
+        .single()
+
+      if (error) throw error
+
+      // Adaptar los datos según el proveedor
+      if (provider === 'resend') {
+        return {
+          api_key: data.password, // La API key está en el campo password
+          from_email: data.username, // El from_email está en username
+          from_name: data.from_name || '',
+          provider: data.provider
+        }
+      }
+
+      return data
+    } catch (error) {
+      console.error('Error getting email config for tenant:', error)
+      return null
     }
   },
 
@@ -823,7 +841,7 @@ export const tenantService = {
     }
   },
 
-  // ====== TESTING DE CONFIGURACIONES ======
+  // ====== TESTING DE CONFIGURACIONES - ACTUALIZADO ======
   async testConfiguration(tenantId: string, type: 'payment' | 'email', provider: string) {
     try {
       console.log('Testing configuration:', { tenantId, type, provider })
@@ -887,19 +905,38 @@ export const tenantService = {
         }
       } else if (type === 'email') {
         if (provider === 'resend') {
-          if (!config.api_key) {
+          // ACTUALIZADO: La API key está en el campo password
+          if (!config.password) {
             throw new Error('Falta la API key de Resend')
           }
-          if (!config.api_key.startsWith('re_')) {
+          if (!config.password.startsWith('re_')) {
             throw new Error('La API key de Resend debe comenzar con re_')
           }
-          if (!config.from_email) {
+
+          // ACTUALIZADO: El email remitente está en el campo username
+          if (!config.username) {
             throw new Error('Falta el email remitente')
           }
+
           // Validar formato de email
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-          if (!emailRegex.test(config.from_email)) {
+          if (!emailRegex.test(config.username)) {
             throw new Error('El formato del email remitente no es válido')
+          }
+
+          // Validaciones adicionales para Resend
+          if (config.password.length < 20) {
+            throw new Error('La API key de Resend parece ser muy corta')
+          }
+
+          // Validar que el host sea correcto (opcional)
+          if (config.host && config.host !== 'api.resend.com') {
+            console.warn('Host no estándar para Resend:', config.host)
+          }
+
+          // Validar puerto (opcional)
+          if (config.port && config.port !== 443) {
+            console.warn('Puerto no estándar para Resend:', config.port)
           }
         }
       }
@@ -907,11 +944,25 @@ export const tenantService = {
       // Simulación de latencia de red
       await new Promise(resolve => setTimeout(resolve, 1000))
 
+      // Preparar mensaje de éxito específico
+      let successMessage = `Configuración de ${provider} válida`
+
+      if (type === 'email' && provider === 'resend') {
+        successMessage = `Configuración de Resend válida - Email: ${config.username}`
+      } else if (provider.startsWith('bank_account')) {
+        successMessage = `Cuenta bancaria válida - ${config.extra?.bank_name}`
+      }
+
       // Por ahora retornamos éxito si pasa las validaciones básicas
       return {
         success: true,
-        message: `Configuración de ${provider.replace('bank_account_', 'cuenta bancaria ')} válida`,
-        tested_at: new Date().toISOString()
+        message: successMessage,
+        tested_at: new Date().toISOString(),
+        details: type === 'email' && provider === 'resend' ? {
+          api_key_prefix: config.password.substring(0, 10) + '...',
+          from_email: config.username,
+          from_name: config.from_name || 'Sin nombre configurado'
+        } : undefined
       }
 
     } catch (error) {
@@ -923,7 +974,7 @@ export const tenantService = {
       }
     }
   },
-  
+
   async upsertBankAccount(accountData: {
     id?: string
     tenant_id: string
