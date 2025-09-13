@@ -1,4 +1,4 @@
-// src/app/(auth)/layout.tsx - REDISEÑADO MANTENIENDO ESENCIA ORIGINAL
+// src/app/(auth)/layout.tsx - CON REDIRECCIÓN ESPECÍFICA PARA REFERIDOS
 'use client'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -12,10 +12,13 @@ import { useUserFeatures } from './hooks/useUserFeatures'
 import { TenantProvider, useTenantContext } from './contexts/TenantContext'
 import { iconMap } from './utils/iconMap'
 import { Tenant } from './types/tenant'
+import { isUserReferred } from './services/referralAuthService'
 
 // Componente interno que usa el context
 function AuthLayoutContent({ children }: { children: React.ReactNode }) {
     const [userEmail, setUserEmail] = useState<string | null>(null)
+    const [userId, setUserId] = useState<string | null>(null)
+    const [isReferralUser, setIsReferralUser] = useState<boolean | null>(null)
     const [sidebarOpen, setSidebarOpen] = useState(true)
     const router = useRouter()
     const pathname = usePathname()
@@ -44,20 +47,44 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
                     router.push('/login')
                     return
                 }
+
                 setUserEmail(user.email ?? null)
+                setUserId(user.id)
+
+                // Verificar si es usuario referido
+                try {
+                    const isReferred = await isUserReferred(user.id)
+                    setIsReferralUser(isReferred)
+                } catch (error) {
+                    console.error('Error checking referral status:', error)
+                    setIsReferralUser(false)
+                }
             })
             .catch(() => router.push('/login'))
             .finally(() => setLoading(false))
     }, [])
 
     useEffect(() => {
-        if (!featuresLoading && !tenantLoading) {
+        if (!featuresLoading && !tenantLoading && isReferralUser !== null) {
             const allFeatures = menuGroups.flatMap(group => [group.parent, ...group.children])
+
+            // Si es usuario referido, redirigir a my-sales
+            if (isReferralUser && pathname === '/dashboard') {
+                const mySalesFeature = allFeatures.find(feature =>
+                    feature.route === '/dashboard/my-sales'
+                )
+                if (mySalesFeature) {
+                    router.replace('/dashboard/my-sales')
+                    return
+                }
+            }
+
+            // Lógica original para otros casos
             if (allFeatures.length === 1) {
                 router.push(allFeatures[0].route)
             }
         }
-    }, [menuGroups, featuresLoading, tenantLoading])
+    }, [menuGroups, featuresLoading, tenantLoading, isReferralUser, pathname])
 
     const handleLogout = async () => {
         try {
@@ -73,12 +100,12 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
         setCurrentTenant(tenant) // ESTO DISPARA CAMBIOS EN TODA LA APP
     }
 
-    if (loading || tenantLoading || featuresLoading) {
+    if (loading || tenantLoading || featuresLoading || isReferralUser === null) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-white">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Cargando... 1</p>
+                    <p className="text-gray-600">Cargando...</p>
                 </div>
             </div>
         )
@@ -94,7 +121,9 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
                 <p className="text-gray-600 mt-2 max-w-sm">
                     {isAdmin && !currentTenant
                         ? "Selecciona un cliente para acceder a sus módulos."
-                        : "Tu cuenta no tiene módulos habilitados aún. Por favor contacta al administrador para obtener acceso."
+                        : isReferralUser
+                            ? "Tu cuenta de referido está siendo configurada. Por favor contacta al administrador."
+                            : "Tu cuenta no tiene módulos habilitados aún. Por favor contacta al administrador para obtener acceso."
                     }
                 </p>
                 <button
@@ -122,7 +151,9 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
                             className="object-contain transition-all"
                         />
                         {sidebarOpen && (
-                            <h1 className="text-lg font-bold text-gray-800">Bienvenido</h1>
+                            <h1 className="text-lg font-bold text-gray-800">
+                                {isReferralUser ? 'Panel Referidos' : 'Bienvenido'}
+                            </h1>
                         )}
                     </div>
                     <button
@@ -134,8 +165,8 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
                     </button>
                 </div>
 
-                {/* Indicador de Tenant Actual */}
-                {sidebarOpen && (
+                {/* Indicador de Tenant Actual - Solo mostrar si NO es usuario referido */}
+                {sidebarOpen && !isReferralUser && (
                     <div className="px-4 py-3 bg-sky-50 border-b border-sky-100">
                         <div className="flex items-center text-sm">
                             <Building2 className="h-4 w-4 text-sky-600 mr-2 flex-shrink-0" />
@@ -154,6 +185,19 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
                     </div>
                 )}
 
+                {/* Indicador especial para usuarios referidos */}
+                {sidebarOpen && isReferralUser && (
+                    <div className="px-4 py-3 bg-green-50 border-b border-green-100">
+                        <div className="flex items-center text-sm">
+                            <div className="h-4 w-4 bg-green-500 rounded-full mr-2 flex-shrink-0"></div>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-xs text-green-600 font-medium">Estado:</p>
+                                <p className="text-green-800 font-semibold">Usuario Referido</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Navigation - Scrollable independiente */}
                 <nav className="flex-1 overflow-y-auto px-4 py-6">
                     <ul className="space-y-2">
@@ -165,11 +209,10 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
                                 <li key={parent.id}>
                                     <Link
                                         href={parent.route}
-                                        className={`flex items-center px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                                            isParentActive 
-                                                ? 'bg-sky-600 text-white shadow-sm' 
+                                        className={`flex items-center px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${isParentActive
+                                                ? 'bg-sky-600 text-white shadow-sm'
                                                 : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                                        }`}
+                                            }`}
                                         title={!sidebarOpen ? parent.label : undefined}
                                     >
                                         <ParentIcon className="h-5 w-5 flex-shrink-0" />
@@ -185,11 +228,10 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
                                                     <li key={child.id}>
                                                         <Link
                                                             href={child.route}
-                                                            className={`flex items-center px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
-                                                                isChildActive 
-                                                                    ? 'bg-sky-100 text-sky-700 font-medium' 
+                                                            className={`flex items-center px-3 py-2 rounded-lg text-sm transition-all duration-200 ${isChildActive
+                                                                    ? 'bg-sky-100 text-sky-700 font-medium'
                                                                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-700'
-                                                            }`}
+                                                                }`}
                                                         >
                                                             <ChildIcon className="h-4 w-4 flex-shrink-0" />
                                                             <span className="ml-2">{child.label}</span>
@@ -227,8 +269,8 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
                                     .find(f => f.route === pathname)?.label || 'Dashboard'}
                             </h1>
 
-                            {/* Selector de Tenant (Solo para Admins) */}
-                            {isAdmin && (
+                            {/* Selector de Tenant (Solo para Admins y NO referidos) */}
+                            {isAdmin && !isReferralUser && (
                                 <div className="flex items-center">
                                     <Menu as="div" className="relative inline-block text-left">
                                         <Menu.Button className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors">
@@ -246,9 +288,8 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
                                                     {({ active }) => (
                                                         <button
                                                             onClick={() => handleTenantChange(null)}
-                                                            className={`${active ? 'bg-gray-50' : ''} ${
-                                                                !currentTenant ? 'bg-sky-50 text-sky-700' : 'text-gray-700'
-                                                            } w-full text-left px-4 py-3 text-sm flex items-center rounded-lg mx-2`}
+                                                            className={`${active ? 'bg-gray-50' : ''} ${!currentTenant ? 'bg-sky-50 text-sky-700' : 'text-gray-700'
+                                                                } w-full text-left px-4 py-3 text-sm flex items-center rounded-lg mx-2`}
                                                         >
                                                             <Globe className="h-4 w-4 mr-3" />
                                                             <div>
@@ -268,9 +309,8 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
                                                         {({ active }) => (
                                                             <button
                                                                 onClick={() => handleTenantChange(tenant)}
-                                                                className={`${active ? 'bg-gray-50' : ''} ${
-                                                                    currentTenant?.id === tenant.id ? 'bg-sky-50 text-sky-700' : 'text-gray-700'
-                                                                } w-full text-left px-4 py-3 text-sm flex items-center rounded-lg mx-2`}
+                                                                className={`${active ? 'bg-gray-50' : ''} ${currentTenant?.id === tenant.id ? 'bg-sky-50 text-sky-700' : 'text-gray-700'
+                                                                    } w-full text-left px-4 py-3 text-sm flex items-center rounded-lg mx-2`}
                                                             >
                                                                 <Building2 className="h-4 w-4 mr-3" />
                                                                 <div>
@@ -303,7 +343,7 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
                                         <div className="text-right">
                                             <p className="text-sm font-medium">{userEmail}</p>
                                             <p className="text-xs text-gray-500">
-                                                {isAdmin ? 'Administrador' : 'Cliente'}
+                                                {isAdmin ? 'Administrador' : isReferralUser ? 'Referido' : 'Cliente'}
                                             </p>
                                         </div>
                                         <div className="w-10 h-10 bg-sky-600 rounded-full flex items-center justify-center text-white text-sm font-medium">

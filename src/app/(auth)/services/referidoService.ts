@@ -1,6 +1,5 @@
 import { supabase } from "../lib/supabaseTenantClient"
-
-const NEXT_PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+import { buildReferralLink } from "../utils/tenantUrl"
 
 export interface Referido {
     id: string
@@ -79,20 +78,38 @@ export async function createReferido(input: ReferidoInput) {
         throw error;
     }
 
-    // Llamar a la API de verificación
+    // Obtener el ID del referido recién creado para enviar verificación
     if (input.email) {
-        const referralLink = `${NEXT_PUBLIC_BASE_URL}/?ref=${encodeURIComponent(input.referral_code)}`;
-        const verifyUrl = `${NEXT_PUBLIC_BASE_URL}/verifyuser?email=${encodeURIComponent(input.email)}`;
-
         try {
+            // Buscar el referido recién creado
+            const { data: createdReferral, error: fetchError } = await supabase
+                .from('referrals')
+                .select('id')
+                .eq('referral_code', input.referral_code.toUpperCase())
+                .eq('email', input.email)
+                .single();
+
+            if (fetchError || !createdReferral) {
+                console.error('Error al obtener referido creado:', fetchError);
+                return;
+            }
+
+            // Usar la nueva función para construir el enlace de referido
+            const referralLink = await buildReferralLink(input.referral_code);
+
+            // Para el enlace de verificación, también usar la URL del tenant
+            const { getTenantBaseUrl } = await import('../utils/tenantUrl');
+            const baseUrl = await getTenantBaseUrl();
+            const verifyUrl = `${baseUrl}/verifyuser?referralId=${createdReferral.id}`;
+
             await fetch('/api/send-verification', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    name: input.name,
-                    email: input.email,
+                    referralId: createdReferral.id,
+                    tenantId,
                     referralLink,
                     verifyUrl,
                 }),
@@ -107,7 +124,7 @@ export async function createReferido(input: ReferidoInput) {
 
 export async function updateReferido(id: string, input: ReferidoInput) {
     console.log('✏️ [REFERIDO-SERVICE] Updating referido:', id);
-    
+
     const { error } = await supabase
         .from('referrals')
         .update({
@@ -150,7 +167,7 @@ export const getReferidos = async (): Promise<Referido[]> => {
     return (
         data?.map((referido: any) => {
             // Filtrar solo las facturas completadas
-            const completedInvoices = referido.invoices?.filter((inv: any) => 
+            const completedInvoices = referido.invoices?.filter((inv: any) =>
                 inv.status === 'completed' || inv.status === 'paid'
             ) || []
 
@@ -176,31 +193,31 @@ export const getReferidos = async (): Promise<Referido[]> => {
 
 export const deleteReferido = async (id: string) => {
     console.log('🗑️ [REFERIDO-SERVICE] Deleting referido:', id);
-    
+
     const { error } = await supabase
         .from('referrals')
         .delete()
         .eq('id', id)
-    
+
     if (error) throw error
     console.log('✅ [REFERIDO-SERVICE] Referido deleted successfully');
 }
 
 export const toggleReferidoStatus = async (id: string, currentStatus: boolean) => {
     console.log('🔄 [REFERIDO-SERVICE] Toggling referido status:', id);
-    
+
     const { error } = await supabase
         .from('referrals')
         .update({ is_active: !currentStatus })
         .eq('id', id)
-    
+
     if (error) throw error
     console.log('✅ [REFERIDO-SERVICE] Status toggled successfully');
 }
 
 export async function getReferralStatsByUser(userId: string) {
     console.log('📊 [REFERIDO-SERVICE] Getting referral stats for user:', userId);
-    
+
     const { data: referral, error: referralError } = await supabase
         .from('referrals')
         .select('id, commission_rate')
@@ -239,7 +256,7 @@ export async function getReferralStatsByUser(userId: string) {
 
 export async function getReferralParticipantsByUser(userId: string) {
     console.log('👥 [REFERIDO-SERVICE] Getting participants for user:', userId);
-    
+
     const { data: referral, error: referralError } = await supabase
         .from('referrals')
         .select('id')

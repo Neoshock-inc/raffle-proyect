@@ -10,7 +10,7 @@ import {
     ReferidoInput,
     Referido,
 } from '../services/referidoService'
-
+import { buildReferralLink } from '../utils/tenantUrl'
 
 interface ReferidoModalProps {
     isOpen: boolean
@@ -30,6 +30,7 @@ export default function ReferidoModal({ isOpen, onClose, referido, onSuccess }: 
     })
     const [loading, setLoading] = useState(false)
     const [errors, setErrors] = useState<Record<string, string>>({})
+    const [previewUrl, setPreviewUrl] = useState('')
 
     useEffect(() => {
         if (referido) {
@@ -52,7 +53,23 @@ export default function ReferidoModal({ isOpen, onClose, referido, onSuccess }: 
             })
         }
         setErrors({})
+        updatePreviewUrl('')
     }, [referido, isOpen])
+
+    const updatePreviewUrl = async (code: string) => {
+        if (!code) {
+            setPreviewUrl('')
+            return
+        }
+
+        try {
+            const url = await buildReferralLink(code)
+            setPreviewUrl(url)
+        } catch (error) {
+            console.error('Error building referral link:', error)
+            setPreviewUrl(`[Error generando enlace]/?ref=${code}`)
+        }
+    }
 
     const generateReferralCode = () => {
         const name = formData.name.trim()
@@ -69,6 +86,7 @@ export default function ReferidoModal({ isOpen, onClose, referido, onSuccess }: 
 
         const code = (cleanName + randomPart).substring(0, 20)
         setFormData(prev => ({ ...prev, referral_code: code }))
+        updatePreviewUrl(code)
     }
 
     const validateForm = () => {
@@ -134,6 +152,8 @@ export default function ReferidoModal({ isOpen, onClose, referido, onSuccess }: 
         } catch (error: any) {
             if (error.message === 'duplicate_referral_code') {
                 setErrors({ referral_code: 'Este código ya existe' })
+            } else if (error.message === 'email_already_exists') {
+                setErrors({ email: 'Este email ya está registrado' })
             } else {
                 console.error('Error saving referido:', error)
                 toast.error(error.message || 'Error al guardar referido')
@@ -141,6 +161,12 @@ export default function ReferidoModal({ isOpen, onClose, referido, onSuccess }: 
         } finally {
             setLoading(false)
         }
+    }
+
+    const handleReferralCodeChange = (value: string) => {
+        const upperValue = value.toUpperCase()
+        setFormData(prev => ({ ...prev, referral_code: upperValue }))
+        updatePreviewUrl(upperValue)
     }
 
     if (!isOpen) return null
@@ -190,6 +216,7 @@ export default function ReferidoModal({ isOpen, onClose, referido, onSuccess }: 
                                         <p className="mt-1 text-sm text-red-600">{errors.name}</p>
                                     )}
                                 </div>
+
                                 {/* Email */}
                                 <div>
                                     <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -212,7 +239,7 @@ export default function ReferidoModal({ isOpen, onClose, referido, onSuccess }: 
                                 {/* Teléfono */}
                                 <div>
                                     <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                                        Teléfono *
+                                        Teléfono
                                     </label>
                                     <input
                                         type="tel"
@@ -222,6 +249,9 @@ export default function ReferidoModal({ isOpen, onClose, referido, onSuccess }: 
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-700 sm:text-sm"
                                         placeholder="+593 99 999 9999"
                                     />
+                                    {errors.phone && (
+                                        <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+                                    )}
                                 </div>
 
                                 {/* Código de Referido */}
@@ -234,18 +264,15 @@ export default function ReferidoModal({ isOpen, onClose, referido, onSuccess }: 
                                             type="text"
                                             id="referral_code"
                                             value={formData.referral_code}
-                                            onChange={(e) => setFormData(prev => ({
-                                                ...prev,
-                                                referral_code: e.target.value.toUpperCase()
-                                            }))}
-                                            className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-700 sm:text-sm ${errors.referral_code ? 'border-red-300' : ''
+                                            onChange={(e) => handleReferralCodeChange(e.target.value)}
+                                            className={`w-full px-3 py-2 border border-gray-300 rounded-l-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-700 sm:text-sm ${errors.referral_code ? 'border-red-300' : ''
                                                 }`}
                                             placeholder="CODIGO2025"
                                         />
                                         <button
                                             type="button"
                                             onClick={generateReferralCode}
-                                            className="inline-flex items-center px-4 py-2 border border-sky-700 text-sky-700 font-medium text-sm bg-white rounded-r-md hover:bg-[#f3eaea] focus:outline-none focus:ring-2 focus:ring-sky-700"
+                                            className="inline-flex items-center px-4 py-2 border border-sky-700 text-sky-700 font-medium text-sm bg-white rounded-r-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-700"
                                         >
                                             Generar
                                         </button>
@@ -253,9 +280,14 @@ export default function ReferidoModal({ isOpen, onClose, referido, onSuccess }: 
                                     {errors.referral_code && (
                                         <p className="mt-1 text-sm text-red-600">{errors.referral_code}</p>
                                     )}
-                                    <p className="mt-1 text-sm text-gray-500">
-                                        Enlace: {window.location.origin}/?ref={formData.referral_code || 'CODIGO'}
-                                    </p>
+                                    {previewUrl && (
+                                        <div className="mt-2 p-3 bg-gray-50 rounded-md">
+                                            <p className="text-sm text-gray-700 font-medium">Enlace de referido:</p>
+                                            <p className="text-xs text-blue-600 break-all font-mono">
+                                                {previewUrl}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Comisión */}

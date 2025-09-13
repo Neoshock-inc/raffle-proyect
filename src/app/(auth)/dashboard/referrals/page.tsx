@@ -2,14 +2,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Edit, Trash2, Eye, Copy, ExternalLink } from 'lucide-react'
+import { Plus, Edit, Trash2, Copy, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import {
-  getReferidos,
-  deleteReferido,
-  toggleReferidoStatus,
-  Referido
+    getReferidos,
+    deleteReferido,
+    toggleReferidoStatus,
+    Referido
 } from '../../services/referidoService'
+import { buildReferralLink } from '../../utils/tenantUrl'
 import ReferidoModal from '../../components/ReferidoModal'
 
 export default function ReferidosPage() {
@@ -51,7 +52,6 @@ export default function ReferidosPage() {
 
         try {
             await deleteReferido(referido.id)
-
             toast.success('Referido eliminado correctamente')
             loadReferidos()
         } catch (error) {
@@ -73,18 +73,24 @@ export default function ReferidosPage() {
     }
 
     const copyReferralLink = async (code: string) => {
-        const link = `${window.location.origin}/?ref=${code}`
         try {
+            const link = await buildReferralLink(code)
             await navigator.clipboard.writeText(link)
             toast.success('Enlace copiado al portapapeles')
         } catch (error) {
+            console.error('Error copying referral link:', error)
             toast.error('Error al copiar enlace')
         }
     }
 
-    const openReferralLink = (code: string) => {
-        const link = `${window.location.origin}/?ref=${code}`
-        window.open(link, '_blank')
+    const openReferralLink = async (code: string) => {
+        try {
+            const link = await buildReferralLink(code)
+            window.open(link, '_blank')
+        } catch (error) {
+            console.error('Error opening referral link:', error)
+            toast.error('Error al abrir enlace')
+        }
     }
 
     if (loading) {
