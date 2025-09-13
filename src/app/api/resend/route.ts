@@ -172,6 +172,7 @@ function generateInvoiceHtml(
   const companyName = tenantInfo?.company_name || emailConfig?.from_name || 'Sistema de Rifas';
   const logoUrl = tenantInfo?.logo_url || 'https://via.placeholder.com/150x50?text=Logo';
   const primaryColor = tenantInfo?.primary_color || '#fa8d3b';
+  const tenantDomain = tenantInfo?.domain ? `https://${tenantInfo.domain}` : 'https://app.myfortunacloud.com';
 
   return `
     <div style="font-family: sans-serif; color: #333; max-width: 700px; margin: auto; border: 1px solid #eee; padding: 0; width: 100%;">
@@ -209,7 +210,7 @@ function generateInvoiceHtml(
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; width: 40%;"><strong>Total:</strong></td>
-                  <td style="padding: 8px 0;">$${invoice.total_price.toFixed(2)}</td>
+                  <td style="padding: 8px 0;">${invoice.total_price.toFixed(2)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 8px 0;"><strong>Método de pago:</strong></td>
@@ -233,7 +234,7 @@ function generateInvoiceHtml(
 
         <!-- Botón personalizable por tenant -->
         <div style="margin-top: 30px; text-align: center;">
-          <a href="https://success-page-url.com/success?participantId=${invoice.participant_id}&email=${encodeURIComponent(invoice.email)}&amount=${invoice.amount}" 
+          <a href="${tenantDomain}/success?participantId=${invoice.participant_id}&email=${encodeURIComponent(invoice.email)}&amount=${invoice.amount}" 
              style="display: inline-block; background-color: ${primaryColor}; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">
             Ver mis números
           </a>
