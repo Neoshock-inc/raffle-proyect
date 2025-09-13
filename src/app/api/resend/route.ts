@@ -181,7 +181,7 @@ function generateInvoiceHtml(
   const companyName = tenantInfo?.company_name || emailConfig?.from_name || 'Sistema de Rifas';
   const logoUrl = tenantInfo?.logo_url || 'https://via.placeholder.com/150x50?text=Logo';
   const primaryColor = tenantInfo?.primary_color || '#fa8d3b';
-  const tenantDomain = tenantInfo?.domain ? `https://${tenantInfo.domain}` : 'https://localhost:3000';
+  const tenantDomain = tenantInfo?.domain ? `https://${tenantInfo.domain}` : 'https://app.myfortunacloud.com';
 
   return `
     <div style="font-family: sans-serif; color: #333; max-width: 700px; margin: auto; border: 1px solid #eee; padding: 0; width: 100%;">
