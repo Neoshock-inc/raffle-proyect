@@ -51,6 +51,10 @@ async function getTenantInfo(tenantId: string) {
           company_name,
           logo_url,
           primary_color
+        ),
+        tenant_domains (
+          domain,
+          verified
         )
       `)
       .eq('id', tenantId)
@@ -61,11 +65,16 @@ async function getTenantInfo(tenantId: string) {
       return null;
     }
 
+    // Buscar dominio verificado, o el primero disponible como fallback
+    const verifiedDomain = data.tenant_domains?.find(d => d.verified);
+    const primaryDomain = verifiedDomain?.domain || data.tenant_domains?.[0]?.domain;
+
     return {
       name: data.name,
       company_name: data.tenant_config[0]?.company_name || data.name,
       logo_url: data.tenant_config[0]?.logo_url,
-      primary_color: data.tenant_config[0]?.primary_color || '#fa8d3b'
+      primary_color: data.tenant_config[0]?.primary_color || '#fa8d3b',
+      domain: primaryDomain
     };
   } catch (error) {
     console.error('Error getting tenant info:', error);
@@ -172,7 +181,7 @@ function generateInvoiceHtml(
   const companyName = tenantInfo?.company_name || emailConfig?.from_name || 'Sistema de Rifas';
   const logoUrl = tenantInfo?.logo_url || 'https://via.placeholder.com/150x50?text=Logo';
   const primaryColor = tenantInfo?.primary_color || '#fa8d3b';
-  const tenantDomain = tenantInfo?.domain ? `https://${tenantInfo.domain}` : 'https://app.myfortunacloud.com';
+  const tenantDomain = tenantInfo?.domain ? `https://${tenantInfo.domain}` : 'https://localhost:3000';
 
   return `
     <div style="font-family: sans-serif; color: #333; max-width: 700px; margin: auto; border: 1px solid #eee; padding: 0; width: 100%;">
@@ -264,11 +273,13 @@ export async function GET(req: NextRequest) {
 
   try {
     const emailConfig = await getEmailConfigForTenant(tenantId);
+    const tenantInfo = await getTenantInfo(tenantId);
 
     if (!emailConfig) {
       return NextResponse.json({
         message: 'No se encontró configuración de email para este tenant',
-        tenant_id: tenantId
+        tenant_id: tenantId,
+        tenant_info: tenantInfo
       }, { status: 404 });
     }
 
@@ -286,6 +297,14 @@ export async function GET(req: NextRequest) {
           <li><strong>API Key:</strong> ${emailConfig.api_key.substring(0, 10)}...</li>
           <li><strong>Provider:</strong> ${emailConfig.provider}</li>
         </ul>
+        ${tenantInfo ? `
+          <h2>Información del Tenant</h2>
+          <ul>
+            <li><strong>Empresa:</strong> ${tenantInfo.company_name}</li>
+            <li><strong>Dominio:</strong> ${tenantInfo.domain || 'No configurado'}</li>
+            <li><strong>Color:</strong> ${tenantInfo.primary_color}</li>
+          </ul>
+        ` : ''}
       `,
     });
 
@@ -294,6 +313,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         message: 'Error al enviar correo de prueba',
         tenant_id: tenantId,
+        tenant_info: tenantInfo,
+        email_config: {
+          from_name: emailConfig.from_name,
+          from_email: emailConfig.from_email,
+          api_key_prefix: emailConfig.api_key.substring(0, 10) + '...'
+        },
         error: error
       }, { status: 500 });
     }
@@ -301,10 +326,22 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       message: 'Correo de prueba enviado con éxito',
       tenant_id: tenantId,
-      config_used: {
+      tenant_info: tenantInfo ? {
+        name: tenantInfo.name,
+        company_name: tenantInfo.company_name,
+        domain: tenantInfo.domain,
+        primary_color: tenantInfo.primary_color,
+        logo_url: tenantInfo.logo_url
+      } : null,
+      email_config: {
         from_name: emailConfig.from_name,
         from_email: emailConfig.from_email,
+        provider: emailConfig.provider,
         api_key_prefix: emailConfig.api_key.substring(0, 10) + '...'
+      },
+      test_details: {
+        email_sent_to: testEmail,
+        timestamp: new Date().toISOString()
       }
     }, { status: 200 });
 
@@ -312,7 +349,8 @@ export async function GET(req: NextRequest) {
     console.error('Error en test:', err);
     return NextResponse.json({
       message: 'Error interno del servidor en test',
-      tenant_id: tenantId
+      tenant_id: tenantId,
+      error: err instanceof Error ? err.message : 'Unknown error'
     }, { status: 500 });
   }
 }
