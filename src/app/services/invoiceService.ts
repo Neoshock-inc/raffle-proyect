@@ -85,34 +85,55 @@ export const getInvoicesByParticipant = async (participantId: string): Promise<I
         throw error;
     }
 };
-
 /**
- * Busca un participante por email, o lo crea si no existe
+ * Busca un participante por email dentro del tenant, o lo crea si no existe
  * @param email Email del participante
  * @param name Nombre del participante (opcional, usado en caso de crear uno nuevo)
+ * @param tenantId ID del tenant donde buscar/crear el participante
  * @returns El ID del participante encontrado o creado
  */
-export const findOrCreateParticipant = async (email: string, name?: string): Promise<string> => {
+export const findOrCreateParticipant = async (
+    email: string,
+    name?: string,
+    tenantId?: string
+): Promise<string> => {
     try {
-        console.log('👤 Finding or creating participant:', email);
+        console.log('👤 Finding or creating participant:', email, 'in tenant:', tenantId);
 
-        // Primero intentamos encontrar el participante por email
+        // Obtener tenant_id del contexto si no se proporciona
+        let currentTenantId = tenantId;
+        if (!currentTenantId) {
+            const context = supabase.getTenantContext();
+            currentTenantId = context.tenantId!;
+        }
+
+        // Buscar participante por email Y tenant_id
         const { data: existingParticipant, error: searchError } = await supabase
             .from('participants')
             .select('id')
             .eq('email', email)
+            .eq('tenant_id', currentTenantId) // CLAVE: filtrar por tenant
             .maybeSingle();
 
-        // Si el participante existe, retornamos su ID
+        if (searchError) {
+            console.error('❌ Error searching participant:', searchError);
+            throw new Error(searchError.message);
+        }
+
+        // Si el participante existe en este tenant, retornamos su ID
         if (existingParticipant) {
             console.log('✅ Participant found:', existingParticipant.id);
             return existingParticipant.id;
         }
 
-        // Si no existe, creamos un nuevo participante
+        // Si no existe, crear nuevo participante CON tenant_id
         const { data: newParticipant, error: insertError } = await supabase
             .from('participants')
-            .insert([{ email, name: name || email.split('@')[0] }])
+            .insert([{
+                email,
+                name: name || email.split('@')[0],
+                tenant_id: currentTenantId // CLAVE: incluir tenant_id
+            }])
             .select()
             .single();
 
@@ -121,13 +142,14 @@ export const findOrCreateParticipant = async (email: string, name?: string): Pro
             throw new Error(insertError.message);
         }
 
-        console.log('✅ Participant created:', newParticipant.id);
+        console.log('✅ Participant created:', newParticipant.id, 'in tenant:', currentTenantId);
         return newParticipant.id;
     } catch (error) {
         console.error('❌ Error in findOrCreateParticipant:', error);
         throw error;
     }
 };
+
 /**
  * Crea una nueva factura, primero asegurándose de que exista el participante
  * @param invoiceData Datos de la factura a crear
@@ -153,10 +175,11 @@ export const createInvoiceWithParticipant = async (
 
         console.log('🔍 Current context during creation:', { tenantId: currentTenantId, isAdmin });
 
-        // Encontrar o crear el participante primero
+        // Encontrar o crear el participante EN EL TENANT CORRECTO
         const participantId = await findOrCreateParticipant(
             invoiceData.email,
             invoiceData.fullName,
+            currentTenantId // CLAVE: pasar el tenant_id
         );
 
         // Luego crear la factura con el ID del participante
