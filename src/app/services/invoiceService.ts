@@ -361,16 +361,18 @@ export interface GenerateNumbersParams {
     name: string;
     email: string;
     amount: number;
-    orderNumber?: string; // Para identificar la transacción
+    orderNumber?: string;
+    tenantId: string; // 👈 nuevo
+
 }
 
 export interface GenerateNumbersResponse {
     success: boolean;
-    assigned?: number[];
-    total_assigned?: number;
+    participantId?: string;
     raffle_id?: string;
     error?: string;
     details?: string;
+
 }
 
 /**
@@ -378,48 +380,48 @@ export interface GenerateNumbersResponse {
  * @param params Parámetros necesarios para generar los números
  * @returns Respuesta con los números asignados o error
  */
-export const generateRaffleNumbers = async (params: GenerateNumbersParams): Promise<GenerateNumbersResponse> => {
+export const generateRaffleNumbers = async (
+    params: GenerateNumbersParams
+): Promise<GenerateNumbersResponse> => {
     try {
-        const { name, email, amount, orderNumber } = params;
+        const { name, email, amount, orderNumber, tenantId } = params;
 
-        // 1. Obtener rifa activa
+        // 1. Obtener rifa activa del tenant
         const { data: raffle, error: raffleError } = await supabase
             .from('raffles')
             .select('id, total_numbers')
             .eq('is_active', true)
-            .single();
+            .eq('tenant_id', tenantId)
+            .maybeSingle();
+
+        console.log(raffle);
 
         if (raffleError || !raffle) {
-            return {
-                success: false,
-                error: 'No hay una rifa activa disponible'
-            };
+            return { success: false, error: 'No hay una rifa activa para este tenant' };
         }
 
         const raffleId = raffle.id;
         const maxNumber = raffle.total_numbers || 99999;
 
-        // 2. Verificar o crear participante
+        // 2. Buscar o crear participante ligado al tenant
         const { data: existingParticipant } = await supabase
             .from('participants')
             .select('id')
             .eq('email', email)
-            .single();
+            .eq('tenant_id', tenantId)
+            .maybeSingle();
 
         let participantId = existingParticipant?.id;
 
         if (!participantId) {
             const { data: newParticipant, error: participantError } = await supabase
                 .from('participants')
-                .insert({ name, email })
+                .insert({ name, email, tenant_id: tenantId })
                 .select()
                 .single();
 
             if (participantError || !newParticipant) {
-                return {
-                    success: false,
-                    error: 'Error al crear participante'
-                };
+                return { success: false, error: 'Error al crear participante' };
             }
 
             participantId = newParticipant.id;
@@ -429,24 +431,18 @@ export const generateRaffleNumbers = async (params: GenerateNumbersParams): Prom
         const { data: usedEntries, error: usedError } = await supabase
             .from('raffle_entries')
             .select('number')
-            .eq('raffle_id', raffleId);
+            .eq('raffle_id', raffleId)
 
         if (usedError) {
             console.error('Error al obtener números usados:', usedError);
-            return {
-                success: false,
-                error: 'Error al verificar números disponibles'
-            };
+            return { success: false, error: 'Error al verificar números disponibles' };
         }
 
         const usedCount = usedEntries?.length || 0;
         const requestedAmount = parseInt(amount.toString());
 
         if (isNaN(requestedAmount) || requestedAmount <= 0) {
-            return {
-                success: false,
-                error: 'Cantidad inválida'
-            };
+            return { success: false, error: 'Cantidad inválida' };
         }
 
         if (maxNumber - usedCount < requestedAmount) {
@@ -456,12 +452,15 @@ export const generateRaffleNumbers = async (params: GenerateNumbersParams): Prom
             };
         }
 
-        // 4. Llamar procedimiento almacenado para generar números
-        const { data: generated, error: rpcError } = await supabase.rpc('generate_raffle_numbers', {
-            in_participant_id: participantId,
-            in_raffle_id: raffleId,
-            in_amount: requestedAmount
-        });
+        // 4. Procedimiento almacenado
+        const { data: generated, error: rpcError } = await supabase.rpc(
+            'generate_raffle_numbers',
+            {
+                in_participant_id: participantId,
+                in_raffle_id: raffleId,
+                in_amount: requestedAmount
+            }
+        );
 
         if (rpcError || !generated || generated.length !== requestedAmount) {
             console.error('Error al generar números:', rpcError);
@@ -472,27 +471,11 @@ export const generateRaffleNumbers = async (params: GenerateNumbersParams): Prom
             };
         }
 
-        // 5. Opcional: Actualizar con orderNumber si se proporciona
-        if (orderNumber) {
-            const { error: updateError } = await supabase
-                .from('raffle_entries')
-                .update({ order_number: orderNumber })
-                .eq('participant_id', participantId)
-                .eq('raffle_id', raffleId)
-                .in('number', generated.map((n: any) => n.generated_number));
-
-            if (updateError) {
-                console.warn('⚠️ No se pudo actualizar order_number:', updateError);
-            }
-        }
-
         return {
             success: true,
-            assigned: generated.map((n: any) => n.generated_number),
-            total_assigned: generated.length,
-            raffle_id: raffleId
+            raffle_id: raffleId,
+            participantId: participantId
         };
-
     } catch (error) {
         console.error('Error general en generateRaffleNumbers:', error);
         return {
@@ -502,7 +485,6 @@ export const generateRaffleNumbers = async (params: GenerateNumbersParams): Prom
         };
     }
 };
-
 /**
  * Verifica si ya existen números generados para un participante y rifa específica
  * @param email Email del participante

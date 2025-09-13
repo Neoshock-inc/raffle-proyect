@@ -212,7 +212,7 @@ export const usePaymentMethods = (
             setIsProcessing(false);
         }
     };
-    
+
     const handleTransferPayment = async (): Promise<void> => {
         const validation = validateCheckoutForm(formData, isOfLegalAge);
         if (!validation.isValid) {
@@ -336,7 +336,8 @@ export const usePaymentMethods = (
                 name: `${formData.name} ${formData.lastName}`,
                 email: formData.email,
                 amount: purchaseData!.amount,
-                orderNumber: orderNumber
+                orderNumber: orderNumber,
+                tenantId: validatedData.tenantId
             });
 
             if (!raffleResult.success) {
@@ -345,15 +346,11 @@ export const usePaymentMethods = (
                 throw new Error(`Error al asignar números: ${raffleResult.error}`);
             }
 
-            console.log('Números asignados:', raffleResult.assigned);
-            console.log('Total números:', raffleResult.total_assigned);
-
             // 3. Redireccionar incluyendo información de los números asignados
             const queryParams = new URLSearchParams({
                 email: formData.email,
                 amount: purchaseData!.amount.toString(),
-                numbers: raffleResult.assigned?.join(',') || '',
-                totalNumbers: raffleResult.total_assigned?.toString() || '0'
+                participantId: raffleResult.participantId!.toString()
             });
 
             window.location.href = `/success?${queryParams.toString()}`;

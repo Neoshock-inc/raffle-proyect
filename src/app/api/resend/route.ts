@@ -47,7 +47,7 @@ async function getTenantInfo(tenantId: string) {
       .from('tenants')
       .select(`
         name,
-        tenant_config!inner (
+        tenant_config (
           company_name,
           logo_url,
           primary_color
@@ -63,11 +63,10 @@ async function getTenantInfo(tenantId: string) {
 
     return {
       name: data.name,
-      company_name: data.tenant_config?.[0]?.company_name || data.name,
-      logo_url: data.tenant_config?.[0]?.logo_url,
-      primary_color: data.tenant_config?.[0]?.primary_color || '#fa8d3b'
+      company_name: data.tenant_config[0]?.company_name || data.name,
+      logo_url: data.tenant_config[0]?.logo_url,
+      primary_color: data.tenant_config[0]?.primary_color || '#fa8d3b'
     };
-
   } catch (error) {
     console.error('Error getting tenant info:', error);
     return null;
@@ -234,7 +233,7 @@ function generateInvoiceHtml(
 
         <!-- Botón personalizable por tenant -->
         <div style="margin-top: 30px; text-align: center;">
-          <a href="https://success-page-url.com?email=${encodeURIComponent(invoice.email)}&tenant=${invoice.tenant_id}" 
+          <a href="https://success-page-url.com/success?participantId=${invoice.participant_id}&email=${encodeURIComponent(invoice.email)}&amount=${invoice.amount}" 
              style="display: inline-block; background-color: ${primaryColor}; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">
             Ver mis números
           </a>

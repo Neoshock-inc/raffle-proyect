@@ -2,30 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '../../lib/supabase';
 
 export async function GET(req: NextRequest) {
-    const email = req.nextUrl.searchParams.get('email');
+    const participantId = req.nextUrl.searchParams.get('participantId');
 
-    if (!email) {
-        return NextResponse.json({ error: 'Email requerido' }, { status: 400 });
-    }
-
-    // Buscar participante
-    const { data: participant, error: participantError } = await supabase
-        .from('participants')
-        .select('id')
-        .eq('email', email)
-        .single();
-
-    console.log(participant, participantError);
-
-    if (participantError || !participant) {
-        return NextResponse.json({ error: 'Participante no encontrado' }, { status: 404 });
+    if (!participantId) {
+        return NextResponse.json({ error: 'participantId requerido' }, { status: 400 });
     }
 
     // Obtener todos los números que le pertenecen al participante
     const { data: entries, error: entriesError } = await supabase
         .from('raffle_entries')
         .select('number, raffle_id')
-        .eq('participant_id', participant.id);
+        .eq('participant_id', participantId);
 
     if (entriesError) {
         return NextResponse.json({ error: 'Error al buscar entradas' }, { status: 500 });
@@ -37,7 +24,7 @@ export async function GET(req: NextRequest) {
     const { data: blessed, error: blessedError } = await supabase
         .from('blessed_numbers')
         .select('number, is_minor_prize')
-        .eq('assigned_to', participant.id);
+        .eq('assigned_to', participantId);
 
     if (blessedError) {
         return NextResponse.json({ error: 'Error al buscar números ganadores' }, { status: 500 });
