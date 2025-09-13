@@ -40,7 +40,6 @@ async function getEmailConfigForTenant(tenantId: string) {
   }
 }
 
-// Función para obtener información adicional del tenant (logo, nombre, etc.)
 async function getTenantInfo(tenantId: string) {
   try {
     const { data, error } = await supabase
@@ -60,10 +59,15 @@ async function getTenantInfo(tenantId: string) {
       .eq('id', tenantId)
       .single();
 
-    if (error) {
-      console.log('No tenant info found:', tenantId);
+    if (error || !data) {
+      console.log('No tenant info found:', tenantId, error);
       return null;
     }
+
+    // Normalizar tenant_config: si es array, tomar el primer elemento; si es objeto, usarlo tal cual
+    const config = Array.isArray(data.tenant_config)
+      ? data.tenant_config[0]
+      : data.tenant_config || {};
 
     // Buscar dominio verificado, o el primero disponible como fallback
     const verifiedDomain = data.tenant_domains?.find(d => d.verified);
@@ -71,10 +75,10 @@ async function getTenantInfo(tenantId: string) {
 
     return {
       name: data.name,
-      company_name: data.tenant_config[0]?.company_name || data.name,
-      logo_url: data.tenant_config[0]?.logo_url,
-      primary_color: data.tenant_config[0]?.primary_color || '#fa8d3b',
-      domain: primaryDomain
+      company_name: config.company_name || data.name,
+      logo_url: config.logo_url || null,
+      primary_color: config.primary_color || '#fa8d3b',
+      domain: primaryDomain || null,
     };
   } catch (error) {
     console.error('Error getting tenant info:', error);
@@ -275,6 +279,8 @@ export async function GET(req: NextRequest) {
     const emailConfig = await getEmailConfigForTenant(tenantId);
     const tenantInfo = await getTenantInfo(tenantId);
 
+    console.log(tenantInfo);
+    
     if (!emailConfig) {
       return NextResponse.json({
         message: 'No se encontró configuración de email para este tenant',
