@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { RaffleData, TenantConfig } from '@/app/types/template';
 import { useTenantPurchase } from '@/app/hooks/useTenantPurchase';
 import { TicketOption } from '@/app/(auth)/types/ticketPackage';
+import { useReferralCode } from '@/app/hooks/useReferralCode';
 
 interface PackagesSectionProps {
     ticketOptions: TicketOption[];
@@ -17,9 +18,10 @@ interface TicketCardProps {
     raffleData: RaffleData;
     tenantConfig: TenantConfig;
     tenantSlug: string;
+    referralCode: string | null;
 }
 
-function TicketCard({ option, raffleData, tenantConfig, tenantSlug }: TicketCardProps) {
+function TicketCard({ option, raffleData, tenantSlug, referralCode }: TicketCardProps) {
     console.log('Renderizando TicketCard para opción:', option);
     const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
     const { purchaseTickets, loading } = useTenantPurchase(tenantSlug, raffleData.id);
@@ -29,7 +31,7 @@ function TicketCard({ option, raffleData, tenantConfig, tenantSlug }: TicketCard
             await purchaseTickets(
                 option.final_amount,    // Ya viene calculado del backend
                 option.final_price,     // Ya viene calculado del backend
-                null,                   // referralCode
+                referralCode,                   // referralCode
                 option.id
             );
         } catch (error) {
@@ -163,6 +165,8 @@ function TicketCard({ option, raffleData, tenantConfig, tenantSlug }: TicketCard
 export function PackagesSection({ ticketOptions, raffleData, tenantConfig }: PackagesSectionProps) {
     // Filtrar solo los paquetes disponibles
     const availableOptions = ticketOptions.filter(option => option.is_available);
+    const referralCode = useReferralCode();
+
 
     if (availableOptions.length === 0) {
         return (
@@ -198,6 +202,7 @@ export function PackagesSection({ ticketOptions, raffleData, tenantConfig }: Pac
                             raffleData={raffleData}
                             tenantConfig={tenantConfig}
                             tenantSlug={tenantConfig.slug}
+                            referralCode={referralCode}
                         />
                     ))}
                 </div>
