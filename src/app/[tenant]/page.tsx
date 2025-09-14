@@ -127,21 +127,6 @@ export default async function TenantPage({ params }: PageProps) {
     // 2. Obtener configuración completa del tenant
     const tenantFullConfig = await TenantService.getTenantFullConfig(tenant.id);
 
-    // if (!tenantFullConfig) {
-    //   // Intentar crear configuración por defecto
-    //   const configCreated = await TenantService.createDefaultConfig(tenant.id);
-    //   if (configCreated) {
-    //     // Volver a intentar obtener la configuración
-    //     const retryConfig = await TenantService.getTenantFullConfig(tenant.id);
-    //     if (!retryConfig) {
-    //       console.error('Failed to create or retrieve tenant config');
-    //       notFound();
-    //     }
-    //   } else {
-    //     notFound();
-    //   }
-    // }
-
     // 3. Obtener TODAS las rifas activas del tenant
     const raffles = await RaffleService.getRafflesByTenant(tenant.id);
 

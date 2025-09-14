@@ -212,7 +212,7 @@ export const usePaymentMethods = (
             setIsProcessing(false);
         }
     };
-
+    
     const handleTransferPayment = async (): Promise<void> => {
         const validation = validateCheckoutForm(formData, isOfLegalAge);
         if (!validation.isValid) {
@@ -263,11 +263,12 @@ export const usePaymentMethods = (
                 amount: validatedData.amount,
                 totalPrice: validatedData.price,
                 referral_code: reffer || undefined
-            }, validatedData.tenantId); // Pasar tenantId como segundo parámetro
+            }, validatedData.tenantId);
 
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            window.location.href = `/transfer-success?email=${formData.email}&name=${formData.name}&lastName=${formData.lastName}&phone=${formData.phone}&amount=${validatedData.amount}&price=${validatedData.price}&orderNumber=${orderNumber}`;
+            // AGREGAMOS EL TENANTID A LOS PARÁMETROS DE LA URL
+            window.location.href = `/transfer-success?email=${formData.email}&name=${formData.name}&lastName=${formData.lastName}&phone=${formData.phone}&amount=${validatedData.amount}&price=${validatedData.price}&orderNumber=${orderNumber}&tenantId=${validatedData.tenantId}`;
         } catch (error: any) {
             console.error('Error al crear factura para transferencia:', error);
             alert(`Hubo un error al procesar tu pedido: ${error.message}`);
