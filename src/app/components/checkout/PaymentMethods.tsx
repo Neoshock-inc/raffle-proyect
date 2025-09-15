@@ -252,15 +252,15 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                                         if (!res.success) {
                                             throw new Error(res.error || 'Error creando la orden')
                                         }
+                                        const price = purchaseData.price.toFixed(2)
 
-                                        // Crear la orden en PayPal
                                         return actions.order.create({
                                             intent: "CAPTURE",
                                             purchase_units: [
                                                 {
                                                     amount: {
                                                         currency_code: "USD",
-                                                        value: purchaseData.price.toString(),
+                                                        value: price,
                                                     },
                                                     description: `Pedido #${orderNumber}`,
                                                     reference_id: orderNumber,
@@ -270,6 +270,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                                                 shipping_preference: "NO_SHIPPING"
                                             }
                                         })
+
                                     } catch (error) {
                                         console.error('Error en createOrder:', error)
                                         alert('Error al crear la orden: ' + (error instanceof Error ? error.message : 'Error desconocido'))
