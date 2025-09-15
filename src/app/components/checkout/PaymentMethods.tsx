@@ -51,7 +51,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
             intent: "capture",
             "enable-funding": "venmo,paylater,card",
             "disable-funding": "",
-            components: "buttons,marks,messages",
+            components: "buttons,marks,messages,hosted-fields",
             // Usar sandbox si está configurado
             ...(config.paypal.extra?.sandbox && {
                 "data-sdk-integration-source": "sandbox"

@@ -18,3 +18,8 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+.paypal-buttons-disabled {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
