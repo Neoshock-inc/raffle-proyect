@@ -247,7 +247,7 @@ function generateInvoiceHtml(
 
         <!-- Botón personalizable por tenant -->
         <div style="margin-top: 30px; text-align: center;">
-          <a href="${tenantDomain}/success?participantId=${invoice.participant_id}&email=${encodeURIComponent(invoice.email)}&amount=${invoice.amount}" 
+          <a href="www.${tenantDomain}/success?participantId=${invoice.participant_id}&email=${encodeURIComponent(invoice.email)}&amount=${invoice.amount}" 
              style="display: inline-block; background-color: ${primaryColor}; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">
             Ver mis números
           </a>
