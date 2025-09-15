@@ -60,7 +60,7 @@ export function StatsSection({ raffleData, tenantConfig }: StatsSectionProps) {
               {/* Subtítulo con información */}
               <div className="text-center space-y-4">
                 <p className="text-gray-200 text-sm md:text-base leading-relaxed max-w-3xl mx-auto">
-                  Cuando la barra llegue el 100% daremos por finalizado y procederemos a realizar el sorteo entre todos los participantes. Se tomarán los 5 números de la primera y segunda suerte del programa <span className="font-bold text-yellow-400">LOTO NACIONAL</span>
+                  Cuando la barra llegue el 100% daremos por finalizado y procederemos a realizar el sorteo entre todos los participantes. Se tomarán los 5 números de la primera y segunda suerte del programa <span className="font-bold text-yellow-400">LOT NACIONAL</span>
                 </p>
               </div>
             </div>
