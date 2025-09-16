@@ -425,6 +425,8 @@ const BankTransferInfo: React.FC<BankTransferInfoProps> = ({
                     {accounts.length > 1 && (
                         <p>• Puedes transferir a cualquiera de las cuentas mostradas arriba</p>
                     )}
+                    {/* DA CLIK EN EL BOTÓN DE WHATSAPP PARA ENVIAR TU ORDEN DE COMPRA */}
+                    <p>• DA CLIK EN EL BOTÓN DE WHATSAPP PARA ENVIAR TU ORDEN DE COMPRA</p>
                 </div>
             </div>
         </div>
