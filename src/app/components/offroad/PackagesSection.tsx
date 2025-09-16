@@ -136,13 +136,6 @@ function TicketCard({ option, raffleData, tenantSlug, referralCode }: TicketCard
                     </div>
                 )}
 
-                {/* Si no hay bonificación, mostrar claramente cuántos números obtienes */}
-                {option.final_amount === option.amount && (
-                    <div className="text-blue-300 text-sm mb-2">
-                        Obtienes {option.final_amount} números
-                    </div>
-                )}
-
                 <button
                     className={`${getButtonStyle()} text-sm sm:text-base py-2 px-6 sm:px-8 rounded-full transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 ${loading ? 'animate-pulse' : ''
                         }`}
