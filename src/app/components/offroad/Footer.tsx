@@ -166,7 +166,7 @@ export function Footer({ raffleData, tenantConfig }: FooterProps) {
                             <p className="text-yellow-400 font-bold">📅 {drawInfo.date}</p>
                             <p>🕐 {drawInfo.time}</p>
                             <p>📍 Live Instagram</p>
-                            <p>💰 ${(raffleData.price * raffleData.total_numbers - 100000).toLocaleString()}</p>
+                            <p>💰 ${(raffleData.price * raffleData.total_numbers - 95000).toLocaleString()}</p>
                         </div>
                     </div>
                 </div>

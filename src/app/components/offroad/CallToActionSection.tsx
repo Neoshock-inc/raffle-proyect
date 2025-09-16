@@ -129,7 +129,7 @@ export function CallToActionSection({ raffleData, tenantConfig }: CallToActionSe
             <div className="text-3xl mb-2">🏆</div>
             <div className="font-bold">Premio Garantizado</div>
             <div className="text-sm opacity-80">
-              ${((raffleData.price * raffleData.total_numbers) - 100000).toLocaleString()}
+              ${((raffleData.price * raffleData.total_numbers) - 95000).toLocaleString()}
             </div>
           </div>
           <div className="bg-black/30 backdrop-blur-sm p-4 rounded-xl">
