@@ -50,7 +50,7 @@ export const OffroadTemplate: React.FC<OffroadTemplateProps> = ({
         raffleData={raffleData}
         tenantConfig={tenantConfig}
       />
-      
+
       {/* Premio Principal */}
       <PrizeSection
         raffleData={raffleData}
@@ -60,12 +60,6 @@ export const OffroadTemplate: React.FC<OffroadTemplateProps> = ({
       {/* Paquetes de Tickets */}
       <PackagesSection
         ticketOptions={ticketOptions}
-        raffleData={raffleData}
-        tenantConfig={tenantConfig}
-      />
-
-      {/* Consultar Mis Números */}
-      <MyNumbersSection
         raffleData={raffleData}
         tenantConfig={tenantConfig}
       />
@@ -90,6 +84,12 @@ export const OffroadTemplate: React.FC<OffroadTemplateProps> = ({
 
       {/* Call to Action Final */}
       <CallToActionSection
+        raffleData={raffleData}
+        tenantConfig={tenantConfig}
+      />
+
+      {/* Consultar Mis Números */}
+      <MyNumbersSection
         raffleData={raffleData}
         tenantConfig={tenantConfig}
       />
