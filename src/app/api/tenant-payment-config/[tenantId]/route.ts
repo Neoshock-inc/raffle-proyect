@@ -7,12 +7,20 @@ const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+// Lista de proveedores de pago soportados (excluyendo bank_account que se maneja aparte)
+const SUPPORTED_PAYMENT_PROVIDERS = [
+    'stripe',
+    'paypal',
+    'payphone',
+    'kushki'
+    // Agregar más proveedores aquí en el futuro
+]
+
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ tenantId: string }> }
 ) {
     try {
-        // Await the params since it's now a Promise
         const { tenantId } = await params
 
         // Obtener configuraciones de pago del tenant
@@ -41,7 +49,7 @@ export async function GET(
             console.log('bank_accounts table does not exist, using legacy payment_configs')
         }
 
-        // Procesar configuraciones
+        // Estructura de configuración inicial
         const config: any = {
             availableMethods: [],
             bankAccounts: [],
@@ -51,16 +59,12 @@ export async function GET(
         // Arrays para recolectar cuentas bancarias del sistema legacy
         const legacyBankAccounts: any[] = []
 
-        // Procesar configuraciones de pago
+        // Procesar configuraciones de pago dinámicamente
         paymentConfigs?.forEach(paymentConfig => {
-            if (paymentConfig.provider === 'stripe') {
-                config.stripe = paymentConfig
-                config.availableMethods.push('stripe')
-            } else if (paymentConfig.provider === 'paypal') {
-                config.paypal = paymentConfig
-                config.availableMethods.push('paypal')
-            } else if (paymentConfig.provider === 'bank_account') {
-                // Sistema legacy: múltiples cuentas bancarias en payment_configs
+            const provider = paymentConfig.provider
+
+            if (provider === 'bank_account') {
+                // Sistema legacy: cuentas bancarias en payment_configs
                 legacyBankAccounts.push({
                     id: paymentConfig.id,
                     bank_name: paymentConfig.extra?.bank_name,
@@ -69,6 +73,10 @@ export async function GET(
                     routing_number: paymentConfig.extra?.routing_number,
                     swift_code: paymentConfig.extra?.swift_code
                 })
+            } else if (SUPPORTED_PAYMENT_PROVIDERS.includes(provider)) {
+                // Proveedores de pago genéricos
+                config[provider] = paymentConfig
+                config.availableMethods.push(provider)
             }
         })
 

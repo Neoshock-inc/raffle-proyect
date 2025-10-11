@@ -1,4 +1,4 @@
-// 📁 hooks/useTenantConfigurations.ts - VERSIÓN ACTUALIZADA
+// 📁 hooks/useTenantConfigurations.ts - VERSIÓN DINÁMICA CON MAPEO CORRECTO
 import { useState, useCallback, useEffect } from 'react'
 import { tenantService } from '@/app/(auth)/services/tenantService'
 import { PaymentConfig, EmailConfig } from '../types/tenant'
@@ -17,27 +17,185 @@ interface BankAccount {
   enabled: boolean
 }
 
+// Tipo genérico para cualquier proveedor de pago
+interface PaymentProviderConfig {
+  enabled: boolean
+  [key: string]: any
+}
+
+type PaymentFormsState = Record<string, PaymentProviderConfig>
+
+/**
+ * Configuración de mapeo para cada proveedor
+ * Define qué campos del formulario van a public_key, secret_key, y extra
+ */
+const PROVIDER_MAPPING: Record<string, {
+  publicKeyField: string    // Campo del form que va a public_key en DB
+  secretKeyField: string     // Campo del form que va a secret_key en DB
+  extraFields?: string[]     // Campos adicionales que van a extra (JSONB)
+}> = {
+  stripe: {
+    publicKeyField: 'public_key',
+    secretKeyField: 'secret_key'
+  },
+  paypal: {
+    publicKeyField: 'client_id',
+    secretKeyField: 'client_secret',
+    extraFields: ['sandbox']
+  },
+  payphone: {
+    publicKeyField: 'store_id',
+    secretKeyField: 'token'
+  },
+  kushki: {
+    publicKeyField: 'public_key',
+    secretKeyField: 'private_key',
+    extraFields: ['test_mode']
+  }
+}
+
 export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsProps) => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [paymentConfigs, setPaymentConfigs] = useState<PaymentConfig[]>([])
   const [emailConfigs, setEmailConfigs] = useState<EmailConfig[]>([])
-
-  // Estados para los formularios
-  const [paymentForms, setPaymentForms] = useState({
-    stripe: { public_key: '', secret_key: '', enabled: false },
-    paypal: { client_id: '', client_secret: '', sandbox: true, enabled: false }
-  })
-
-  // Estado para cuentas bancarias
+  const [paymentForms, setPaymentForms] = useState<PaymentFormsState>({})
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([])
-
-  // Estado para email - CORREGIDO para manejar el mapeo de campos
   const [emailForm, setEmailForm] = useState({
     resend: { api_key: '', from_email: '', from_name: '', enabled: false }
   })
 
-  // Cargar configuraciones existentes - ACTUALIZADO
+  /**
+   * Convierte los datos de la BD al formato del formulario
+   * BD: { provider, public_key, secret_key, extra }
+   * Form: { field1, field2, field3, enabled }
+   */
+  const mapDbToForm = useCallback((config: any): PaymentProviderConfig => {
+    const provider = config.provider
+    const mapping = PROVIDER_MAPPING[provider]
+
+    if (!mapping) {
+      // Si no hay mapeo, devolver extra directamente y asegurar enabled
+      return {
+        ...config.extra,
+        enabled: true
+      }
+    }
+
+    const formData: PaymentProviderConfig = { enabled: true }
+
+    // Mapear public_key al campo correspondiente del form
+    if (config.public_key) {
+      formData[mapping.publicKeyField] = config.public_key
+    }
+
+    // Mapear secret_key al campo correspondiente del form
+    if (config.secret_key) {
+      formData[mapping.secretKeyField] = config.secret_key
+    }
+
+    // Mapear campos adicionales desde extra
+    if (mapping.extraFields && config.extra) {
+      mapping.extraFields.forEach(field => {
+        if (config.extra[field] !== undefined) {
+          formData[field] = config.extra[field]
+        }
+      })
+    }
+
+    // Asegurar que enabled siempre esté presente
+    if (typeof formData.enabled !== 'boolean') {
+      formData.enabled = true
+    }
+
+    return formData
+  }, [])
+
+  /**
+   * Convierte los datos del formulario al formato de la BD
+   * Form: { field1, field2, field3 }
+   * BD: { provider, public_key, secret_key, extra }
+   */
+  const mapFormToDb = useCallback((provider: string, formData: PaymentProviderConfig) => {
+    const mapping = PROVIDER_MAPPING[provider]
+
+    const dbData: any = {
+      provider,
+      tenant_id: tenantId,
+      public_key: '',
+      secret_key: '',
+      extra: {}
+    }
+
+    if (!mapping) {
+      // Si no hay mapeo, todo va a extra
+      const { enabled, ...rest } = formData
+      dbData.extra = rest
+      return dbData
+    }
+
+    // Extraer public_key del campo correspondiente del form
+    const publicKeyValue = formData[mapping.publicKeyField]
+    if (publicKeyValue) {
+      dbData.public_key = publicKeyValue
+    }
+
+    // Extraer secret_key del campo correspondiente del form
+    const secretKeyValue = formData[mapping.secretKeyField]
+    if (secretKeyValue) {
+      dbData.secret_key = secretKeyValue
+    }
+
+    // Construir objeto extra con TODOS los campos del formulario
+    const extraData: Record<string, any> = {}
+
+    // Agregar los campos principales también a extra (para referencia)
+    if (publicKeyValue) {
+      extraData[mapping.publicKeyField] = publicKeyValue
+    }
+    if (secretKeyValue) {
+      extraData[mapping.secretKeyField] = secretKeyValue
+    }
+
+    // Agregar campos extra específicos
+    if (mapping.extraFields) {
+      mapping.extraFields.forEach(field => {
+        if (formData[field] !== undefined) {
+          extraData[field] = formData[field]
+        }
+      })
+    }
+
+    dbData.extra = extraData
+    return dbData
+  }, [tenantId])
+
+  /**
+   * Validar que los campos requeridos estén completos
+   */
+  const validateProviderFields = useCallback((provider: string, formData: PaymentProviderConfig) => {
+    const mapping = PROVIDER_MAPPING[provider]
+
+    if (!mapping) return true
+
+    // Validar public_key
+    const publicKeyValue = formData[mapping.publicKeyField]
+    if (!publicKeyValue || publicKeyValue.toString().trim() === '') {
+      throw new Error(`Falta el campo: ${mapping.publicKeyField}`)
+    }
+
+    // Validar secret_key
+    const secretKeyValue = formData[mapping.secretKeyField]
+    if (!secretKeyValue || secretKeyValue.toString().trim() === '') {
+      throw new Error(`Falta el campo: ${mapping.secretKeyField}`)
+    }
+
+    return true
+  }, [])
+
+  /**
+   * Cargar configuraciones desde la BD
+   */
   const loadConfigurations = useCallback(async () => {
     try {
       setLoading(true)
@@ -49,11 +207,7 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
       setPaymentConfigs(paymentData)
       setEmailConfigs(emailData)
 
-      // Rellenar formularios con datos existentes
-      const newPaymentForms = {
-        stripe: { public_key: '', secret_key: '', enabled: false },
-        paypal: { client_id: '', client_secret: '', sandbox: true, enabled: false }
-      }
+      const newPaymentForms: PaymentFormsState = {}
       const newBankAccounts: BankAccount[] = []
       const newEmailForm = {
         resend: { api_key: '', from_email: '', from_name: '', enabled: false }
@@ -61,20 +215,8 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
 
       // Procesar configuraciones de pago
       paymentData.forEach((config: any) => {
-        if (config.provider === 'stripe') {
-          newPaymentForms.stripe = {
-            public_key: config.public_key,
-            secret_key: config.secret_key,
-            enabled: true
-          }
-        } else if (config.provider === 'paypal') {
-          newPaymentForms.paypal = {
-            client_id: config.extra?.client_id || config.public_key || '',
-            client_secret: config.extra?.client_secret || config.secret_key || '',
-            sandbox: config.extra?.sandbox ?? true,
-            enabled: true
-          }
-        } else if (config.provider === 'bank_account') {
+        if (config.provider === 'bank_account') {
+          // Cuentas bancarias se manejan por separado
           newBankAccounts.push({
             id: config.id,
             bank_name: config.extra?.bank_name || '',
@@ -84,17 +226,19 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
             swift_code: config.extra?.swift_code || '',
             enabled: true
           })
+        } else {
+          // Mapear dinámicamente cualquier proveedor de pago
+          newPaymentForms[config.provider] = mapDbToForm(config)
         }
       })
 
-      // Procesar configuraciones de email - CORREGIDO
+      // Procesar configuraciones de email
       emailData.forEach((config: any) => {
         if (config.provider === 'resend') {
           newEmailForm.resend = {
-            // IMPORTANTE: Mapear correctamente los campos
-            api_key: config.password || '', // La API key está guardada en el campo password
-            from_email: config.username || '', // El from_email está en username
-            from_name: config.from_name || '', // Este campo debería existir en el esquema
+            api_key: config.password || '',
+            from_email: config.username || '',
+            from_name: config.from_name || '',
             enabled: true
           }
         }
@@ -115,53 +259,52 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
     } finally {
       setLoading(false)
     }
-  }, [tenantId])
+  }, [tenantId, mapDbToForm])
 
   useEffect(() => {
     loadConfigurations()
   }, [loadConfigurations])
 
-  // Actualizar configuración de pago
-  const updatePaymentConfig = useCallback(async (provider: 'stripe' | 'paypal', enabled: boolean) => {
+  /**
+   * Actualizar configuración de pago (genérico para cualquier proveedor)
+   */
+  const updatePaymentConfig = useCallback(async (provider: string, enabled: boolean) => {
     setSaving(true)
     try {
       if (enabled) {
-        let configData: any = {
-          provider,
-          tenant_id: tenantId
+        let formData = paymentForms[provider]
+
+        // Si no existe la configuración, solo cambiar el estado del toggle
+        // El usuario debe llenar los campos y hacer clic en "Guardar"
+        if (!formData || Object.keys(formData).length <= 1) {
+          // Inicializar el formulario vacío para este proveedor
+          setPaymentForms(prev => ({
+            ...prev,
+            [provider]: { enabled: true }
+          }))
+          return { success: true }
         }
 
-        if (provider === 'stripe') {
-          if (!paymentForms.stripe.public_key || !paymentForms.stripe.secret_key) {
-            throw new Error('Faltan las claves de Stripe')
-          }
-          configData = {
-            ...configData,
-            public_key: paymentForms.stripe.public_key,
-            secret_key: paymentForms.stripe.secret_key
-          }
-        } else if (provider === 'paypal') {
-          if (!paymentForms.paypal.client_id || !paymentForms.paypal.client_secret) {
-            throw new Error('Faltan las credenciales de PayPal')
-          }
-          configData = {
-            ...configData,
-            public_key: paymentForms.paypal.client_id,
-            secret_key: paymentForms.paypal.client_secret,
-            extra: {
-              client_id: paymentForms.paypal.client_id,
-              client_secret: paymentForms.paypal.client_secret,
-              sandbox: paymentForms.paypal.sandbox
-            }
-          }
-        }
+        // Validar campos requeridos
+        validateProviderFields(provider, formData)
 
-        await tenantService.upsertPaymentConfig(configData)
+        // Convertir form a formato DB y enviar
+        const dbData = mapFormToDb(provider, formData)
+        await tenantService.upsertPaymentConfig(dbData)
+
+        await loadConfigurations()
       } else {
+        // Deshabilitar/eliminar configuración
         await tenantService.deletePaymentConfig(tenantId, provider)
+
+        // Remover del estado local
+        setPaymentForms(prev => {
+          const newForms = { ...prev }
+          delete newForms[provider]
+          return newForms
+        })
       }
 
-      await loadConfigurations()
       return { success: true }
     } catch (error) {
       console.error('Error updating payment config:', error)
@@ -172,31 +315,29 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
     } finally {
       setSaving(false)
     }
-  }, [tenantId, paymentForms, loadConfigurations])
+  }, [tenantId, paymentForms, validateProviderFields, mapFormToDb, loadConfigurations, setPaymentForms])
 
-  // Actualizar configuración de email - CORREGIDO SIMPLE
+  /**
+   * Actualizar configuración de email
+   */
   const updateEmailConfig = useCallback(async (enabled: boolean) => {
     setSaving(true)
     try {
       if (enabled) {
-        // Solo validar si está habilitando Y tiene campos llenos
-        // Si está habilitando pero los campos están vacíos, solo cambiar el estado del checkbox
         if (emailForm.resend.api_key && emailForm.resend.from_email) {
           const configData = {
             provider: 'resend' as const,
             tenant_id: tenantId,
-            password: emailForm.resend.api_key, // Directamente al campo password
-            username: emailForm.resend.from_email, // Directamente al campo username
+            password: emailForm.resend.api_key,
+            username: emailForm.resend.from_email,
             from_name: emailForm.resend.from_name || null
           }
 
-          console.log('Enviando configuración de email:', configData)
           await tenantService.upsertEmailConfig({
             ...configData,
-            from_name: configData.from_name ?? undefined, // convierte null en undefined
+            from_name: configData.from_name ?? undefined,
           })
         } else {
-          // Solo cambiar el estado del formulario si no hay datos
           setEmailForm(prev => ({
             ...prev,
             resend: { ...prev.resend, enabled: true }
@@ -204,7 +345,6 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
           return { success: true }
         }
       } else {
-        // Si está deshabilitando, eliminar la configuración
         await tenantService.deleteEmailConfig(tenantId, 'resend')
         setEmailForm(prev => ({
           ...prev,
@@ -222,9 +362,9 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
     } finally {
       setSaving(false)
     }
-  }, [tenantId, emailForm, loadConfigurations])
+  }, [tenantId, emailForm])
 
-  // Funciones para cuentas bancarias (sin cambios)
+  // Funciones para cuentas bancarias
   const addBankAccount = useCallback(() => {
     setBankAccounts(prev => [...prev, {
       bank_name: '',
@@ -302,24 +442,26 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
     }
   }, [bankAccounts, tenantId])
 
-  // Testear configuraciones - ACTUALIZADO
+  /**
+   * Testear configuraciones
+   */
   const testConfiguration = useCallback(async (type: 'payment' | 'email', provider: string) => {
     try {
       setSaving(true)
 
-      // Validaciones locales antes de enviar al servidor
       if (type === 'email' && provider === 'resend') {
         if (!emailForm.resend.api_key) {
-          return {
-            success: false,
-            error: 'Falta la API key de Resend'
-          }
+          return { success: false, error: 'Falta la API key de Resend' }
         }
         if (!emailForm.resend.from_email) {
-          return {
-            success: false,
-            error: 'Falta el email remitente'
-          }
+          return { success: false, error: 'Falta el email remitente' }
+        }
+      }
+
+      if (type === 'payment') {
+        const formData = paymentForms[provider]
+        if (formData) {
+          validateProviderFields(provider, formData)
         }
       }
 
@@ -333,10 +475,9 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
     } finally {
       setSaving(false)
     }
-  }, [tenantId, emailForm])
+  }, [tenantId, emailForm, paymentForms, validateProviderFields])
 
   return {
-    // Estados
     loading,
     saving,
     paymentConfigs,
@@ -344,8 +485,6 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
     paymentForms,
     emailForm,
     bankAccounts,
-
-    // Acciones
     setPaymentForms,
     setEmailForm,
     setBankAccounts,
@@ -353,8 +492,6 @@ export const useTenantConfigurations = ({ tenantId }: UseTenantConfigurationsPro
     updateEmailConfig,
     testConfiguration,
     loadConfigurations,
-
-    // Acciones para cuentas bancarias
     addBankAccount,
     updateBankAccount,
     removeBankAccount,

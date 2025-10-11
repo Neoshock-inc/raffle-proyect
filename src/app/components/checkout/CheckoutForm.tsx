@@ -1,4 +1,4 @@
-// 📁 components/CheckoutForm.tsx (Actualizado)
+// 📁 components/CheckoutForm.tsx (Actualizado con PayPhone)
 import React from 'react';
 import { PersonalDataForm } from './PersonalDataForm';
 import { OrderSummary } from './OrderSummary';
@@ -6,6 +6,7 @@ import { PaymentMethods } from './PaymentMethods';
 import { useCheckoutForm } from '@/app/hooks/useCheckoutForm';
 import { usePaymentMethods } from '@/app/hooks/usePaymentMethods';
 import { useTokenValidation } from '@/app/hooks/useTokenValidation';
+import { useTenantPaymentConfig } from '@/app/hooks/useTenantPaymentConfig';
 import { generateOrderNumber } from '@/app/services/invoiceService';
 import { ExpirationWarning } from './ui/ExpirationWarning';
 import { TokenExpiredModal } from './ui/TokenExpiredModal';
@@ -36,6 +37,9 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ token, reffer }) => 
         setIsOfLegalAge,
         handleInputChange
     } = useCheckoutForm();
+
+    // 👇 NUEVO: Obtener la configuración de pagos del tenant
+    const { config: paymentConfig } = useTenantPaymentConfig(purchaseData?.tenantId || '');
 
     const generateNewOrderNumber = async (): Promise<string> => {
         try {
@@ -68,8 +72,9 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ token, reffer }) => 
         reffer,
         token,
         checkTokenValidity,
-        () => { }, // setTokenExpired is handled in useTokenValidation
-        generateNewOrderNumber
+        () => { },
+        generateNewOrderNumber,
+        paymentConfig?.payphone as any 
     );
 
     // Inicialización
@@ -177,7 +182,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ token, reffer }) => 
                             />
 
                             <PaymentMethods
-                                tenantId={purchaseData.tenantId} // 👈 NUEVO: Pasamos el tenantId
+                                tenantId={purchaseData.tenantId}
                                 method={method}
                                 setMethod={setMethod}
                                 isProcessing={isProcessing}

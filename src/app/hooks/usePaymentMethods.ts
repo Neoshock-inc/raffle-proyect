@@ -4,17 +4,19 @@ import { PaymentMethod, PaymentStatus } from '../types/invoices';
 import { createInvoiceWithParticipant, generateRaffleNumbers } from '../services/invoiceService';
 import { PurchaseData, CheckoutFormData, PaymentMethodType } from '../types/checkout';
 import { validateCheckoutForm } from '../utils/validationUtils';
+import { PaymentConfig } from '../(auth)/types/tenant';
 
 export const usePaymentMethods = (
     orderNumber: string,
     purchaseData: PurchaseData | null,
     formData: CheckoutFormData,
-    isOfLegalAge: boolean,
+    isOfLegalAge: boolean,  
     reffer: string | null,
     token: string | null,
     checkTokenValidity: () => Promise<boolean>,
     setTokenExpired: (expired: boolean) => void,
-    generateNewOrderNumber: () => Promise<string>
+    generateNewOrderNumber: () => Promise<string>,
+    payphoneConfig?: PaymentConfig | null
 ) => {
     const [method, setMethod] = useState<PaymentMethodType>(null);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -116,10 +118,29 @@ export const usePaymentMethods = (
             return;
         }
 
+        if (!payphoneConfig) {
+            alert('Error: Configuración de PayPhone no disponible.');
+            return;
+        }
+
         setIsProcessing(true);
 
         try {
-            // Crear la factura primero
+            // Validar token para obtener tenantId
+            const tokenValidation = await fetch('/api/validate-purchase', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token })
+            });
+
+            if (!tokenValidation.ok) {
+                const errorData = await tokenValidation.json();
+                throw new Error(errorData.error || 'Token inválido o expirado');
+            }
+
+            const validatedData = await tokenValidation.json();
+
+            // Crear la factura con el tenantId
             await createInvoiceWithParticipant({
                 orderNumber: orderNumber,
                 fullName: `${formData.name} ${formData.lastName}`,
@@ -134,74 +155,95 @@ export const usePaymentMethods = (
                 amount: purchaseData.amount,
                 totalPrice: purchaseData.price,
                 referral_code: reffer || undefined
-            });
+            }, validatedData.tenantId);
 
-            // Crear link de pago en PayPhone
-            const res = await fetch('/api/payphone/create-link', {
+            // Limpiar y formatear número de teléfono (593984111222)
+            const cleanPhone = formData.phone.replace(/\D/g, '');
+            const phoneNumber = cleanPhone.startsWith('593')
+                ? cleanPhone.slice(3)
+                : cleanPhone.startsWith('0')
+                    ? cleanPhone.slice(1)
+                    : cleanPhone;
+
+            // Calcular el monto según la fórmula de PayPhone
+            // amount = amountWithoutTax + amountWithTax + tax + service + tip
+            const totalAmount = purchaseData.price; // precio total
+            const amountWithoutTax = totalAmount; // en este caso todo el monto
+            const tax = 0;
+            const service = 0;
+            const tip = 0;
+
+            console.log('Configuración de PayPhone:', payphoneConfig);
+
+            // Preparar el payload para PayPhone
+            const payphonePayload = {
+                phoneNumber: phoneNumber,
+                countryCode: "593",
+                amount: totalAmount,
+                amountWithoutTax: amountWithoutTax,
+                tax: tax,
+                service: service,
+                tip: tip,
+                clientTransactionId: `${orderNumber}-${Date.now()}`,
+                reference: `Compra ${purchaseData.amount} boletos - ${formData.name}`,
+                storeId: payphoneConfig.public_key,
+                currency: payphoneConfig.extra?.currency || "USD",
+                responseUrl: `${window.location.origin}/payphone-callback`,
+            };
+
+            console.log('Enviando pago a PayPhone:', payphonePayload);
+
+            // Llamar directamente a la API de PayPhone
+            const payphoneResponse = await fetch('https://pay.payphonetodoesposible.com/api/Sale', {
                 method: 'POST',
-                body: JSON.stringify({
-                    orderNumber,
-                    amount: purchaseData.amount,
-                    price: purchaseData.price,
-                    name: `${formData.name} ${formData.lastName}`,
-                    email: formData.email,
-                    phone: formData.phone,
-                    country: formData.country,
-                    province: formData.province,
-                    city: formData.city,
-                    address: formData.address
-                }),
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Authorization': `Bearer ${payphoneConfig.secret_key}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payphonePayload)
             });
 
-            const data = await res.json();
+            const payphoneData = await payphoneResponse.json();
 
-            if (data.paymentLink) {
-                // Limpiar comillas dobles si existen
-                const cleanLink = data.paymentLink.trim().replace(/^"|"$/g, '');
+            console.log('Respuesta de PayPhone:', payphoneData);
 
-                // Guardar info como antes ...
+            if (!payphoneResponse.ok) {
+                throw new Error(payphoneData.message || 'Error al procesar el pago con PayPhone');
+            }
+
+            // PayPhone responde con diferentes estructuras según el resultado
+            // Caso exitoso típico: { transactionId, transactionStatus, ... }
+            if (payphoneData.transactionId) {
+                // Guardar información del pago
                 const paymentInfo = {
-                    linkId: data.linkId,
-                    clientTransactionId: data.clientTransactionId,
+                    transactionId: payphoneData.transactionId,
+                    clientTransactionId: payphonePayload.clientTransactionId,
                     orderNumber: orderNumber,
-                    expirationDate: data.expirationDate || '',
-                    paymentLink: cleanLink
+                    status: payphoneData.transactionStatus
                 };
 
                 (window as any).__payphonePaymentInfo = paymentInfo;
 
                 try {
-                    localStorage.setItem('payphone_link_id', data.linkId);
-                    localStorage.setItem('payphone_client_transaction_id', data.clientTransactionId);
+                    localStorage.setItem('payphone_transaction_id', payphoneData.transactionId);
+                    localStorage.setItem('payphone_client_transaction_id', payphonePayload.clientTransactionId);
                     localStorage.setItem('payphone_order_number', orderNumber);
-                    localStorage.setItem('payphone_expiration', data.expirationDate || '');
                 } catch (e) {
-                    console.warn('localStorage no disponible, usando almacenamiento en memoria');
+                    console.warn('localStorage no disponible');
                 }
 
-                // Abrir el link limpio en ventana nueva
-                const paymentWindow = window.open(
-                    cleanLink,
-                    'payphone_payment',
-                    'width=800,height=600,scrollbars=yes,resizable=yes'
-                );
+                // Redirigir a página de éxito o espera
+                alert('¡Pago iniciado! Revisa tu teléfono para confirmar la transacción.');
 
-                if (!paymentWindow) {
-                    console.warn('Popup bloqueado, redirigiendo en la misma ventana');
-                    window.location.href = cleanLink;
-                } else {
-                    // Opcional: monitor ventana
-                    const checkClosed = setInterval(() => {
-                        if (paymentWindow.closed) {
-                            clearInterval(checkClosed);
-                            console.log('Ventana de pago cerrada');
-                        }
-                    }, 1000);
-                }
-            }
-            else {
-                throw new Error(data.error || 'No se pudo crear el link de pago PayPhone');
+                // Puedes redirigir a una página de estado o hacer polling
+                // window.location.href = `/payphone-status?orderId=${orderNumber}`;
+
+            } else if (payphoneData.payWithCard) {
+                // Si PayPhone devuelve un enlace para pagar con tarjeta
+                window.open(payphoneData.payWithCard, '_blank');
+                alert('Se ha abierto una ventana para completar el pago con tarjeta.');
+            } else {
+                throw new Error('Respuesta inesperada de PayPhone');
             }
 
         } catch (error: any) {
@@ -212,7 +254,7 @@ export const usePaymentMethods = (
             setIsProcessing(false);
         }
     };
-    
+
     const handleTransferPayment = async (): Promise<void> => {
         const validation = validateCheckoutForm(formData, isOfLegalAge);
         if (!validation.isValid) {
@@ -248,7 +290,6 @@ export const usePaymentMethods = (
 
             const validatedData = await tokenValidation.json();
 
-            // Pasar el tenantId obtenido de la validación del token
             await createInvoiceWithParticipant({
                 orderNumber: orderNumber,
                 fullName: `${formData.name} ${formData.lastName}`,
@@ -267,7 +308,6 @@ export const usePaymentMethods = (
 
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // AGREGAMOS EL TENANTID A LOS PARÁMETROS DE LA URL
             window.location.href = `/transfer-success?email=${formData.email}&name=${formData.name}&lastName=${formData.lastName}&phone=${formData.phone}&amount=${validatedData.amount}&price=${validatedData.price}&orderNumber=${orderNumber}&tenantId=${validatedData.tenantId}`;
         } catch (error: any) {
             console.error('Error al crear factura para transferencia:', error);
@@ -296,12 +336,11 @@ export const usePaymentMethods = (
 
         setIsProcessing(true);
 
-        return { success: true };  // solo valida y activa loading
+        return { success: true };
     };
 
     const handlePayPalApprove = async (): Promise<{ success: boolean; error?: string }> => {
         try {
-            // Validar token para obtener tenantId
             const tokenValidation = await fetch('/api/validate-purchase', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -315,7 +354,6 @@ export const usePaymentMethods = (
 
             const validatedData = await tokenValidation.json();
 
-            // 1. Crear la factura primero con el tenantId
             await createInvoiceWithParticipant({
                 orderNumber,
                 fullName: `${formData.name} ${formData.lastName}`,
@@ -330,9 +368,8 @@ export const usePaymentMethods = (
                 amount: purchaseData!.amount,
                 totalPrice: purchaseData!.price,
                 referral_code: reffer || undefined
-            }, validatedData.tenantId); // Pasar tenantId como segundo parámetro
+            }, validatedData.tenantId);
 
-            // 2. Generar números de rifa después de crear la factura
             const raffleResult = await generateRaffleNumbers({
                 name: `${formData.name} ${formData.lastName}`,
                 email: formData.email,
@@ -343,11 +380,9 @@ export const usePaymentMethods = (
 
             if (!raffleResult.success) {
                 console.error('Error al generar números de rifa:', raffleResult.error);
-                // Opcional: Marcar la factura como problemática o enviar notificación
                 throw new Error(`Error al asignar números: ${raffleResult.error}`);
             }
 
-            // 3. Redireccionar incluyendo información de los números asignados
             const queryParams = new URLSearchParams({
                 email: formData.email,
                 amount: purchaseData!.amount.toString(),
@@ -376,7 +411,6 @@ export const usePaymentMethods = (
         alert('Hubo un error al procesar tu pago con PayPal.');
         await generateNewOrderNumber();
     };
-
 
     return {
         method,

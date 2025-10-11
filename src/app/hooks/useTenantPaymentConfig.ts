@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 
 interface PaymentConfig {
     id: string
-    provider: 'stripe' | 'paypal' | 'bank_account'
+    provider: 'stripe' | 'paypal' | 'bank_account' | 'payphone'
     public_key: string
     secret_key: string
     extra?: {
@@ -30,6 +30,7 @@ interface BankAccount {
 interface TenantPaymentConfig {
     stripe?: PaymentConfig
     paypal?: PaymentConfig
+    payphone?: PaymentConfig
     bankAccounts: BankAccount[] // Cambiado de bank_account a bankAccounts array
     availableMethods: string[]
     bankInfo?: BankAccount // Para retrocompatibilidad, usar la primera cuenta bancaria

@@ -1,4 +1,4 @@
-// 📁 components/PaymentMethods.tsx (Versión actualizada)
+// 📁 components/PaymentMethods.tsx (Versión actualizada con PayPhone)
 import { PaymentMethodType } from '@/app/types/checkout'
 import React from 'react'
 import { LoadingSpinner } from './ui/LoadingSpinner'
@@ -158,6 +158,30 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                     </label>
                 )}
 
+                {/* PayPhone */}
+                {config.availableMethods.includes('payphone') && (
+                    <label className="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-sky-50 hover:border-sky-200 transition-all">
+                        <input
+                            type="radio"
+                            name="payment"
+                            value="payphone"
+                            checked={method === 'payphone'}
+                            onChange={() => setMethod('payphone')}
+                            disabled={isProcessing}
+                            className="h-5 w-5 text-sky-600 focus:ring-sky-500"
+                        />
+                        <div className="flex items-center flex-1">
+                            <div className="w-12 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded flex items-center justify-center mr-3">
+                                <PhoneIcon className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                                <span className="font-medium text-gray-900">PayPhone</span>
+                                <p className="text-sm text-gray-500">Pago móvil rápido (Ecuador)</p>
+                            </div>
+                        </div>
+                    </label>
+                )}
+
                 {/* Transferencia Bancaria */}
                 {config.availableMethods.includes('transfer') && (
                     <label className="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-sky-50 hover:border-sky-200 transition-all">
@@ -247,7 +271,6 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                                 }}
                                 createOrder={async (data, actions) => {
                                     try {
-                                        // Crear la orden en tu backend
                                         const res = await onPayPalPayment()
                                         if (!res.success) {
                                             throw new Error(res.error || 'Error creando la orden')
@@ -282,12 +305,10 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                                         console.log('Pago aprobado:', data)
 
                                         if (actions.order) {
-                                            // Capturar el pago en PayPal
                                             const details = await actions.order.capture()
                                             console.log('Pago capturado:', details)
                                         }
 
-                                        // Procesar en tu backend
                                         const result = await onPayPalApprove(data)
                                         if (!result.success) {
                                             throw new Error(result.error || 'Error procesando el pago')
@@ -308,6 +329,17 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                             />
                         </PayPalScriptProvider>
                     </div>
+                )}
+
+                {/* PayPhone */}
+                {method === 'payphone' && (
+                    <button
+                        onClick={onPayPhonePayment}
+                        disabled={isProcessing || !purchaseData || !isOfLegalAge}
+                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center"
+                    >
+                        {isProcessing ? <LoadingSpinner /> : 'Pagar con PayPhone'}
+                    </button>
                 )}
 
                 {/* Transferencia */}
@@ -336,16 +368,15 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
 interface BankTransferInfoProps {
     orderNumber: string
     bankAccounts: {
-        id?: string // Cambiado de string a string | undefined para coincidir con el hook
+        id?: string
         bank_name: string
         account_number: string
         account_holder: string
         routing_number?: string
         swift_code?: string
     }[]
-    // Mantener bankInfo para retrocompatibilidad
     bankInfo?: {
-        id?: string // También agregado aquí para consistencia
+        id?: string
         bank_name: string
         account_number: string
         account_holder: string
@@ -356,10 +387,9 @@ interface BankTransferInfoProps {
 
 const BankTransferInfo: React.FC<BankTransferInfoProps> = ({
     orderNumber,
-    bankAccounts = [], // Valor por defecto
+    bankAccounts = [],
     bankInfo
 }) => {
-    // Usar bankAccounts si está disponible, sino usar bankInfo para retrocompatibilidad
     const accounts = bankAccounts && bankAccounts.length > 0 ? bankAccounts : (bankInfo ? [bankInfo] : [])
 
     if (accounts.length === 0) {
@@ -377,7 +407,6 @@ const BankTransferInfo: React.FC<BankTransferInfoProps> = ({
             </p>
 
             {accounts.length === 1 ? (
-                // Una sola cuenta - mostrar directamente
                 <div className="space-y-2 text-sm">
                     <p><span className="font-semibold text-gray-700">Banco:</span> {accounts[0].bank_name}</p>
                     <p><span className="font-semibold text-gray-700">Titular:</span> {accounts[0].account_holder}</p>
@@ -390,7 +419,6 @@ const BankTransferInfo: React.FC<BankTransferInfoProps> = ({
                     )}
                 </div>
             ) : (
-                // Múltiples cuentas - mostrar en acordeón o tabs
                 <div className="space-y-3">
                     {accounts.map((account, index) => (
                         <div key={account.id || `account-${index}`} className="bg-white border border-gray-200 rounded-lg p-3">
@@ -425,13 +453,13 @@ const BankTransferInfo: React.FC<BankTransferInfoProps> = ({
                     {accounts.length > 1 && (
                         <p>• Puedes transferir a cualquiera de las cuentas mostradas arriba</p>
                     )}
-                    {/* DA CLIK EN EL BOTÓN DE WHATSAPP PARA ENVIAR TU ORDEN DE COMPRA */}
                     <p>• DA CLIK EN EL BOTÓN DE WHATSAPP PARA ENVIAR TU ORDEN DE COMPRA</p>
                 </div>
             </div>
         </div>
     )
 }
+
 // Iconos
 const CreditCardIcon = ({ className }: { className?: string }) => (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -456,6 +484,12 @@ const PayPalIcon: React.FC<{ className?: string }> = ({ className = "" }) => (
         <path d="M12 2v7" />
         <path d="M8 2v7" />
         <path d="M16 2v7" />
+    </svg>
+)
+
+const PhoneIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
     </svg>
 )
 

@@ -2,7 +2,7 @@
 import { useTenantConfigurations } from '@/app/(auth)/hooks/useTenantConfigurations'
 import {
     CreditCard, Mail, DollarSign, Building2,
-    Check, X, Settings, TestTube, Eye, EyeOff, Save, AlertCircle
+    Check, X, TestTube, Eye, EyeOff, Save, AlertCircle
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -10,21 +10,155 @@ interface ConfigurationsTabProps {
     tenantId: string
 }
 
+// Definición de tipos para los campos de cada proveedor
+interface ProviderField {
+    key: string
+    label: string
+    type: 'text' | 'password' | 'email' | 'checkbox'
+    placeholder?: string
+    required?: boolean
+    description?: string
+}
+
+interface PaymentProviderConfig {
+    id: string
+    name: string
+    description: string
+    icon: any
+    iconColor: string
+    iconBg: string
+    buttonColor: string
+    fields: ProviderField[]
+}
+
+// Configuración de todos los proveedores de pago
+const PAYMENT_PROVIDERS: PaymentProviderConfig[] = [
+    {
+        id: 'stripe',
+        name: 'Stripe',
+        description: 'Procesamiento de tarjetas de crédito',
+        icon: CreditCard,
+        iconColor: 'text-purple-600',
+        iconBg: 'bg-purple-100',
+        buttonColor: 'bg-purple-600 hover:bg-purple-700',
+        fields: [
+            {
+                key: 'public_key',
+                label: 'Publishable Key',
+                type: 'text',
+                placeholder: 'pk_test_...',
+                required: true
+            },
+            {
+                key: 'secret_key',
+                label: 'Secret Key',
+                type: 'password',
+                placeholder: 'sk_test_...',
+                required: true
+            }
+        ]
+    },
+    {
+        id: 'paypal',
+        name: 'PayPal',
+        description: 'Pagos con PayPal',
+        icon: DollarSign,
+        iconColor: 'text-blue-600',
+        iconBg: 'bg-blue-100',
+        buttonColor: 'bg-blue-600 hover:bg-blue-700',
+        fields: [
+            {
+                key: 'client_id',
+                label: 'Client ID',
+                type: 'text',
+                placeholder: 'Client ID de PayPal',
+                required: true
+            },
+            {
+                key: 'client_secret',
+                label: 'Client Secret',
+                type: 'password',
+                placeholder: 'Client Secret de PayPal',
+                required: true
+            },
+            {
+                key: 'sandbox',
+                label: 'Modo Sandbox (Pruebas)',
+                type: 'checkbox',
+                description: 'Habilitar modo de pruebas'
+            }
+        ]
+    },
+    {
+        id: 'payphone',
+        name: 'Payphone',
+        description: 'Pagos móviles Ecuador',
+        icon: CreditCard,
+        iconColor: 'text-indigo-600',
+        iconBg: 'bg-indigo-100',
+        buttonColor: 'bg-indigo-600 hover:bg-indigo-700',
+        fields: [
+            {
+                key: 'token',
+                label: 'Token',
+                type: 'password',
+                placeholder: 'Token de Payphone',
+                required: true
+            },
+            {
+                key: 'store_id',
+                label: 'Store ID',
+                type: 'text',
+                placeholder: 'ID de la tienda',
+                required: true
+            }
+        ]
+    },
+    {
+        id: 'kushki',
+        name: 'Kushki',
+        description: 'Pagos Latinoamérica',
+        icon: CreditCard,
+        iconColor: 'text-teal-600',
+        iconBg: 'bg-teal-100',
+        buttonColor: 'bg-teal-600 hover:bg-teal-700',
+        fields: [
+            {
+                key: 'public_key',
+                label: 'Public Merchant ID',
+                type: 'text',
+                placeholder: 'Public Merchant ID',
+                required: true
+            },
+            {
+                key: 'private_key',
+                label: 'Private Merchant ID',
+                type: 'password',
+                placeholder: 'Private Merchant ID',
+                required: true
+            },
+            {
+                key: 'test_mode',
+                label: 'Modo de Pruebas',
+                type: 'checkbox',
+                description: 'Usar ambiente de pruebas'
+            }
+        ]
+    }
+]
+
 export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
-    // Usar el hook que ya creamos
-    // Usar el hook que ya creamos
     const {
         loading,
         saving,
         paymentForms,
         emailForm,
-        bankAccounts, // NUEVO
+        bankAccounts,
         setPaymentForms,
         setEmailForm,
         updatePaymentConfig,
         updateEmailConfig,
         testConfiguration,
-        // Nuevas funciones para cuentas bancarias
         addBankAccount,
         updateBankAccount,
         removeBankAccount,
@@ -38,13 +172,41 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
         setShowSecrets(prev => ({ ...prev, [key]: !prev[key] }))
     }
 
-    const handlePaymentConfigChange = (provider: keyof typeof paymentForms, field: string, value: any) => {
+    // Handler genérico para cambios en configuración de pagos
+    const handlePaymentConfigChange = (providerId: string, field: string, value: any) => {
         setPaymentForms(prev => ({
             ...prev,
-            [provider]: {
-                ...prev[provider],
+            [providerId]: {
+                ...prev[providerId],
                 [field]: value
             }
+        }))
+    }
+
+    // Handler genérico para activar/desactivar proveedores
+    const handleTogglePaymentConfig = async (providerId: string, enabled: boolean) => {
+        const result = await updatePaymentConfig(providerId, enabled)
+        if (!result.success) {
+            console.error('Error updating payment config:', result.error)
+            alert('Error al guardar: ' + result.error)
+        }
+    }
+
+    // Verificar si todos los campos requeridos están completos
+    const areRequiredFieldsFilled = (providerId: string, provider: PaymentProviderConfig) => {
+        const config = paymentForms[providerId]
+        if (!config) return false
+
+        return provider.fields
+            .filter(field => field.required)
+            .every(field => config[field.key] && config[field.key].toString().trim() !== '')
+    }
+
+    const handleTest = async (type: 'payment' | 'email', provider: string) => {
+        const result = await testConfiguration(type, provider)
+        setTestResults(prev => ({
+            ...prev,
+            [`${type}_${provider}`]: result
         }))
     }
 
@@ -58,10 +220,8 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
         }))
     }
 
-    // Nueva función para guardar la configuración - CON VALIDACIÓN
     const handleSaveEmailConfig = async () => {
         if (!emailForm.resend.api_key || !emailForm.resend.from_email) {
-            // Mostrar error en el UI en lugar de console
             alert('Faltan la API key o el email remitente')
             return
         }
@@ -73,25 +233,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
         }
     }
 
-    const handleTest = async (type: 'payment' | 'email', provider: string) => {
-        const result = await testConfiguration(type, provider)
-        setTestResults(prev => ({
-            ...prev,
-            [`${type}_${provider}`]: result
-        }))
-    }
-
-    // Handler para activar/desactivar configuraciones
-    const handleTogglePaymentConfig = async (provider: 'stripe' | 'paypal', enabled: boolean) => {
-        const result = await updatePaymentConfig(provider, enabled)
-        if (!result.success) {
-            // Mostrar error si es necesario
-            console.error('Error updating payment config:', result.error)
-        }
-    }
-
     const handleToggleEmailConfig = async (enabled: boolean) => {
-        // Solo cambiar el estado local del formulario
         setEmailForm(prev => ({
             ...prev,
             resend: { ...prev.resend, enabled }
@@ -109,7 +251,6 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
 
     return (
         <div className="space-y-8">
-            {/* Header */}
             <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                     Configuraciones del Tenant
@@ -119,7 +260,6 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                 </p>
             </div>
 
-            {/* Configuraciones de Pago */}
             <div className="bg-white border border-gray-200 rounded-lg">
                 <div className="px-6 py-4 border-b border-gray-200">
                     <h4 className="text-base font-medium text-gray-900 flex items-center">
@@ -132,224 +272,138 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                 </div>
 
                 <div className="p-6 space-y-6">
-                    {/* Stripe */}
-                    <div className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center">
-                                <div className="h-10 w-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-                                    <CreditCard className="h-5 w-5 text-purple-600" />
-                                </div>
-                                <div>
-                                    <h5 className="font-medium text-gray-900">Stripe</h5>
-                                    <p className="text-sm text-gray-500">Procesamiento de tarjetas de crédito</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                {paymentForms.stripe.enabled && (
-                                    <button
-                                        onClick={() => handleTest('payment', 'stripe')}
-                                        disabled={saving}
-                                        className="p-2 text-blue-600 hover:text-blue-500 hover:bg-blue-50 rounded-md"
-                                        title="Probar configuración"
-                                    >
-                                        <TestTube className="h-4 w-4" />
-                                    </button>
-                                )}
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={paymentForms.stripe.enabled}
-                                        onChange={(e) => handleTogglePaymentConfig('stripe', e.target.checked)}
-                                        disabled={saving}
-                                        className="sr-only peer"
-                                    />
-                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                </label>
-                            </div>
-                        </div>
+                    {PAYMENT_PROVIDERS.map((provider) => {
+                        const Icon = provider.icon
+                        const providerConfig = paymentForms[provider.id] || { enabled: false }
 
-                        {paymentForms.stripe.enabled && (
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Publishable Key *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={paymentForms.stripe.public_key}
-                                        onChange={(e) => handlePaymentConfigChange('stripe', 'public_key', e.target.value)}
-                                        placeholder="pk_test_..."
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Secret Key *
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type={showSecrets.stripe_secret ? 'text' : 'password'}
-                                            value={paymentForms.stripe.secret_key}
-                                            onChange={(e) => handlePaymentConfigChange('stripe', 'secret_key', e.target.value)}
-                                            placeholder="sk_test_..."
-                                            className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                                            required
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => toggleSecretVisibility('stripe_secret')}
-                                            className="absolute inset-y-0 right-0 flex items-center pr-3"
-                                        >
-                                            {showSecrets.stripe_secret ? (
-                                                <EyeOff className="h-4 w-4 text-gray-400" />
-                                            ) : (
-                                                <Eye className="h-4 w-4 text-gray-400" />
-                                            )}
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="flex justify-end">
-                                    <button
-                                        onClick={() => handleTogglePaymentConfig('stripe', true)}
-                                        disabled={saving || !paymentForms.stripe.public_key || !paymentForms.stripe.secret_key}
-                                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
-                                    >
-                                        {saving ? 'Guardando...' : 'Guardar Stripe'}
-                                    </button>
-                                </div>
-                                {testResults.payment_stripe && (
-                                    <div className={`p-3 rounded-md text-sm ${testResults.payment_stripe.success
-                                        ? 'bg-green-50 text-green-700 border border-green-200'
-                                        : 'bg-red-50 text-red-700 border border-red-200'
-                                        }`}>
-                                        <div className="flex items-center">
-                                            {testResults.payment_stripe.success ? (
-                                                <Check className="h-4 w-4 mr-2" />
-                                            ) : (
-                                                <X className="h-4 w-4 mr-2" />
-                                            )}
-                                            {testResults.payment_stripe.success ? 'Conexión exitosa' : testResults.payment_stripe.error}
+                        return (
+                            <div key={provider.id} className="border rounded-lg p-4">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center">
+                                        <div className={`h-10 w-10 ${provider.iconBg} rounded-lg flex items-center justify-center mr-3`}>
+                                            <Icon className={`h-5 w-5 ${provider.iconColor}`} />
+                                        </div>
+                                        <div>
+                                            <h5 className="font-medium text-gray-900">{provider.name}</h5>
+                                            <p className="text-sm text-gray-500">{provider.description}</p>
                                         </div>
                                     </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* PayPal */}
-                    <div className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center">
-                                <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                                    <DollarSign className="h-5 w-5 text-blue-600" />
-                                </div>
-                                <div>
-                                    <h5 className="font-medium text-gray-900">PayPal</h5>
-                                    <p className="text-sm text-gray-500">Pagos con PayPal</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                {paymentForms.paypal.enabled && (
-                                    <button
-                                        onClick={() => handleTest('payment', 'paypal')}
-                                        disabled={saving}
-                                        className="p-2 text-blue-600 hover:text-blue-500 hover:bg-blue-50 rounded-md"
-                                        title="Probar configuración"
-                                    >
-                                        <TestTube className="h-4 w-4" />
-                                    </button>
-                                )}
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={paymentForms.paypal.enabled}
-                                        onChange={(e) => handleTogglePaymentConfig('paypal', e.target.checked)}
-                                        disabled={saving}
-                                        className="sr-only peer"
-                                    />
-                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                </label>
-                            </div>
-                        </div>
-
-                        {paymentForms.paypal.enabled && (
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Client ID *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={paymentForms.paypal.client_id}
-                                        onChange={(e) => handlePaymentConfigChange('paypal', 'client_id', e.target.value)}
-                                        placeholder="Client ID de PayPal"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Client Secret *
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type={showSecrets.paypal_secret ? 'text' : 'password'}
-                                            value={paymentForms.paypal.client_secret}
-                                            onChange={(e) => handlePaymentConfigChange('paypal', 'client_secret', e.target.value)}
-                                            placeholder="Client Secret de PayPal"
-                                            className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                                            required
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => toggleSecretVisibility('paypal_secret')}
-                                            className="absolute inset-y-0 right-0 flex items-center pr-3"
-                                        >
-                                            {showSecrets.paypal_secret ? (
-                                                <EyeOff className="h-4 w-4 text-gray-400" />
-                                            ) : (
-                                                <Eye className="h-4 w-4 text-gray-400" />
-                                            )}
-                                        </button>
+                                    <div className="flex items-center space-x-2">
+                                        {providerConfig.enabled && (
+                                            <button
+                                                onClick={() => handleTest('payment', provider.id)}
+                                                disabled={saving}
+                                                className="p-2 text-blue-600 hover:text-blue-500 hover:bg-blue-50 rounded-md"
+                                                title="Probar configuración"
+                                            >
+                                                <TestTube className="h-4 w-4" />
+                                            </button>
+                                        )}
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={providerConfig.enabled}
+                                                onChange={(e) => handleTogglePaymentConfig(provider.id, e.target.checked)}
+                                                disabled={saving}
+                                                className="sr-only peer"
+                                            />
+                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                        </label>
                                     </div>
                                 </div>
-                                <div className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        checked={paymentForms.paypal.sandbox}
-                                        onChange={(e) => handlePaymentConfigChange('paypal', 'sandbox', e.target.checked)}
-                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-2"
-                                    />
-                                    <label className="text-sm text-gray-700">Modo Sandbox (Pruebas)</label>
-                                </div>
-                                <div className="flex justify-end">
-                                    <button
-                                        onClick={() => handleTogglePaymentConfig('paypal', true)}
-                                        disabled={saving || !paymentForms.paypal.client_id || !paymentForms.paypal.client_secret}
-                                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
-                                    >
-                                        {saving ? 'Guardando...' : 'Guardar PayPal'}
-                                    </button>
-                                </div>
-                                {testResults.payment_paypal && (
-                                    <div className={`p-3 rounded-md text-sm ${testResults.payment_paypal.success
-                                        ? 'bg-green-50 text-green-700 border border-green-200'
-                                        : 'bg-red-50 text-red-700 border border-red-200'
-                                        }`}>
-                                        <div className="flex items-center">
-                                            {testResults.payment_paypal.success ? (
-                                                <Check className="h-4 w-4 mr-2" />
-                                            ) : (
-                                                <X className="h-4 w-4 mr-2" />
-                                            )}
-                                            {testResults.payment_paypal.success ? 'Conexión exitosa' : testResults.payment_paypal.error}
+
+                                {providerConfig.enabled && (
+                                    <div className="space-y-3">
+                                        {provider.fields.map((field) => {
+                                            if (field.type === 'checkbox') {
+                                                return (
+                                                    <div key={field.key} className="flex items-center">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={providerConfig[field.key] || false}
+                                                            onChange={(e) => handlePaymentConfigChange(provider.id, field.key, e.target.checked)}
+                                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-2"
+                                                        />
+                                                        <label className="text-sm text-gray-700">
+                                                            {field.label}
+                                                        </label>
+                                                    </div>
+                                                )
+                                            }
+
+                                            return (
+                                                <div key={field.key}>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        {field.label} {field.required && '*'}
+                                                    </label>
+                                                    {field.type === 'password' ? (
+                                                        <div className="relative">
+                                                            <input
+                                                                type={showSecrets[`${provider.id}_${field.key}`] ? 'text' : 'password'}
+                                                                value={providerConfig[field.key] || ''}
+                                                                onChange={(e) => handlePaymentConfigChange(provider.id, field.key, e.target.value)}
+                                                                placeholder={field.placeholder}
+                                                                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                                                required={field.required}
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => toggleSecretVisibility(`${provider.id}_${field.key}`)}
+                                                                className="absolute inset-y-0 right-0 flex items-center pr-3"
+                                                            >
+                                                                {showSecrets[`${provider.id}_${field.key}`] ? (
+                                                                    <EyeOff className="h-4 w-4 text-gray-400" />
+                                                                ) : (
+                                                                    <Eye className="h-4 w-4 text-gray-400" />
+                                                                )}
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <input
+                                                            type={field.type}
+                                                            value={providerConfig[field.key] || ''}
+                                                            onChange={(e) => handlePaymentConfigChange(provider.id, field.key, e.target.value)}
+                                                            placeholder={field.placeholder}
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                                            required={field.required}
+                                                        />
+                                                    )}
+                                                </div>
+                                            )
+                                        })}
+
+                                        <div className="flex justify-end">
+                                            <button
+                                                onClick={() => handleTogglePaymentConfig(provider.id, true)}
+                                                disabled={saving || !areRequiredFieldsFilled(provider.id, provider)}
+                                                className={`inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white ${provider.buttonColor} disabled:opacity-50`}
+                                            >
+                                                {saving ? 'Guardando...' : `Guardar ${provider.name}`}
+                                            </button>
                                         </div>
+
+                                        {testResults[`payment_${provider.id}`] && (
+                                            <div className={`p-3 rounded-md text-sm ${testResults[`payment_${provider.id}`].success
+                                                ? 'bg-green-50 text-green-700 border border-green-200'
+                                                : 'bg-red-50 text-red-700 border border-red-200'
+                                                }`}>
+                                                <div className="flex items-center">
+                                                    {testResults[`payment_${provider.id}`].success ? (
+                                                        <Check className="h-4 w-4 mr-2" />
+                                                    ) : (
+                                                        <X className="h-4 w-4 mr-2" />
+                                                    )}
+                                                    {testResults[`payment_${provider.id}`].success
+                                                        ? 'Conexión exitosa'
+                                                        : testResults[`payment_${provider.id}`].error}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
-                        )}
-                    </div>
+                        )
+                    })}
 
                     {/* Cuentas Bancarias */}
                     <div className="border rounded-lg p-4">
@@ -387,8 +441,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                     <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                                         <div className="flex items-center justify-between mb-4">
                                             <div className="flex items-center">
-                                                <div className={`h-3 w-3 rounded-full mr-2 ${account.enabled ? 'bg-green-500' : 'bg-gray-300'
-                                                    }`} />
+                                                <div className={`h-3 w-3 rounded-full mr-2 ${account.enabled ? 'bg-green-500' : 'bg-gray-300'}`} />
                                                 <span className="text-sm font-medium text-gray-900">
                                                     {account.bank_name || `Cuenta Bancaria ${index + 1}`}
                                                 </span>
@@ -500,7 +553,6 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                                 </button>
                                             </div>
 
-                                            {/* Información de estado para cuentas guardadas */}
                                             {account.id && (
                                                 <div className="bg-green-50 border border-green-200 rounded-md p-3">
                                                     <div className="flex items-center">
@@ -509,13 +561,9 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                                             Cuenta bancaria configurada correctamente
                                                         </span>
                                                     </div>
-                                                    <p className="text-xs text-green-600 mt-1">
-                                                        Los clientes podrán utilizar esta cuenta para transferencias bancarias
-                                                    </p>
                                                 </div>
                                             )}
 
-                                            {/* Validación de campos requeridos */}
                                             {(!account.bank_name || !account.account_holder || !account.account_number) && (
                                                 <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
                                                     <div className="flex items-center">
@@ -638,7 +686,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                 </div>
                                 <div className="flex justify-end">
                                     <button
-                                        onClick={handleSaveEmailConfig} // Cambiar esta línea
+                                        onClick={handleSaveEmailConfig}
                                         disabled={saving || !emailForm.resend.api_key || !emailForm.resend.from_email}
                                         className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 disabled:opacity-50"
                                     >
@@ -666,7 +714,6 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                 </div>
             </div>
 
-            {/* Estado de guardado */}
             {saving && (
                 <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50">
                     <div className="flex items-center">
