@@ -60,6 +60,8 @@ export async function GET(request: NextRequest) {
             .eq('tenant_id', invoice.tenant_id)
             .eq('provider', 'payphone');
 
+        console.log('🔧 Configuración de pago obtenida:', paymentConfigs);
+
         if (configError || !paymentConfigs || paymentConfigs.length === 0) {
             console.error('❌ Configuración de PayPhone no encontrada para tenant:', invoice.tenant_id);
             return NextResponse.json({
@@ -67,6 +69,7 @@ export async function GET(request: NextRequest) {
                 error: 'Configuración de pago no encontrada'
             }, { status: 404 });
         }
+
 
         const paymentConfig = paymentConfigs[0];
         const payphoneToken = paymentConfig.secret_key; // El token Bearer
