@@ -1,4 +1,4 @@
-// 📁 components/PaymentMethods.tsx (Versión actualizada con PayPhone)
+// 📁 components/PaymentMethods.tsx (Versión completa con instrucciones PayPhone)
 import { PaymentMethodType } from '@/app/types/checkout'
 import React from 'react'
 import { LoadingSpinner } from './ui/LoadingSpinner'
@@ -52,7 +52,6 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
             "enable-funding": "venmo,paylater,card",
             "disable-funding": "",
             components: "buttons,marks,messages,hosted-fields",
-            // Usar sandbox si está configurado
             ...(config.paypal.extra?.sandbox && {
                 "data-sdk-integration-source": "sandbox"
             })
@@ -206,6 +205,53 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                     </label>
                 )}
             </div>
+
+            {/* 📱 Instrucciones de PayPhone */}
+            {method === 'payphone' && (
+                <div className="mt-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-lg p-4">
+                    <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0">
+                            <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full flex items-center justify-center">
+                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div className="flex-1">
+                            <h4 className="font-semibold text-indigo-900 mb-2">
+                                📱 Instrucciones para pagar con PayPhone
+                            </h4>
+                            <ol className="space-y-2 text-sm text-indigo-800">
+                                <li className="flex items-start">
+                                    <span className="font-bold mr-2 text-indigo-600">1.</span>
+                                    <span>Asegúrate de tener la <strong>app PayPhone instalada y abierta</strong> en tu teléfono</span>
+                                </li>
+                                <li className="flex items-start">
+                                    <span className="font-bold mr-2 text-indigo-600">2.</span>
+                                    <span>Verifica que tu número de teléfono <strong>coincida con el registrado en PayPhone</strong></span>
+                                </li>
+                                <li className="flex items-start">
+                                    <span className="font-bold mr-2 text-indigo-600">3.</span>
+                                    <span>Al hacer clic en "Pagar", <strong>recibirás una notificación</strong> en la app PayPhone</span>
+                                </li>
+                                <li className="flex items-start">
+                                    <span className="font-bold mr-2 text-indigo-600">4.</span>
+                                    <span>Tienes <strong>5 minutos</strong> para aprobar o rechazar la transacción</span>
+                                </li>
+                                <li className="flex items-start">
+                                    <span className="font-bold mr-2 text-indigo-600">5.</span>
+                                    <span>Una vez aprobado, <strong>recibirás confirmación automáticamente</strong></span>
+                                </li>
+                            </ol>
+                            <div className="mt-3 p-2 bg-amber-100 border border-amber-300 rounded">
+                                <p className="text-xs text-amber-800 font-medium">
+                                    ⚠️ <strong>Importante:</strong> No cierres esta página mientras esperas la confirmación del pago
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Checkbox de términos */}
             <div className="mt-6 flex items-start space-x-2">
