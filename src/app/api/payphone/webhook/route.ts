@@ -72,22 +72,24 @@ export async function GET(request: NextRequest) {
 
 
         const paymentConfig = paymentConfigs[0];
-        const payphoneToken = paymentConfig.secret_key; // El token Bearer
-        console.log('🔑 Token de PayPhone obtenido');
+        const payphoneToken = paymentConfig.secret_key.trim();
+        console.log('🔑 Token de PayPhone obtenido: ', payphoneToken);
 
         // 4. Verificar el estado de la transacción con PayPhone
         console.log(`🔍 Consultando transacción en PayPhone: ${transactionId}`);
 
         const payphoneResponse = await fetch(
-            `https://pay.payphonetodoesposible.com/api/Sale/${transactionId}`,
+            `https://pay.payphonetodoesposible.com/api/Sale/67079248`,
             {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${payphoneToken}`,
+                    'Authorization': `Bearer RHcZ5fBS96dDNnaMKjf_ldUkDn8_k5_AfglzTlDQhntQ_thufuVCTEiKNcA2nsdSRQzkmTS51s_pMuOzHnq_YvSjgADt_WXOgogtC6F12ULa-eM6hpf8OOeWPdZfN1JvHcx6FWdQIFh8DB4hE3KJbAJN_MFnxRQhrOid_nZzNS3prwPETRNNWuXhMtu1Ty8pTD1ZSW7zD_XVe-BZ5BSPhrEPXaD-zZi0S7q1yl3719h3dt4rhBEGeLnEyLH3GPzlUF8BRmm5vXF9SNfWrrH3TrnI8dOMwsOT56SAJ4vfxgcDNrSVYCI8AL_BjgKwBcpk4LDbf_YOUUriCLbDqFgWkCUcC1I`,
                     'Content-Type': 'application/json'
                 }
             }
         );
+
+        console.log('📥 Respuesta de PayPhone recibida con estado:', payphoneResponse);
 
         if (!payphoneResponse.ok) {
             const errorText = await payphoneResponse.text();
