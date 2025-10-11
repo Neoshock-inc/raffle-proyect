@@ -1,6 +1,9 @@
 // src/app/api/payphone/webhook/route.ts
+import axios from 'axios';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+
+export const runtime = 'nodejs';
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -70,37 +73,34 @@ export async function GET(request: NextRequest) {
             }, { status: 404 });
         }
 
-
         const paymentConfig = paymentConfigs[0];
         const payphoneToken = paymentConfig.secret_key.trim();
-        console.log('🔑 Token de PayPhone obtenido: ', payphoneToken);
+        console.log('🔑 Token de PayPhone obtenido');
 
         // 4. Verificar el estado de la transacción con PayPhone
         console.log(`🔍 Consultando transacción en PayPhone: ${transactionId}`);
-
-        const payphoneResponse = await fetch(
-            `https://pay.payphonetodoesposible.com/api/Sale/67079248`,
+        const response = await axios.get(
+            `https://pay.payphonetodoesposible.com/api/Sale/${transactionId}`,
             {
-                method: 'GET',
                 headers: {
-                    'Authorization': `Bearer RHcZ5fBS96dDNnaMKjf_ldUkDn8_k5_AfglzTlDQhntQ_thufuVCTEiKNcA2nsdSRQzkmTS51s_pMuOzHnq_YvSjgADt_WXOgogtC6F12ULa-eM6hpf8OOeWPdZfN1JvHcx6FWdQIFh8DB4hE3KJbAJN_MFnxRQhrOid_nZzNS3prwPETRNNWuXhMtu1Ty8pTD1ZSW7zD_XVe-BZ5BSPhrEPXaD-zZi0S7q1yl3719h3dt4rhBEGeLnEyLH3GPzlUF8BRmm5vXF9SNfWrrH3TrnI8dOMwsOT56SAJ4vfxgcDNrSVYCI8AL_BjgKwBcpk4LDbf_YOUUriCLbDqFgWkCUcC1I`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${payphoneToken}`,
+                    'Content-Type': 'application/json',
+                },
+                timeout: 10000,
+                validateStatus: () => true,
             }
         );
 
-        console.log('📥 Respuesta de PayPhone recibida con estado:', payphoneResponse);
+        console.log('📥 Respuesta de PayPhone:', response.status, response.data);
 
-        if (!payphoneResponse.ok) {
-            const errorText = await payphoneResponse.text();
-            console.error('❌ Error consultando PayPhone:', errorText);
-            return NextResponse.json({
-                success: false,
-                error: 'Error al consultar el estado de la transacción'
-            }, { status: 500 });
+        if (response.status !== 200) {
+            return NextResponse.json(
+                { success: false, error: 'Error al consultar transacción', details: response.data },
+                { status: response.status }
+            );
         }
 
-        const transactionData = await payphoneResponse.json();
+        const transactionData = response.data;
         console.log('📊 Estado de transacción PayPhone:', {
             transactionId: transactionData.transactionId,
             statusCode: transactionData.statusCode,
@@ -108,8 +108,7 @@ export async function GET(request: NextRequest) {
             amount: transactionData.amount
         });
 
-        // 5. Verificar si el pago fue aprobado
-        // statusCode: 3 = Approved
+        // 5. Verificar si el pago fue aprobado (statusCode: 3 = Approved)
         if (transactionData.statusCode === 3 && transactionData.transactionStatus === 'Approved') {
             console.log('✅ Pago aprobado, procesando...');
 
@@ -118,8 +117,6 @@ export async function GET(request: NextRequest) {
                 .from('invoices')
                 .update({
                     status: 'completed',
-                    payment_details: transactionData,
-                    updated_at: new Date().toISOString()
                 })
                 .eq('id', invoice.id);
 
@@ -133,48 +130,144 @@ export async function GET(request: NextRequest) {
 
             console.log('✅ Factura actualizada a COMPLETED');
 
-            // 7. Generar números de rifa
+            // 7. Generar números de rifa (lógica integrada)
             try {
                 console.log('🎲 Generando números de rifa...');
 
-                const raffleResponse = await fetch(
-                    `${process.env.NEXT_PUBLIC_BASE_URL}/api/raffle/register`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
+                // 7.1. Obtener rifa activa del tenant
+                const { data: raffle, error: raffleError } = await supabase
+                    .from('raffles')
+                    .select('id, total_numbers')
+                    .eq('is_active', true)
+                    .eq('tenant_id', invoice.tenant_id)
+                    .maybeSingle();
+
+                if (raffleError || !raffle) {
+                    console.error('❌ No hay rifa activa para el tenant:', invoice.tenant_id);
+                    return NextResponse.json({
+                        success: false,
+                        error: 'No hay una rifa activa para este tenant'
+                    }, { status: 404 });
+                }
+
+                const raffleId = raffle.id;
+                const maxNumber = raffle.total_numbers || 99999;
+                console.log(`📋 Rifa activa encontrada: ID ${raffleId}, máximo ${maxNumber} números`);
+
+                // 7.2. Buscar o crear participante ligado al tenant
+                const { data: existingParticipant } = await supabase
+                    .from('participants')
+                    .select('id')
+                    .eq('email', invoice.email)
+                    .eq('tenant_id', invoice.tenant_id)
+                    .maybeSingle();
+
+                let participantId = existingParticipant?.id;
+
+                if (!participantId) {
+                    console.log('👤 Creando nuevo participante...');
+                    const { data: newParticipant, error: participantError } = await supabase
+                        .from('participants')
+                        .insert({
                             name: invoice.full_name,
                             email: invoice.email,
-                            amount: invoice.amount,
-                            orderNumber: orderNumber,
-                            tenantId: invoice.tenant_id,
-                            payphoneTransactionId: transactionId
-                        }),
+                            tenant_id: invoice.tenant_id
+                        })
+                        .select()
+                        .single();
+
+                    if (participantError || !newParticipant) {
+                        console.error('❌ Error al crear participante:', participantError);
+                        return NextResponse.json({
+                            success: false,
+                            error: 'Error al crear participante'
+                        }, { status: 500 });
+                    }
+
+                    participantId = newParticipant.id;
+                    console.log('✅ Participante creado:', participantId);
+                } else {
+                    console.log('✅ Participante existente:', participantId);
+                }
+
+                // 7.3. Verificar disponibilidad de números
+                const { data: usedEntries, error: usedError } = await supabase
+                    .from('raffle_entries')
+                    .select('number')
+                    .eq('raffle_id', raffleId);
+
+                if (usedError) {
+                    console.error('❌ Error al obtener números usados:', usedError);
+                    return NextResponse.json({
+                        success: false,
+                        error: 'Error al verificar números disponibles'
+                    }, { status: 500 });
+                }
+
+                const usedCount = usedEntries?.length || 0;
+                const requestedAmount = parseInt(invoice.amount.toString());
+
+                console.log(`📊 Disponibilidad: ${maxNumber - usedCount} números de ${maxNumber}`);
+
+                if (isNaN(requestedAmount) || requestedAmount <= 0) {
+                    return NextResponse.json({
+                        success: false,
+                        error: 'Cantidad inválida en la factura'
+                    }, { status: 400 });
+                }
+
+                if (maxNumber - usedCount < requestedAmount) {
+                    return NextResponse.json({
+                        success: false,
+                        error: `No hay suficientes números disponibles. Solicitados: ${requestedAmount}, Disponibles: ${maxNumber - usedCount}`
+                    }, { status: 400 });
+                }
+
+                // 7.4. Generar números usando procedimiento almacenado
+                console.log(`🎯 Generando ${requestedAmount} números para participante ${participantId}...`);
+
+                const { data: generated, error: rpcError } = await supabase.rpc(
+                    'generate_raffle_numbers',
+                    {
+                        in_participant_id: participantId,
+                        in_raffle_id: raffleId,
+                        in_amount: requestedAmount
                     }
                 );
 
-                if (!raffleResponse.ok) {
-                    const errorText = await raffleResponse.text();
-                    console.error('❌ Error al generar números de rifa:', errorText);
-                } else {
-                    const raffleData = await raffleResponse.json();
-                    console.log('✅ Números de rifa generados:', raffleData);
+                if (rpcError || !generated || generated.length !== requestedAmount) {
+                    console.error('❌ Error al generar números:', rpcError);
+                    return NextResponse.json({
+                        success: false,
+                        error: 'Error al generar números',
+                        details: rpcError?.message
+                    }, { status: 500 });
                 }
+
+                console.log('✅ Números de rifa generados exitosamente:', generated);
+
+                // 8. Respuesta exitosa
+                return NextResponse.json({
+                    success: true,
+                    message: 'Pago procesado correctamente',
+                    data: {
+                        orderNumber,
+                        transactionId,
+                        status: 'completed',
+                        participantId,
+                        raffleId,
+                        numbersGenerated: generated.length
+                    }
+                });
+
             } catch (raffleError) {
                 console.error('❌ Error en generación de números:', raffleError);
+                return NextResponse.json({
+                    success: false,
+                    error: 'Error al generar números de rifa',
+                    details: raffleError instanceof Error ? raffleError.message : 'Error desconocido'
+                }, { status: 500 });
             }
-
-            return NextResponse.json({
-                success: true,
-                message: 'Pago procesado correctamente',
-                data: {
-                    orderNumber,
-                    transactionId,
-                    status: 'completed'
-                }
-            });
 
         } else {
             // Pago no aprobado o rechazado
@@ -185,7 +278,6 @@ export async function GET(request: NextRequest) {
                 .from('invoices')
                 .update({
                     status: 'failed',
-                    payment_details: transactionData,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', invoice.id);
@@ -196,7 +288,8 @@ export async function GET(request: NextRequest) {
                 data: {
                     orderNumber,
                     transactionId,
-                    status: transactionData.transactionStatus
+                    status: transactionData.transactionStatus,
+                    statusCode: transactionData.statusCode
                 }
             });
         }
