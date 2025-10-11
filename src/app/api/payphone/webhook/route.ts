@@ -1,22 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // GET porque PayPhone envía los parámetros en la URL
-export async function POST(request: NextRequest) {
-    console.log('📱 Webhook PayPhone recibido - Procesando...');
-    console.log('Headers:', JSON.stringify(Object.fromEntries(request.headers.entries()), null, 2));
-    console.log('URL:', request);
-    
+export async function GET(request: NextRequest) {
     try {
-        const { id, clientTransactionId } = await request.json();
+        const searchParams = request.nextUrl.searchParams;
+        const transactionId = searchParams.get('id');
+        const clientTransactionId = searchParams.get('clientTransactionId');
 
         console.log('📱 Webhook PayPhone recibido:', {
-            transactionId: id,
-            clientTransactionId,
-            timestamp: new Date().toISOString()
-        });
-
-        console.log('📱 Webhook PayPhone recibido:', {
-            transactionId: id,
+            transactionId,
             clientTransactionId,
             timestamp: new Date().toISOString()
         });

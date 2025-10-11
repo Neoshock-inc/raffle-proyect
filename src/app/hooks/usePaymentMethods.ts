@@ -10,7 +10,7 @@ export const usePaymentMethods = (
     orderNumber: string,
     purchaseData: PurchaseData | null,
     formData: CheckoutFormData,
-    isOfLegalAge: boolean,  
+    isOfLegalAge: boolean,
     reffer: string | null,
     token: string | null,
     checkTokenValidity: () => Promise<boolean>,
@@ -165,31 +165,28 @@ export const usePaymentMethods = (
                     ? cleanPhone.slice(1)
                     : cleanPhone;
 
-            // Calcular el monto según la fórmula de PayPhone
-            // amount = amountWithoutTax + amountWithTax + tax + service + tip
-            const totalAmount = purchaseData.price; // precio total
-            const amountWithoutTax = totalAmount; // en este caso todo el monto
+            const totalAmount = purchaseData.price;
+            const amountWithoutTax = totalAmount;
             const tax = 0;
             const service = 0;
             const tip = 0;
 
-            console.log('Configuración de PayPhone:', payphoneConfig);
-
-            // Preparar el payload para PayPhone
+            // Convertir a centavos
             const payphonePayload = {
                 phoneNumber: phoneNumber,
                 countryCode: "593",
-                amount: totalAmount,
-                amountWithoutTax: amountWithoutTax,
-                tax: tax,
-                service: service,
-                tip: tip,
+                amount: Math.round(totalAmount * 100), // ✅ centavos
+                amountWithoutTax: Math.round(amountWithoutTax * 100),
+                tax: Math.round(tax * 100),
+                service: Math.round(service * 100),
+                tip: Math.round(tip * 100),
                 clientTransactionId: `${orderNumber}-${Date.now()}`,
                 reference: `Compra ${purchaseData.amount} boletos - ${formData.name}`,
                 storeId: payphoneConfig.public_key,
                 currency: payphoneConfig.extra?.currency || "USD",
-                responseUrl: `${window.location.origin}/payphone-callback`,
+                responseUrl: `https://app.myfortunacloud.com/api/payphone/webhook`,
             };
+
 
             console.log('Enviando pago a PayPhone:', payphonePayload);
 
