@@ -140,9 +140,9 @@ export const usePaymentMethods = (
 
             const validatedData = await tokenValidation.json();
 
-            // Crear la factura con el tenantId (estado PENDING)
+            // Crear factura PENDING
             await createInvoiceWithParticipant({
-                orderNumber: orderNumber,
+                orderNumber,
                 fullName: `${formData.name} ${formData.lastName}`,
                 email: formData.email,
                 phone: formData.phone,
@@ -157,7 +157,7 @@ export const usePaymentMethods = (
                 referral_code: reffer || undefined
             }, validatedData.tenantId);
 
-            // Limpiar y formatear número de teléfono
+            // Limpiar y formatear teléfono
             const cleanPhone = formData.phone.replace(/\D/g, '');
             const phoneNumber = cleanPhone.startsWith('593')
                 ? cleanPhone.slice(3)
@@ -165,30 +165,32 @@ export const usePaymentMethods = (
                     ? cleanPhone.slice(1)
                     : cleanPhone;
 
-            // Preparar montos
+            // Preparar montos y clientTransactionId < 15 caracteres
             const totalAmount = purchaseData.price;
             const amountWithoutTax = totalAmount;
+            const orderShort = orderNumber.replace(/-/g, '').slice(0, 7);
+            const clientTransactionId = `${orderShort}-${Date.now() % 1000}`;
 
-            // Preparar payload para PayPhone
+            // Payload para PayPhone
             const payphonePayload = {
-                phoneNumber: phoneNumber,
+                phoneNumber,
                 countryCode: "593",
-                amount: Math.round(totalAmount * 100), // Convertir a centavos
+                amount: Math.round(totalAmount * 100),
                 amountWithoutTax: Math.round(amountWithoutTax * 100),
                 tax: 0,
                 service: 0,
                 tip: 0,
-                clientTransactionId: `${orderNumber}-${Date.now()}`,
+                clientTransactionId,
                 reference: `Compra ${purchaseData.amount} boletos - ${formData.name}`,
                 storeId: payphoneConfig.public_key,
                 currency: payphoneConfig.extra?.currency || "USD",
-                responseUrl: `${window.location.origin}/api/payphone/webhook`
+                responseUrl: `https://app.myfortunacloud.com/api/payphone/webhook`
             };
 
             console.log('Enviando pago a PayPhone:', payphonePayload);
 
-            // Llamar a la API de PayPhone
-            const payphoneResponse = await fetch('https://pay.payphonetodoesposible.com/api/Sale', {
+            // Llamar a la API de PayPhone y leer link como texto
+            const payphoneResponse = await fetch('https://cors-anywhere.herokuapp.com/https://pay.payphonetodoesposible.com/api/Links', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${payphoneConfig.secret_key}`,
@@ -197,32 +199,28 @@ export const usePaymentMethods = (
                 body: JSON.stringify(payphonePayload)
             });
 
-            const payphoneData = await payphoneResponse.json();
-
-            console.log('Respuesta de PayPhone:', payphoneData);
-
             if (!payphoneResponse.ok) {
-                throw new Error(payphoneData.message || 'Error al procesar el pago con PayPhone');
+                const errorText = await payphoneResponse.text();
+                throw new Error(errorText || 'Error al procesar el pago con PayPhone');
             }
 
-            // Verificar que se recibió el transactionId
-            if (payphoneData.transactionId) {
-                console.log('✅ PayPhone transactionId recibido:', payphoneData.transactionId);
+            let paymentLink = await payphoneResponse.text();
+            paymentLink = paymentLink.replace(/^"+|"+$/g, '');
 
-                // Redirigir a la página de éxito con parámetros
-                const queryParams = new URLSearchParams({
-                    email: formData.email,
-                    amount: purchaseData.amount.toString(),
-                    orderNumber: orderNumber,
-                    transactionId: payphoneData.transactionId.toString(),
-                    provider: 'payphone'
-                });
+            console.log('✅ Link de pago recibido:', paymentLink);
 
-                window.location.href = `/success?${queryParams.toString()}`;
+            // Abrir ventana emergente con el link recibido
+            window.open(paymentLink, '_blank', 'width=500,height=700');
 
-            } else {
-                throw new Error('Respuesta inesperada de PayPhone: falta transactionId');
-            }
+            // Redirigir a página de éxito
+            const queryParams = new URLSearchParams({
+                email: formData.email,
+                amount: purchaseData.amount.toString(),
+                orderNumber,
+                provider: 'payphone'
+            });
+
+            window.location.href = `/success?${queryParams.toString()}`;
 
         } catch (error: any) {
             console.error('Error en el pago con PayPhone:', error);

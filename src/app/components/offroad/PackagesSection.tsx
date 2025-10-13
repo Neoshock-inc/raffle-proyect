@@ -96,7 +96,7 @@ function TicketCard({ option, raffleData, tenantSlug, referralCode }: TicketCard
                         {option.final_amount}
                     </div>
                     <div className="text-white text-base font-semibold mb-2">
-                        NÚMEROS
+                        BOLETOS
                     </div>
 
                     {/* Precio como elemento secundario */}
