@@ -78,8 +78,8 @@ export function CallToActionSection({ raffleData, tenantConfig }: CallToActionSe
 
         <p className="text-2xl mb-8 opacity-90">
           {isLowStock
-            ? `¡Solo quedan ${remainingTickets.toLocaleString()} números disponibles!`
-            : 'El sorteo se acerca y los números se están agotando'
+            ? `¡Solo quedan ${remainingTickets.toLocaleString()} boletos disponibles!`
+            : 'El sorteo se acerca y los boletos se están agotando'
           }
         </p>
 

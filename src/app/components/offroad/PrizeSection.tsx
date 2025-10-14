@@ -250,7 +250,7 @@ export function PrizeSection({ raffleData, tenantConfig }: PrizeSectionProps) {
                                 </div>
                             </div>
                             <div className="bg-gray-800 p-4 rounded-lg">
-                                <div className="text-yellow-400 font-bold">🎟️ Precio por Número</div>
+                                <div className="text-yellow-400 font-bold">🎟️ Precio por Boleto</div>
                                 <div className="text-white text-xl font-bold">${raffleData.price}</div>
                             </div>
                         </div>

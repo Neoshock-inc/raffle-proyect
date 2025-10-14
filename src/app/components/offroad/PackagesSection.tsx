@@ -183,7 +183,7 @@ export function PackagesSection({ ticketOptions, raffleData, tenantConfig }: Pac
                     🎯 ELIGE TU PAQUETE
                 </h2>
                 <p className="text-2xl text-gray-300 text-center mb-16">
-                    Más números = más oportunidades de ganar
+                    Más boletos = más oportunidades de ganar
                 </p>
 
                 {/* Grid de paquetes */}
