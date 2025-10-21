@@ -1,7 +1,8 @@
+// 📁 hooks/usePaymentMethods.ts (ACTUALIZADO)
 import { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { PaymentMethod, PaymentStatus } from '../types/invoices';
-import { createInvoiceWithParticipant, generateRaffleNumbers } from '../services/invoiceService';
+import { createInvoiceWithParticipant } from '../services/invoiceService';
 import { PurchaseData, CheckoutFormData, PaymentMethodType } from '../types/checkout';
 import { validateCheckoutForm } from '../utils/validationUtils';
 import { PaymentConfig } from '../(auth)/types/tenant';
@@ -20,6 +21,8 @@ export const usePaymentMethods = (
 ) => {
     const [method, setMethod] = useState<PaymentMethodType>(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [showPayPhoneModal, setShowPayPhoneModal] = useState(false);
+    const [payphoneModalConfig, setPayphoneModalConfig] = useState<any>(null);
 
     const handleStripePayment = async (): Promise<void> => {
         const validation = validateCheckoutForm(formData, isOfLegalAge);
@@ -114,7 +117,7 @@ export const usePaymentMethods = (
         }
 
         if (!token || !purchaseData) {
-            alert('Error: Token de compra no válido. Por favor, regresa a la página anterior.');
+            alert('Error: Token de compra no válido.');
             return;
         }
 
@@ -126,7 +129,9 @@ export const usePaymentMethods = (
         setIsProcessing(true);
 
         try {
-            // Validar token para obtener tenantId
+            console.log('🔄 Iniciando proceso de pago PayPhone...');
+
+            // 1. Validar token para obtener tenantId
             const tokenValidation = await fetch('/api/validate-purchase', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -139,8 +144,10 @@ export const usePaymentMethods = (
             }
 
             const validatedData = await tokenValidation.json();
+            console.log('✅ Token validado:', validatedData);
 
-            // Crear factura PENDING
+            // 2. Crear factura PENDING
+            console.log('📝 Creando factura PENDING...');
             await createInvoiceWithParticipant({
                 orderNumber,
                 fullName: `${formData.name} ${formData.lastName}`,
@@ -157,79 +164,75 @@ export const usePaymentMethods = (
                 referral_code: reffer || undefined
             }, validatedData.tenantId);
 
-            // Limpiar y formatear teléfono
+            console.log('✅ Factura PENDING creada exitosamente');
+
+            // 3. Formatear teléfono
             const cleanPhone = formData.phone.replace(/\D/g, '');
             const phoneNumber = cleanPhone.startsWith('593')
-                ? cleanPhone.slice(3)
+                ? `+${cleanPhone}`
                 : cleanPhone.startsWith('0')
-                    ? cleanPhone.slice(1)
-                    : cleanPhone;
+                    ? `+593${cleanPhone.slice(1)}`
+                    : `+593${cleanPhone}`;
 
-            // Preparar montos y clientTransactionId < 15 caracteres
+            // 4. Calcular montos en centavos
             const totalAmount = purchaseData.price;
-            const amountWithoutTax = totalAmount;
-            const orderShort = orderNumber.replace(/-/g, '').slice(0, 7);
-            const clientTransactionId = `${orderShort}-${Date.now() % 1000}`;
+            const amountInCents = Math.round(totalAmount * 100);
 
-            // Payload para PayPhone
-            const payphonePayload = {
-                phoneNumber,
-                countryCode: "593",
-                amount: Math.round(totalAmount * 100),
-                amountWithoutTax: Math.round(amountWithoutTax * 100),
-                tax: 0,
-                service: 0,
-                tip: 0,
-                clientTransactionId,
-                reference: `Compra ${purchaseData.amount} boletos - ${formData.name}`,
+            // 5. Generar clientTransactionId único
+            const clientTransactionId = orderNumber;
+            // 6. Configurar modal de PayPhone
+            const modalConfig = {
+                token: payphoneConfig.secret_key,
                 storeId: payphoneConfig.public_key,
-                currency: payphoneConfig.extra?.currency || "USD",
-                responseUrl: `https://app.myfortunacloud.com/api/payphone/webhook`
+                amount: amountInCents,
+                amountWithoutTax: amountInCents,
+                clientTransactionId,
+                reference: orderNumber,
+                phoneNumber,
+                email: formData.email,
+                documentId: formData.phone
             };
 
-            console.log('Enviando pago a PayPhone:', payphonePayload);
-
-            // Llamar a la API de PayPhone y leer link como texto
-            const payphoneResponse = await fetch('https://cors-anywhere.herokuapp.com/https://pay.payphonetodoesposible.com/api/Links', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${payphoneConfig.secret_key}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payphonePayload)
+            console.log('📱 Configuración del modal PayPhone:', {
+                ...modalConfig,
+                token: modalConfig.token.substring(0, 10) + '...'
             });
 
-            if (!payphoneResponse.ok) {
-                const errorText = await payphoneResponse.text();
-                throw new Error(errorText || 'Error al procesar el pago con PayPhone');
-            }
+            // 7. Abrir modal
+            setPayphoneModalConfig(modalConfig);
+            setShowPayPhoneModal(true);
 
-            let paymentLink = await payphoneResponse.text();
-            paymentLink = paymentLink.replace(/^"+|"+$/g, '');
-
-            console.log('✅ Link de pago recibido:', paymentLink);
-
-            // Abrir ventana emergente con el link recibido
-            window.open(paymentLink, '_blank', 'width=500,height=700');
-
-            // Redirigir a página de éxito
-            const queryParams = new URLSearchParams({
-                email: formData.email,
-                amount: purchaseData.amount.toString(),
-                orderNumber,
-                provider: 'payphone'
-            });
-
-            window.location.href = `/success?${queryParams.toString()}`;
+            console.log('✅ Modal de PayPhone configurado');
 
         } catch (error: any) {
-            console.error('Error en el pago con PayPhone:', error);
-            alert(`Hubo un error al procesar tu pago con PayPhone: ${error.message || 'Error desconocido'}`);
+            console.error('❌ Error preparando pago PayPhone:', error);
+            alert(`Error: ${error.message || 'No se pudo iniciar el pago'}`);
             await generateNewOrderNumber();
         } finally {
             setIsProcessing(false);
         }
     };
+
+    // Manejar cierre del modal
+    const handleClosePayPhoneModal = () => {
+        setShowPayPhoneModal(false);
+        setPayphoneModalConfig(null);
+    };
+
+    // Manejar éxito de PayPhone (no se usa porque redirige PayPhone)
+    const handlePayPhoneSuccess = async (transactionData: any) => {
+        console.log('✅ Pago exitoso con PayPhone:', transactionData);
+        handleClosePayPhoneModal();
+    };
+
+    // Manejar error de PayPhone
+    const handlePayPhoneError = async (error: any) => {
+        console.error('❌ Error en pago PayPhone:', error);
+        handleClosePayPhoneModal();
+        alert('Hubo un error al procesar tu pago con PayPhone. Por favor, intenta de nuevo.');
+        await generateNewOrderNumber();
+    };
+
 
     const handleTransferPayment = async (): Promise<void> => {
         const validation = validateCheckoutForm(formData, isOfLegalAge);
@@ -346,23 +349,10 @@ export const usePaymentMethods = (
                 referral_code: reffer || undefined
             }, validatedData.tenantId);
 
-            const raffleResult = await generateRaffleNumbers({
-                name: `${formData.name} ${formData.lastName}`,
-                email: formData.email,
-                amount: purchaseData!.amount,
-                orderNumber: orderNumber,
-                tenantId: validatedData.tenantId
-            });
-
-            if (!raffleResult.success) {
-                console.error('Error al generar números de rifa:', raffleResult.error);
-                throw new Error(`Error al asignar números: ${raffleResult.error}`);
-            }
-
             const queryParams = new URLSearchParams({
                 email: formData.email,
                 amount: purchaseData!.amount.toString(),
-                participantId: raffleResult.participantId!.toString()
+                orderNumber
             });
 
             window.location.href = `/success?${queryParams.toString()}`;
@@ -370,11 +360,11 @@ export const usePaymentMethods = (
             return { success: true };
 
         } catch (error: any) {
-            console.error('Error al procesar PayPal y generar números:', error);
+            console.error('Error al procesar PayPal:', error);
             await generateNewOrderNumber();
             return {
                 success: false,
-                error: error.message || 'Error al procesar el pago y generar números'
+                error: error.message || 'Error al procesar el pago'
             };
         } finally {
             setIsProcessing(false);
@@ -392,8 +382,13 @@ export const usePaymentMethods = (
         method,
         setMethod,
         isProcessing,
+        showPayPhoneModal,
+        payphoneModalConfig,
+        setShowPayPhoneModal: handleClosePayPhoneModal,
         handleStripePayment,
         handlePayPhonePayment,
+        handlePayPhoneSuccess,
+        handlePayPhoneError,
         handleTransferPayment,
         handlePayPalPayment,
         handlePayPalApprove,

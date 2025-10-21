@@ -11,6 +11,7 @@ import { generateOrderNumber } from '@/app/services/invoiceService';
 import { ExpirationWarning } from './ui/ExpirationWarning';
 import { TokenExpiredModal } from './ui/TokenExpiredModal';
 import { Header } from '../../components/Header';
+import { PayPhoneModal } from '../PayPhoneModal';
 
 interface CheckoutFormProps {
     token: string | null;
@@ -58,8 +59,13 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ token, reffer }) => 
         method,
         setMethod,
         isProcessing,
+        showPayPhoneModal,
+        payphoneModalConfig,
+        setShowPayPhoneModal, // Este ahora es el handler de cierre
         handleStripePayment,
         handlePayPhonePayment,
+        handlePayPhoneSuccess,
+        handlePayPhoneError,
         handleTransferPayment,
         handlePayPalPayment,
         handlePayPalApprove,
@@ -72,9 +78,9 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ token, reffer }) => 
         reffer,
         token,
         checkTokenValidity,
-        () => { },
+        renewToken,
         generateNewOrderNumber,
-        paymentConfig?.payphone as any 
+        paymentConfig?.payphone as any
     );
 
     // Inicialización
@@ -145,6 +151,16 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ token, reffer }) => 
             />
 
             <Header />
+
+            {showPayPhoneModal && payphoneModalConfig && (
+                <PayPhoneModal
+                    isOpen={showPayPhoneModal}
+                    onClose={setShowPayPhoneModal} // Usa el handler del hook
+                    config={payphoneModalConfig}
+                    onSuccess={handlePayPhoneSuccess}
+                    onError={handlePayPhoneError}
+                />
+            )}
 
             <div className="min-h-screen bg-gray-50">
                 <div className="max-w-6xl mx-auto px-4 py-8">

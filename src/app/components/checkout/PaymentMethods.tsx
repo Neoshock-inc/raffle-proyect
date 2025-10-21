@@ -1,9 +1,12 @@
-// 📁 components/PaymentMethods.tsx (Versión completa con instrucciones PayPhone)
+// 📁 components/PaymentMethods.tsx (VERSIÓN CON MODAL)
+'use client';
+
 import { PaymentMethodType } from '@/app/types/checkout'
-import React from 'react'
+import React, { useState } from 'react'
 import { LoadingSpinner } from './ui/LoadingSpinner'
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js"
 import { useTenantPaymentConfig } from '@/app/hooks/useTenantPaymentConfig'
+import { PayPhoneModal } from '../PayPhoneModal';
 
 interface PaymentMethodsProps {
     tenantId: string
@@ -40,7 +43,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
 }) => {
     const { config, loading, error } = useTenantPaymentConfig(tenantId)
 
-    // Opciones de PayPal usando la configuración del tenant
+    // Opciones de PayPal
     const getPayPalOptions = () => {
         if (!config?.paypal) return null
 
@@ -98,315 +101,242 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
     const paypalOptions = getPayPalOptions()
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow border">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800">
-                Selecciona tu método de pago
-            </h3>
+        <>
+    
+            <div className="bg-white p-6 rounded-lg shadow border">
+                <h3 className="text-xl font-semibold mb-4 text-gray-800">
+                    Selecciona tu método de pago
+                </h3>
 
-            <div className="space-y-4">
-                {/* Stripe */}
-                {config.availableMethods.includes('stripe') && (
-                    <label className="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-sky-50 hover:border-sky-200 transition-all">
-                        <input
-                            type="radio"
-                            name="payment"
-                            value="stripe"
-                            checked={method === 'stripe'}
-                            onChange={() => setMethod('stripe')}
-                            disabled={isProcessing}
-                            className="h-5 w-5 text-sky-600 focus:ring-sky-500"
-                        />
-                        <div className="flex items-center flex-1">
-                            <div className="w-12 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded flex items-center justify-center mr-3">
-                                <CreditCardIcon className="w-5 h-5 text-white" />
+                <div className="space-y-4">
+                    {/* Stripe */}
+                    {config.availableMethods.includes('stripe') && (
+                        <label className="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-sky-50 hover:border-sky-200 transition-all">
+                            <input
+                                type="radio"
+                                name="payment"
+                                value="stripe"
+                                checked={method === 'stripe'}
+                                onChange={() => setMethod('stripe')}
+                                disabled={isProcessing}
+                                className="h-5 w-5 text-sky-600 focus:ring-sky-500"
+                            />
+                            <div className="flex items-center flex-1">
+                                <div className="w-12 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded flex items-center justify-center mr-3">
+                                    <CreditCardIcon className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                    <span className="font-medium text-gray-900">Pagar con tarjeta</span>
+                                    <p className="text-sm text-gray-500">Pago seguro con Stripe</p>
+                                </div>
                             </div>
-                            <div>
-                                <span className="font-medium text-gray-900">Pagar con tarjeta</span>
-                                <p className="text-sm text-gray-500">Pago seguro con Stripe</p>
-                            </div>
-                        </div>
-                    </label>
-                )}
+                        </label>
+                    )}
 
-                {/* PayPal */}
-                {config.availableMethods.includes('paypal') && (
-                    <label className="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-sky-50 hover:border-sky-200 transition-all">
-                        <input
-                            type="radio"
-                            name="payment"
-                            value="paypal"
-                            checked={method === 'paypal'}
-                            onChange={() => setMethod('paypal')}
-                            disabled={isProcessing}
-                            className="h-5 w-5 text-sky-600 focus:ring-sky-500"
-                        />
-                        <div className="flex items-center flex-1">
-                            <div className="w-12 h-8 bg-blue-600 rounded flex items-center justify-center mr-3">
-                                <PayPalIcon className="w-5 h-5 text-white" />
+                    {/* PayPal */}
+                    {config.availableMethods.includes('paypal') && (
+                        <label className="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-sky-50 hover:border-sky-200 transition-all">
+                            <input
+                                type="radio"
+                                name="payment"
+                                value="paypal"
+                                checked={method === 'paypal'}
+                                onChange={() => setMethod('paypal')}
+                                disabled={isProcessing}
+                                className="h-5 w-5 text-sky-600 focus:ring-sky-500"
+                            />
+                            <div className="flex items-center flex-1">
+                                <div className="w-12 h-8 bg-blue-600 rounded flex items-center justify-center mr-3">
+                                    <PayPalIcon className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                    <span className="font-medium text-gray-900">Pagar con Tarjeta</span>
+                                    <p className="text-sm text-gray-500">
+                                        Pago seguro con Tarjeta o PayPal
+                                        {config.paypal?.extra?.sandbox && (
+                                            <span className="text-amber-600 font-medium"> (Sandbox)</span>
+                                        )}
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <span className="font-medium text-gray-900">Pagar con Tarjeta</span>
-                                <p className="text-sm text-gray-500">
-                                    Pago seguro con Tarjeta o PayPal
-                                    {config.paypal?.extra?.sandbox && (
-                                        <span className="text-amber-600 font-medium"> (Sandbox)</span>
-                                    )}
+                        </label>
+                    )}
+
+                    {/* PayPhone */}
+                    {config.availableMethods.includes('payphone') && (
+                        <label className="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-sky-50 hover:border-sky-200 transition-all">
+                            <input
+                                type="radio"
+                                name="payment"
+                                value="payphone"
+                                checked={method === 'payphone'}
+                                onChange={() => setMethod('payphone')}
+                                disabled={isProcessing}
+                                className="h-5 w-5 text-sky-600 focus:ring-sky-500"
+                            />
+                            <div className="flex items-center flex-1">
+                                <div className="w-12 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded flex items-center justify-center mr-3">
+                                    <PhoneIcon className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                    <span className="font-medium text-gray-900">PayPhone</span>
+                                    <p className="text-sm text-gray-500">Pago con tarjeta (Ecuador)</p>
+                                </div>
+                            </div>
+                        </label>
+                    )}
+
+                    {/* Transferencia Bancaria */}
+                    {config.availableMethods.includes('transfer') && (
+                        <label className="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-sky-50 hover:border-sky-200 transition-all">
+                            <input
+                                type="radio"
+                                name="payment"
+                                value="transfer"
+                                checked={method === 'transfer'}
+                                onChange={() => setMethod('transfer')}
+                                disabled={isProcessing}
+                                className="h-5 w-5 text-sky-600 focus:ring-sky-500"
+                            />
+                            <div className="flex items-center flex-1">
+                                <div className="w-12 h-8 bg-green-600 rounded flex items-center justify-center mr-3">
+                                    <BankIcon className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                    <span className="font-medium text-gray-900">Transferencia bancaria</span>
+                                    <p className="text-sm text-gray-500">Transfiere a nuestra cuenta</p>
+                                </div>
+                            </div>
+                        </label>
+                    )}
+                </div>
+
+                {/* 📱 Instrucciones de PayPhone */}
+                {method === 'payphone' && (
+                    <div className="mt-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-lg p-4">
+                        <div className="flex items-start space-x-3">
+                            <div className="flex-shrink-0">
+                                <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full flex items-center justify-center">
+                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="font-semibold text-indigo-900 mb-2">
+                                    📱 Pago seguro con PayPhone
+                                </h4>
+                                <p className="text-sm text-indigo-800 mb-2">
+                                    Al hacer clic en "Pagar con PayPhone", se abrirá un formulario seguro donde podrás ingresar los datos de tu tarjeta.
                                 </p>
-                            </div>
-                        </div>
-                    </label>
-                )}
-
-                {/* PayPhone */}
-                {config.availableMethods.includes('payphone') && (
-                    <label className="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-sky-50 hover:border-sky-200 transition-all">
-                        <input
-                            type="radio"
-                            name="payment"
-                            value="payphone"
-                            checked={method === 'payphone'}
-                            onChange={() => setMethod('payphone')}
-                            disabled={isProcessing}
-                            className="h-5 w-5 text-sky-600 focus:ring-sky-500"
-                        />
-                        <div className="flex items-center flex-1">
-                            <div className="w-12 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded flex items-center justify-center mr-3">
-                                <PhoneIcon className="w-5 h-5 text-white" />
-                            </div>
-                            <div>
-                                <span className="font-medium text-gray-900">PayPhone</span>
-                                <p className="text-sm text-gray-500">Pago móvil rápido (Ecuador)</p>
-                            </div>
-                        </div>
-                    </label>
-                )}
-
-                {/* Transferencia Bancaria */}
-                {config.availableMethods.includes('transfer') && (
-                    <label className="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-sky-50 hover:border-sky-200 transition-all">
-                        <input
-                            type="radio"
-                            name="payment"
-                            value="transfer"
-                            checked={method === 'transfer'}
-                            onChange={() => setMethod('transfer')}
-                            disabled={isProcessing}
-                            className="h-5 w-5 text-sky-600 focus:ring-sky-500"
-                        />
-                        <div className="flex items-center flex-1">
-                            <div className="w-12 h-8 bg-green-600 rounded flex items-center justify-center mr-3">
-                                <BankIcon className="w-5 h-5 text-white" />
-                            </div>
-                            <div>
-                                <span className="font-medium text-gray-900">Transferencia bancaria</span>
-                                <p className="text-sm text-gray-500">Transfiere a nuestra cuenta</p>
-                            </div>
-                        </div>
-                    </label>
-                )}
-            </div>
-
-            {/* 📱 Instrucciones de PayPhone */}
-            {method === 'payphone' && (
-                <div className="mt-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-lg p-4">
-                    <div className="flex items-start space-x-3">
-                        <div className="flex-shrink-0">
-                            <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full flex items-center justify-center">
-                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                        </div>
-                        <div className="flex-1">
-                            <h4 className="font-semibold text-indigo-900 mb-2">
-                                📱 Instrucciones para pagar con PayPhone
-                            </h4>
-                            <ol className="space-y-2 text-sm text-indigo-800">
-                                <li className="flex items-start">
-                                    <span className="font-bold mr-2 text-indigo-600">1.</span>
-                                    <span>Asegúrate de tener la <strong>app PayPhone instalada y abierta</strong> en tu teléfono</span>
-                                </li>
-                                <li className="flex items-start">
-                                    <span className="font-bold mr-2 text-indigo-600">2.</span>
-                                    <span>Verifica que tu número de teléfono <strong>coincida con el registrado en PayPhone</strong></span>
-                                </li>
-                                <li className="flex items-start">
-                                    <span className="font-bold mr-2 text-indigo-600">3.</span>
-                                    <span>Al hacer clic en "Pagar", <strong>recibirás una notificación</strong> en la app PayPhone</span>
-                                </li>
-                                <li className="flex items-start">
-                                    <span className="font-bold mr-2 text-indigo-600">4.</span>
-                                    <span>Tienes <strong>5 minutos</strong> para aprobar o rechazar la transacción</span>
-                                </li>
-                                <li className="flex items-start">
-                                    <span className="font-bold mr-2 text-indigo-600">5.</span>
-                                    <span>Una vez aprobado, <strong>recibirás confirmación automáticamente</strong></span>
-                                </li>
-                            </ol>
-                            <div className="mt-3 p-2 bg-amber-100 border border-amber-300 rounded">
-                                <p className="text-xs text-amber-800 font-medium">
-                                    ⚠️ <strong>Importante:</strong> No cierres esta página mientras esperas la confirmación del pago
-                                </p>
+                                <ul className="space-y-1 text-sm text-indigo-800">
+                                    <li>✓ Acepta tarjetas Visa, Mastercard, Diners y Discover</li>
+                                    <li>✓ Conexión segura con encriptación SSL</li>
+                                    <li>✓ Tienes 10 minutos para completar el pago</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* Checkbox de términos */}
-            <div className="mt-6 flex items-start space-x-2">
-                <input
-                    id="legal-age"
-                    type="checkbox"
-                    checked={isOfLegalAge}
-                    onChange={(e) => setIsOfLegalAge(e.target.checked)}
-                    disabled={isProcessing}
-                    className="mt-1 h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded"
-                />
-                <label htmlFor="legal-age" className="text-sm text-gray-700">
-                    Confirmo que soy mayor de 18 años y acepto los términos de participación.
-                </label>
-            </div>
-
-            {/* Información bancaria dinámica */}
-            {method === 'transfer' && (config.bankAccounts?.length > 0 || config.bankInfo) && (
-                <BankTransferInfo
-                    orderNumber={orderNumber}
-                    bankAccounts={config.bankAccounts || []}
-                    bankInfo={config.bankInfo}
-                />
-            )}
-
-            {/* Botones de pago */}
-            <div className="mt-6">
-                {/* Stripe */}
-                {method === 'stripe' && (
-                    <button
-                        onClick={onStripePayment}
-                        disabled={isProcessing || !purchaseData || !isOfLegalAge}
-                        className="w-full bg-sky-600 hover:bg-sky-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center"
-                    >
-                        {isProcessing ? <LoadingSpinner /> : 'Pagar con tarjeta'}
-                    </button>
                 )}
 
-                {/* PayPal Buttons con configuración dinámica */}
-                {method === 'paypal' && purchaseData && isOfLegalAge && paypalOptions && (
-                    <div
-                        className="paypal-container"
-                        style={{
-                            minHeight: '150px',
-                            position: 'relative',
-                            zIndex: 1,
-                        }}
-                    >
-                        <PayPalScriptProvider
-                            options={paypalOptions}
-                            deferLoading={false}
-                        >
-                            <PayPalButtons
-                                disabled={isProcessing}
-                                forceReRender={[purchaseData.price]}
-                                style={{
-                                    layout: 'vertical',
-                                    color: 'gold',
-                                    shape: 'rect',
-                                    label: 'paypal',
-                                    height: 45,
-                                    disableMaxWidth: false,
-                                }}
-                                createOrder={async (data, actions) => {
-                                    try {
-                                        const res = await onPayPalPayment()
-                                        if (!res.success) {
-                                            throw new Error(res.error || 'Error creando la orden')
-                                        }
-                                        const price = purchaseData.price.toFixed(2)
+                {/* Checkbox de términos */}
+                <div className="mt-6 flex items-start space-x-2">
+                    <input
+                        id="legal-age"
+                        type="checkbox"
+                        checked={isOfLegalAge}
+                        onChange={(e) => setIsOfLegalAge(e.target.checked)}
+                        disabled={isProcessing}
+                        className="mt-1 h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="legal-age" className="text-sm text-gray-700">
+                        Confirmo que soy mayor de 18 años y acepto los términos de participación.
+                    </label>
+                </div>
 
+                {/* Información bancaria */}
+                {method === 'transfer' && (config.bankAccounts?.length > 0 || config.bankInfo) && (
+                    <BankTransferInfo
+                        orderNumber={orderNumber}
+                        bankAccounts={config.bankAccounts || []}
+                        bankInfo={config.bankInfo}
+                    />
+                )}
+
+                {/* Botones de pago */}
+                <div className="mt-6">
+                    {/* Stripe */}
+                    {method === 'stripe' && (
+                        <button
+                            onClick={onStripePayment}
+                            disabled={isProcessing || !purchaseData || !isOfLegalAge}
+                            className="w-full bg-sky-600 hover:bg-sky-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center"
+                        >
+                            {isProcessing ? <LoadingSpinner /> : 'Pagar con tarjeta'}
+                        </button>
+                    )}
+
+                    {/* PayPal */}
+                    {method === 'paypal' && purchaseData && isOfLegalAge && paypalOptions && (
+                        <div className="paypal-container" style={{ minHeight: '150px', position: 'relative', zIndex: 1 }}>
+                            <PayPalScriptProvider options={paypalOptions} deferLoading={false}>
+                                <PayPalButtons
+                                    disabled={isProcessing}
+                                    forceReRender={[purchaseData.price]}
+                                    style={{ layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal', height: 45 }}
+                                    createOrder={async (data, actions) => {
+                                        const res = await onPayPalPayment()
+                                        if (!res.success) throw new Error(res.error || 'Error creando la orden')
                                         return actions.order.create({
                                             intent: "CAPTURE",
-                                            purchase_units: [
-                                                {
-                                                    amount: {
-                                                        currency_code: "USD",
-                                                        value: price,
-                                                    },
-                                                    description: `Pedido #${orderNumber}`,
-                                                    reference_id: orderNumber,
-                                                }
-                                            ],
-                                            application_context: {
-                                                shipping_preference: "NO_SHIPPING"
-                                            }
+                                            purchase_units: [{
+                                                amount: { currency_code: "USD", value: purchaseData.price.toFixed(2) },
+                                                description: `Pedido #${orderNumber}`,
+                                                reference_id: orderNumber
+                                            }],
+                                            application_context: { shipping_preference: "NO_SHIPPING" }
                                         })
-
-                                    } catch (error) {
-                                        console.error('Error en createOrder:', error)
-                                        alert('Error al crear la orden: ' + (error instanceof Error ? error.message : 'Error desconocido'))
-                                        throw error
-                                    }
-                                }}
-                                onApprove={async (data, actions) => {
-                                    try {
-                                        console.log('Pago aprobado:', data)
-
-                                        if (actions.order) {
-                                            const details = await actions.order.capture()
-                                            console.log('Pago capturado:', details)
-                                        }
-
+                                    }}
+                                    onApprove={async (data, actions) => {
+                                        if (actions.order) await actions.order.capture()
                                         const result = await onPayPalApprove(data)
-                                        if (!result.success) {
-                                            throw new Error(result.error || 'Error procesando el pago')
-                                        }
+                                        if (!result.success) throw new Error(result.error)
+                                    }}
+                                    onError={onPayPalError}
+                                />
+                            </PayPalScriptProvider>
+                        </div>
+                    )}
 
-                                    } catch (error) {
-                                        console.error('Error en onApprove:', error)
-                                        await onPayPalError(error)
-                                    }
-                                }}
-                                onError={async (err) => {
-                                    console.error('Error de PayPal:', err)
-                                    await onPayPalError(err)
-                                }}
-                                onCancel={(data) => {
-                                    console.log('Pago cancelado por el usuario:', data)
-                                }}
-                            />
-                        </PayPalScriptProvider>
-                    </div>
-                )}
+                    {/* 🆕 PayPhone - SOLO BOTÓN */}
+                    {method === 'payphone' && (
+                        <button
+                            onClick={onPayPhonePayment}
+                            disabled={isProcessing || !purchaseData || !isOfLegalAge}
+                            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center"
+                        >
+                            {isProcessing ? <LoadingSpinner /> : 'Pagar con PayPhone'}
+                        </button>
+                    )}
 
-                {/* PayPhone */}
-                {method === 'payphone' && (
-                    <button
-                        onClick={onPayPhonePayment}
-                        disabled={isProcessing || !purchaseData || !isOfLegalAge}
-                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center"
-                    >
-                        {isProcessing ? <LoadingSpinner /> : 'Pagar con PayPhone'}
-                    </button>
-                )}
-
-                {/* Transferencia */}
-                {method === 'transfer' && (
-                    <button
-                        onClick={onTransferPayment}
-                        disabled={isProcessing || !purchaseData || !isOfLegalAge}
-                        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
-                    >
-                        {isProcessing ? (
-                            <LoadingSpinner />
-                        ) : (
-                            <>
-                                <WhatsAppIcon />
-                                Contactar por WhatsApp
-                            </>
-                        )}
-                    </button>
-                )}
+                    {/* Transferencia */}
+                    {method === 'transfer' && (
+                        <button
+                            onClick={onTransferPayment}
+                            disabled={isProcessing || !purchaseData || !isOfLegalAge}
+                            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                        >
+                            {isProcessing ? <LoadingSpinner /> : (
+                                <>
+                                    <WhatsAppIcon />
+                                    Contactar por WhatsApp
+                                </>
+                            )}
+                        </button>
+                    )}
+                </div>
             </div>
-        </div>
+        </>
     )
 }
 
