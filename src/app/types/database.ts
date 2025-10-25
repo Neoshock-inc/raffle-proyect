@@ -14,6 +14,7 @@ export interface Tenant {
   created_at: string;
   updated_at: string;
   deleted_at?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface TenantConfig {

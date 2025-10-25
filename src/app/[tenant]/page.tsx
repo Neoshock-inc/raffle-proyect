@@ -10,6 +10,8 @@ import { VibrantTemplate } from '../components/templates/VibrantTemplate';
 import { OffroadTemplate } from '../components/templates/OffroadTemplate';
 import { getBaseUrl } from '../(auth)/utils/tenant';
 
+import { MetaPixel } from '../components/components/analytics/MetaPixel';
+
 // Mapeo de templates con nombres más descriptivos
 const templates = {
   'default': DefaultTemplate,      // Diseño limpio y funcional
@@ -130,20 +132,28 @@ export default async function TenantPage({ params }: PageProps) {
     // 3. Obtener TODAS las rifas activas del tenant
     const raffles = await RaffleService.getRafflesByTenant(tenant.id);
 
+    // Extraer metaPixel del tenant
+    const metaPixelId = tenant.metadata?.metaPixel?.enabled
+      ? tenant.metadata.metaPixel.id
+      : null;
+
     if (raffles.length === 0) {
       // Usar configuración del tenant si está disponible
       const companyName = tenantFullConfig?.config?.company_name || tenant.name;
       return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">
-              {companyName}
-            </h1>
-            <p className="text-gray-600">
-              No hay rifas activas en este momento. ¡Mantente atento!
-            </p>
+        <>
+          {metaPixelId && <MetaPixel pixelId={metaPixelId} />}
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">
+                {companyName}
+              </h1>
+              <p className="text-gray-600">
+                No hay rifas activas en este momento. ¡Mantente atento!
+              </p>
+            </div>
           </div>
-        </div>
+        </>
       );
     }
 
@@ -192,13 +202,16 @@ export default async function TenantPage({ params }: PageProps) {
 
     console.log(`Using template: ${tenant.layout} for tenant: ${tenant.slug}`);
 
-    // 10. Renderizar template con props tipados
+    // 10. Renderizar template con Meta Pixel y props tipados
     return (
-      <Template
-        raffleData={raffleData}
-        ticketOptions={calculatedPackages}
-        tenantConfig={tenantConfig}
-      />
+      <>
+        {metaPixelId && <MetaPixel pixelId={metaPixelId} />}
+        <Template
+          raffleData={raffleData}
+          ticketOptions={calculatedPackages}
+          tenantConfig={tenantConfig}
+        />
+      </>
     );
 
   } catch (error) {
