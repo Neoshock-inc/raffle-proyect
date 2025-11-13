@@ -4,9 +4,6 @@ import { PlanMarketing } from '@/app/types/landing'
 import { plans } from '@/app/components/landing/data/plans'
 import { MockSubscriptionService, MockCheckoutPayload } from '@/app/services/mockSubscriptionService'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { PersonalDataForm } from '@/app/components/checkout/PersonalDataForm'
-import PlanSummary from '@/app/components/plans-checkout/PlanSummary'
-import PaymentMethodsMock from '@/app/components/plans-checkout/PaymentMethodsMock'
 
 const CheckoutForm = () => {
   const router = useRouter()
@@ -14,15 +11,11 @@ const CheckoutForm = () => {
   const initialPlanId = useMemo(() => params.get('plan') ?? plans[0].id, [params])
   const [form, setForm] = useState({
     planId: initialPlanId,
-    name: '',
-    lastName: '',
+    fullName: '',
     email: '',
-    confirmEmail: '',
     phone: '',
     country: '',
-    province: '',
     city: '',
-    address: '',
     company: '',
     referralCode: '',
     acceptTerms: false
@@ -38,23 +31,15 @@ const CheckoutForm = () => {
   const onSubmit = async (e: any) => {
     e.preventDefault()
     setError('')
-    if (!form.name || !form.lastName || !form.email || !form.confirmEmail || !form.phone || !form.country || !form.city || !form.address) {
-      setError('Completa todos los campos requeridos')
-      return
-    }
-    if (form.email !== form.confirmEmail) {
-      setError('El email y su confirmación no coinciden')
-      return
-    }
-    if (!form.acceptTerms) {
-      setError('Debes aceptar términos y confirmar mayoría de edad')
+    if (!form.fullName || !form.email || !form.acceptTerms) {
+      setError('Completa nombre, email y acepta términos')
       return
     }
     setLoading(true)
     const payload: MockCheckoutPayload = {
       planId: form.planId,
       type,
-      fullName: `${form.name} ${form.lastName}`.trim(),
+      fullName: form.fullName,
       email: form.email,
       phone: form.phone,
       country: form.country,
@@ -68,42 +53,61 @@ const CheckoutForm = () => {
     router.push(`/plans/checkout/success?session=${completed.id}&plan=${form.planId}`)
   }
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-sky-600 rounded-full flex items-center justify-center mr-3">
-              <span className="text-white font-bold text-lg">FC</span>
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">My Fortuna Cloud</h1>
-              <p className="text-gray-600">Checkout de Planes (Simulado)</p>
-            </div>
-          </div>
-          <div className="w-24 h-1 bg-sky-600 rounded mx-auto"></div>
+    <form onSubmit={onSubmit} className="max-w-3xl mx-auto bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6">
+      <h2 className="text-2xl font-bold text-white mb-4">Checkout Simulado</h2>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <label className="text-white/80 text-sm">Plan</label>
+          <select name="planId" value={form.planId} onChange={onChange} className="w-full mt-1 bg-black/30 text-white rounded-xl px-3 py-2 border border-white/20">
+            {plans.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-3">
-            <PersonalDataForm
-              formData={form as any}
-              onInputChange={onChange}
-              isProcessing={loading}
-            />
-          </div>
-          <div className="lg:col-span-2 space-y-6">
-            <PlanSummary plan={plan} type={type} />
-            <PaymentMethodsMock
-              selectedType={type}
-              acceptTerms={form.acceptTerms}
-              onToggleTerms={(v) => setForm((prev) => ({ ...prev, acceptTerms: v }))}
-              loading={loading}
-              onPay={onSubmit}
-            />
-            {error && <div className="mt-2 text-red-600 text-sm">{error}</div>}
-          </div>
+        <div>
+          <label className="text-white/80 text-sm">Tipo</label>
+          <input value={type === 'subscription' ? 'Suscripción' : 'Pago único'} disabled className="w-full mt-1 bg-black/30 text-white rounded-xl px-3 py-2 border border-white/20" />
+        </div>
+        <div>
+          <label className="text-white/80 text-sm">Nombre completo</label>
+          <input name="fullName" value={form.fullName} onChange={onChange} className="w-full mt-1 bg-black/30 text-white rounded-xl px-3 py-2 border border-white/20" />
+        </div>
+        <div>
+          <label className="text-white/80 text-sm">Email</label>
+          <input name="email" type="email" value={form.email} onChange={onChange} className="w-full mt-1 bg-black/30 text-white rounded-xl px-3 py-2 border border-white/20" />
+        </div>
+        <div>
+          <label className="text-white/80 text-sm">Teléfono</label>
+          <input name="phone" value={form.phone} onChange={onChange} className="w-full mt-1 bg-black/30 text-white rounded-xl px-3 py-2 border border-white/20" />
+        </div>
+        <div>
+          <label className="text-white/80 text-sm">País</label>
+          <input name="country" value={form.country} onChange={onChange} className="w-full mt-1 bg-black/30 text-white rounded-xl px-3 py-2 border border-white/20" />
+        </div>
+        <div>
+          <label className="text-white/80 text-sm">Ciudad</label>
+          <input name="city" value={form.city} onChange={onChange} className="w-full mt-1 bg-black/30 text-white rounded-xl px-3 py-2 border border-white/20" />
+        </div>
+        <div>
+          <label className="text-white/80 text-sm">Empresa</label>
+          <input name="company" value={form.company} onChange={onChange} className="w-full mt-1 bg-black/30 text-white rounded-xl px-3 py-2 border border-white/20" />
+        </div>
+        <div>
+          <label className="text-white/80 text-sm">Código de referido</label>
+          <input name="referralCode" value={form.referralCode} onChange={onChange} className="w-full mt-1 bg-black/30 text-white rounded-xl px-3 py-2 border border-white/20" />
         </div>
       </div>
-    </div>
+      <div className="mt-4 flex items-center gap-2">
+        <input type="checkbox" name="acceptTerms" checked={form.acceptTerms} onChange={onChange} />
+        <span className="text-white/80 text-sm">Acepto términos y condiciones</span>
+      </div>
+      {error && <div className="mt-3 text-red-400 text-sm">{error}</div>}
+      <div className="mt-6">
+        <button disabled={loading} className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-3 rounded-xl font-bold hover:from-yellow-500 hover:to-orange-600 transition-all duration-300">
+          {loading ? 'Procesando...' : 'Pagar (Simulado)'}
+        </button>
+      </div>
+    </form>
   )
 }
 
