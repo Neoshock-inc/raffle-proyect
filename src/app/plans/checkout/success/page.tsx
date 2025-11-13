@@ -1,8 +1,9 @@
 'use client'
+import { Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { CheckCircle2, Calendar, Mail, User, Rocket } from 'lucide-react'
 
-export default function SuccessPage() {
+function SuccessPageContent() {
   const params = useSearchParams()
   const router = useRouter()
   const session = params.get('session')
@@ -39,5 +40,13 @@ export default function SuccessPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Cargando...</div>}>
+      <SuccessPageContent />
+    </Suspense>
   )
 }

@@ -30,10 +30,10 @@ export const useFeaturedRaffles = (metrics: DashboardMetrics): FeaturedRaffleCar
     }
   ]
 
-  const mapped = (metrics.topRaffles || []).slice(0, 2).map((raffle) => ({
+  const mapped: FeaturedRaffleCard[] = (metrics.topRaffles || []).slice(0, 2).map((raffle) => ({
     id: raffle.id,
     name: raffle.title,
-    image: raffle.bannerUrl,
+    image: raffle.bannerUrl || 'https://placehold.co/1200x630?text=Rifa',
     ticketsSold: Math.floor(raffle.soldNumbers * 20),
     totalTickets: raffle.totalNumbers,
     price: Number(raffle.totalPrice),
@@ -43,5 +43,5 @@ export const useFeaturedRaffles = (metrics: DashboardMetrics): FeaturedRaffleCar
     badge: '✨ Popular'
   }))
 
-  return [...staticFeatured, ...mapped]
+  return [...staticFeatured, ...mapped.filter((r): r is FeaturedRaffleCard => r.image !== undefined)]
 }
