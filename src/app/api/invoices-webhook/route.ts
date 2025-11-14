@@ -11,10 +11,10 @@ export async function POST(req: Request) {
             return NextResponse.json({ ok: false, error: 'Invalid payload' }, { status: 400 });
         }
 
-        // Solo ejecutar si la factura cambió a COMPLETED
+        // Solo ejecutar si la factura cambió a completed
         if (
-            old_record.status !== 'COMPLETED' &&
-            record.status === 'COMPLETED'
+            old_record.status !== 'completed' &&
+            record.status === 'completed'
         ) {
             console.log('📌 Factura completada, enviando evento a Facebook CAPI…');
             await FacebookService.sendPurchaseEvent(record);
