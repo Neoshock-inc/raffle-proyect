@@ -1,8 +1,9 @@
 import crypto from 'crypto';
 import { TenantService } from '@/app/services/tenantService';
 
-function sha256(value: string) {
-    return crypto.createHash('sha256').update(value).digest('hex');
+function sha256(value?: string | null) {
+    if (!value) return undefined;
+    return crypto.createHash('sha256').update(String(value)).digest('hex');
 }
 
 export const FacebookService = {
@@ -26,16 +27,33 @@ export const FacebookService = {
                 return;
             }
 
-            // Datos del usuario
-            const userData = {
+            console.log('📌 Enviando evento a Facebook CAPI...', invoice);
+
+            // === NOMBRE CORREGIDO ===
+            const fullName = invoice.full_name || "";
+            const nameParts = fullName.trim().split(" ");
+
+            const firstName = nameParts[0] || "";
+            const lastName  = nameParts.slice(1).join(" ") || "";
+
+            // === USER DATA ===
+            const userData: Record<string, any> = {
                 em: sha256(invoice.email),
                 ph: sha256(invoice.phone),
-                fn: sha256(invoice.fullName.split(' ')[0] || ''),
-                ln: sha256(invoice.fullName.split(' ')[1] || ''),
-                ct: sha256(invoice.city || ''),
-                st: sha256(invoice.province || ''),
-                country: sha256(invoice.country || '')
+                fn: sha256(firstName),
+                ln: sha256(lastName),
+                ct: sha256(invoice.city),
+                st: sha256(invoice.province),
+                country: sha256(invoice.country)
             };
+
+            // Quitar undefined (Facebook no acepta)
+            Object.keys(userData).forEach((k) => {
+                if (!userData[k]) delete userData[k];
+            });
+
+            // === CARGAR VALOR DE COMPRA CORRECTAMENTE ===
+            const amount = Number(invoice.total_price || invoice.amount || 0);
 
             const payload = {
                 data: [
@@ -46,7 +64,7 @@ export const FacebookService = {
                         event_source_url: `http://pixel-play.127.0.0.1.nip.io:3000/success`,
                         user_data: userData,
                         custom_data: {
-                            value: invoice.totalPrice,
+                            value: amount,
                             currency: "USD"
                         }
                     }
