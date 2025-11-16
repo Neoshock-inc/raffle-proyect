@@ -1,9 +1,16 @@
+// src/app/components/landing/data/plans.ts
+
 import { Activity, Zap, Crown } from 'lucide-react'
 import { PlanMarketing } from '@/app/types/landing'
 
+/**
+ * Static fallback plans data
+ * This will be replaced by API data when available
+ */
 export const plans: PlanMarketing[] = [
   {
     id: 'basic',
+    code: 'basic',
     name: 'Básico',
     price: '$99',
     period: '/mes',
@@ -24,12 +31,18 @@ export const plans: PlanMarketing[] = [
     tenantCount: '142 usuarios activos',
     color: 'gray',
     icon: Activity,
+    icon_name: 'Activity',
     popular: false,
+    is_popular: false,
+    is_featured: false,
     cta: 'Comenzar Gratis',
-    highlight: null
+    cta_text: 'Comenzar Gratis',
+    highlight: null,
+    highlight_label: null
   },
   {
-    id: 'medium',
+    id: 'professional',
+    code: 'professional',
     name: 'Profesional',
     price: '$500',
     period: 'pago único',
@@ -50,12 +63,18 @@ export const plans: PlanMarketing[] = [
     tenantCount: '89 usuarios activos',
     color: 'blue',
     icon: Zap,
+    icon_name: 'Zap',
     popular: true,
+    is_popular: true,
+    is_featured: true,
     cta: 'Comprar Ahora',
-    highlight: 'Más popular'
+    cta_text: 'Comprar Ahora',
+    highlight: 'Más popular',
+    highlight_label: 'Más popular'
   },
   {
     id: 'enterprise',
+    code: 'enterprise',
     name: 'Full Elite',
     price: '$1,000',
     period: 'pago único',
@@ -78,8 +97,27 @@ export const plans: PlanMarketing[] = [
     tenantCount: '34 usuarios elite',
     color: 'purple',
     icon: Crown,
+    icon_name: 'Crown',
     popular: false,
+    is_popular: false,
+    is_featured: false,
     cta: 'Activar Full Elite',
-    highlight: 'Mejor valor'
+    cta_text: 'Activar Full Elite',
+    highlight: 'Mejor valor',
+    highlight_label: 'Mejor valor'
   }
 ]
+
+/**
+ * Get plan by code
+ */
+export function getPlanByCode(code: string): PlanMarketing | undefined {
+  return plans.find(p => p.code === code)
+}
+
+/**
+ * Get plan by ID (legacy support)
+ */
+export function getPlanById(id: string): PlanMarketing | undefined {
+  return plans.find(p => p.id === id || p.code === id)
+}

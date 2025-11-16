@@ -1,6 +1,14 @@
+// src/app/types/landing.ts
+
+import { LucideIcon } from 'lucide-react'
+
+/**
+ * Plan de marketing para mostrar en la landing page
+ * Este tipo se usa para la UI, no para la base de datos
+ */
 export type PlanMarketing = {
-  id: string
-  code: string
+  id: string           // Este será el 'code' de la BD
+  code: string         // 'basic', 'professional', 'enterprise'
   name: string
   price: string
   period: string
@@ -9,12 +17,20 @@ export type PlanMarketing = {
   features: Record<string, boolean>
   tenantCount: string
   color: 'gray' | 'blue' | 'purple'
-  icon_name: string
+  icon: LucideIcon    // Para componente
+  icon_name: string   // Para BD: 'Activity' | 'Zap' | 'Crown'
   popular: boolean
-  cta_text: string
+  cta: string
+  cta_text: string    // Alias para compatibilidad
   highlight: string | null
+  highlight_label?: string | null
+  is_popular?: boolean
+  is_featured?: boolean
 }
 
+/**
+ * Otros tipos existentes de la landing
+ */
 export type Testimonial = {
   name: string
   role: string

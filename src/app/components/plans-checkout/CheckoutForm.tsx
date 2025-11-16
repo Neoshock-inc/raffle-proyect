@@ -1,13 +1,12 @@
-// src/app/plans/checkout/page.tsx
+// src/app/components/plans-checkout/CheckoutForm.tsx
 
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Header } from '@/app/components/Header'
 import { PersonalDataForm } from '@/app/components/checkout/PersonalDataForm'
 import PlanSummary from '@/app/components/plans-checkout/PlanSummary'
-import { plans } from '@/app/components/landing/data/plans'
 import { getStripe } from '@/app/lib/stripe/client'
 import type { PlanMarketing } from '@/app/types/landing'
 import type { CheckoutFormData } from '@/app/types/checkout'
@@ -17,8 +16,10 @@ import PaymentMethods from '../checkout/PaymentMethods'
 const CheckoutForm = () => {
   const router = useRouter()
   const params = useSearchParams()
-  const initialPlanCode = useMemo(() => params.get('plan') ?? plans[0].code, [params])
+  const initialPlanCode = params.get('plan') || 'basic'
 
+  const [plans, setPlans] = useState<PlanMarketing[]>([])
+  const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState<CheckoutFormData>({
     name: '',
     lastName: '',
@@ -45,10 +46,36 @@ const CheckoutForm = () => {
   })
 
   const [step, setStep] = useState(1)
-  const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
-  console.log(initialPlanCode)
-  const plan = initialPlanCode
+
+  // Load plans from API
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const response = await fetch('/api/stripe/checkout')
+        const result = await response.json()
+
+        if (result.success && result.data) {
+          setPlans(result.data)
+        }
+      } catch (err) {
+        console.error('Error loading plans:', err)
+        setError('Error al cargar los planes')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPlans()
+  }, [])
+
+  // Get current selected plan
+  const currentPlan = useMemo(() => {
+    return plans.find(p => p.code === extras.planCode) || plans[0]
+  }, [plans, extras.planCode])
+
+  const planType: 'subscription' | 'one_time' = currentPlan?.code === 'basic' ? 'subscription' : 'one_time'
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -118,7 +145,7 @@ const CheckoutForm = () => {
       }
 
       // Check domain requirement for non-basic plans
-      if (plan !== 'basic' && !tenantData.domain) {
+      if (extras.planCode !== 'basic' && !tenantData.domain) {
         setError('El dominio es requerido para este plan')
         return false
       }
@@ -163,7 +190,7 @@ const CheckoutForm = () => {
       return
     }
 
-    setLoading(true)
+    setSubmitting(true)
 
     try {
       // Prepare request data
@@ -179,7 +206,7 @@ const CheckoutForm = () => {
             city: formData.city,
             state: formData.province,
             country: formData.country,
-            postal_code: undefined, // Add if you have postal code field
+            postal_code: undefined,
           }
         },
         tenant: {
@@ -222,8 +249,36 @@ const CheckoutForm = () => {
     } catch (err) {
       console.error('Checkout error:', err)
       setError(err instanceof Error ? err.message : 'Error al procesar el pago')
-      setLoading(false)
+      setSubmitting(false)
     }
+  }
+
+  // Show loading state while fetching plans
+  if (loading) {
+    return (
+      <>
+        <Header />
+        <div className="min-h-screen bg-gradient-to-br from-sky-50 to-indigo-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Cargando planes...</p>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  if (!currentPlan) {
+    return (
+      <>
+        <Header />
+        <div className="min-h-screen bg-gradient-to-br from-sky-50 to-indigo-50 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-600">Error: No se pudieron cargar los planes</p>
+          </div>
+        </div>
+      </>
+    )
   }
 
   return (
@@ -286,8 +341,10 @@ const CheckoutForm = () => {
                   <div className="px-6 pb-6">
                     <PersonalDataForm
                       formData={formData}
-                      onInputChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => handleInputChange(e as React.ChangeEvent<HTMLInputElement>)}
-                      isProcessing={loading}
+                      onInputChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+                        handleInputChange(e as React.ChangeEvent<HTMLInputElement>)
+                      }
+                      isProcessing={submitting}
                     />
                     {error && step === 1 && (
                       <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
@@ -332,7 +389,7 @@ const CheckoutForm = () => {
                             name="name"
                             value={tenantData.name}
                             onChange={handleTenantChange}
-                            disabled={loading}
+                            disabled={submitting}
                             placeholder="Mi Empresa de Rifas"
                             className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:bg-gray-100"
                           />
@@ -346,7 +403,7 @@ const CheckoutForm = () => {
                               name="slug"
                               value={tenantData.slug}
                               onChange={handleTenantChange}
-                              disabled={loading}
+                              disabled={submitting}
                               placeholder="mi-empresa"
                               className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:bg-gray-100"
                             />
@@ -360,19 +417,19 @@ const CheckoutForm = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-gray-700 mb-2 font-medium">
-                            Dominio {plan === 'basic' ? '(opcional)' : '*'}
+                            Dominio {extras.planCode === 'basic' ? '(opcional)' : '*'}
                           </label>
                           <input
                             name="domain"
                             value={tenantData.domain}
                             onChange={handleTenantChange}
-                            disabled={loading}
+                            disabled={submitting}
                             placeholder="midominio.com"
                             className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:bg-gray-100"
                           />
-                          {plan !== 'basic' && (
+                          {extras.planCode !== 'basic' && (
                             <p className="text-xs text-gray-500 mt-1">
-                              Requerido para el plan {plan}
+                              Requerido para el plan {currentPlan.name}
                             </p>
                           )}
                         </div>
@@ -384,7 +441,7 @@ const CheckoutForm = () => {
                             name="description"
                             value={tenantData.description}
                             onChange={handleTenantChange}
-                            disabled={loading}
+                            disabled={submitting}
                             placeholder="Breve descripción de tu negocio"
                             className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:bg-gray-100"
                           />
@@ -429,7 +486,7 @@ const CheckoutForm = () => {
                     <select
                       value={extras.planCode}
                       onChange={(e) => setExtras((p) => ({ ...p, planCode: e.target.value }))}
-                      disabled={loading}
+                      disabled={submitting}
                       className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:bg-gray-100"
                     >
                       {plans.map((p) => (
@@ -443,18 +500,18 @@ const CheckoutForm = () => {
                   {/* Plan summary */}
                   <div className="bg-white rounded-2xl shadow-2xl">
                     <div className="p-6">
-                      <PlanSummary plan={plan} />
+                      <PlanSummary plan={currentPlan} type={planType} />
                     </div>
                   </div>
 
                   {/* Payment methods */}
                   <PaymentMethods
-                    selectedType={type}
+                    selectedType={planType}
                     acceptTerms={extras.acceptTerms}
-                    onToggleTerms={(v: boolean) => setExtras((prev) => ({ ...prev, acceptTerms: v }))}
+                    onToggleTerms={(v) => setExtras((prev) => ({ ...prev, acceptTerms: v }))}
                     acceptUsage={extras.acceptUsage}
-                    onToggleUsage={(v: any) => setExtras((prev) => ({ ...prev, acceptUsage: v }))}
-                    loading={loading}
+                    onToggleUsage={(v) => setExtras((prev) => ({ ...prev, acceptUsage: v }))}
+                    loading={submitting}
                     onPay={onSubmit}
                     onBack={goPrev}
                   />

@@ -18,8 +18,8 @@ const checkoutSchema = z.object({
     address: z.object({
       line1: z.string().min(1, 'Dirección requerida'),
       city: z.string().min(1, 'Ciudad requerida'),
-      state: z.string().min(1, 'Estado requerido'),
       country: z.string().min(1, 'País requerido'),
+      postal_code: z.string().optional(),
     }),
   }),
   tenant: z.object({
@@ -30,6 +30,7 @@ const checkoutSchema = z.object({
     domain: z.string().optional(),
     description: z.string().optional(),
   }),
+  referralCode: z.string().optional(),
 })
 
 /**
@@ -39,44 +40,44 @@ const checkoutSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    console.log('Request body:', body)
+
     // Validate request
     const validationResult = checkoutSchema.safeParse(body)
     if (!validationResult.success) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Datos inválidos', 
-          details: validationResult.error.flatten() 
+        {
+          success: false,
+          error: 'Datos inválidos',
+          details: validationResult.error.flatten()
         },
         { status: 400 }
       )
     }
-    
+
     const data = validationResult.data as CreateCheckoutRequest
-    
+
     // Check for domain requirement
     if (data.planCode !== 'basic' && !data.tenant.domain) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'El dominio es requerido para este plan' 
+        {
+          success: false,
+          error: 'El dominio es requerido para este plan'
         },
         { status: 400 }
       )
     }
-    
+
     // Create checkout session
     const session = await subscriptionService.createCheckoutSession(data)
-    
+
     return NextResponse.json({
       success: true,
       data: session,
     })
-    
+
   } catch (error) {
     console.error('Checkout error:', error)
-    
+
     // Handle specific errors
     if (error instanceof Error) {
       if (error.message.includes('slug')) {
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
         )
       }
     }
-    
+
     return NextResponse.json(
       { success: false, error: 'Error al crear sesión de pago' },
       { status: 500 }
@@ -100,13 +101,17 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   try {
-    const plans = await subscriptionService.getPlans()
-    
+    const dbPlans = await subscriptionService.getPlans()
+
+    // Convert to marketing format for UI
+    const { dbPlansToMarketing } = await import('@/app/utils/planAdapter')
+    const marketingPlans = dbPlansToMarketing(dbPlans)
+
     return NextResponse.json({
       success: true,
-      data: plans,
+      data: marketingPlans,
     })
-    
+
   } catch (error) {
     console.error('Error fetching plans:', error)
     return NextResponse.json(
