@@ -26,7 +26,7 @@ const Landing = () => {
   const onStartFreeTrial = () => { router.push('/plans/checkout?plan=basic') }
   const [showVideoModal, setShowVideoModal] = useState(false)
   const onOpenDemo = () => setShowVideoModal(true)
-  const onSelectPlan = (id: string) => { router.push(`/plans/checkout?plan=${id}`) }
+  const onSelectPlan = (code: string) => { router.push(`/plans/checkout?plan=${code}`) }
   const onActivate = () => { router.push('/plans/checkout') }
   if (loading) {
     return (

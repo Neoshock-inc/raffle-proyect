@@ -1,5 +1,6 @@
 export type PlanMarketing = {
   id: string
+  code: string
   name: string
   price: string
   period: string
@@ -8,9 +9,9 @@ export type PlanMarketing = {
   features: Record<string, boolean>
   tenantCount: string
   color: 'gray' | 'blue' | 'purple'
-  icon: any
+  icon_name: string
   popular: boolean
-  cta: string
+  cta_text: string
   highlight: string | null
 }
 
