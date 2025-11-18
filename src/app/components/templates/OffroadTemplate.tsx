@@ -83,10 +83,10 @@ export const OffroadTemplate: React.FC<OffroadTemplateProps> = ({
       /> */}
 
       {/* Call to Action Final */}
-      <CallToActionSection
+      {/* <CallToActionSection
         raffleData={raffleData}
         tenantConfig={tenantConfig}
-      />
+      /> */}
 
       {/* Consultar Mis Números */}
       <MyNumbersSection

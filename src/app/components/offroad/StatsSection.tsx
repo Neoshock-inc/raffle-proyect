@@ -20,9 +20,14 @@ export function StatsSection({ raffleData, tenantConfig }: StatsSectionProps) {
             <div className="bg-gradient-to-br from-gray-800 via-gray-700 to-gray-600 rounded-2xl p-8 shadow-2xl border border-gray-600">
               {/* Título Principal */}
               <h2 className="text-white font-black text-3xl md:text-4xl mb-6 text-center bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 bg-clip-text text-transparent">
-                ¡Si pero las cantidades son limitadas!
+                ¡NO TE QUEDES FUERA!
               </h2>
 
+              {/* Subtítulo */}
+              <h3 className="text-gray-200 text-lg md:text-xl font-medium italic text-center mb-4">
+                ¡Los números son 100% limitados!              
+              </h3>
+              
               {/* Barra de Progreso Mejorada */}
               <div className="space-y-4 mb-6">
                 <div className="relative">
@@ -60,7 +65,7 @@ export function StatsSection({ raffleData, tenantConfig }: StatsSectionProps) {
               {/* Subtítulo con información */}
               <div className="text-center space-y-4">
                 <p className="text-gray-200 text-sm md:text-base leading-relaxed max-w-3xl mx-auto">
-                  Cuando la barra llegue el 100% daremos por finalizado y procederemos a realizar el sorteo entre todos los participantes. Se tomarán los 5 números de la primera y segunda suerte del programa <span className="font-bold text-yellow-400">LOT NACIONAL</span>
+                  Al llegar la barra al 100%, el ganador se define públicamente usando los números de la <span className="font-bold text-yellow-400">LOTERÍA NACIONAL</span>
                 </p>
               </div>
             </div>

@@ -180,10 +180,12 @@ export function PackagesSection({ ticketOptions, raffleData, tenantConfig }: Pac
         <section id="packages-section" className="py-10 px-4 bg-black">
             <div className="max-w-6xl mx-auto">
                 <h2 className="text-4xl sm:text-6xl font-black text-center text-white mb-8">
-                    🎯 ELIGE TU PAQUETE
+                    !Estas a un paso!
+                    <br />
+                    Eligue tu Oportunidad
                 </h2>
                 <p className="text-2xl text-gray-300 text-center mb-16">
-                    Más boletos = más oportunidades de ganar
+                    ¡Más números, más oportunidades de ganar!
                 </p>
 
                 {/* Grid de paquetes */}

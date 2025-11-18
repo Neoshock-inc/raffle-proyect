@@ -352,7 +352,7 @@ export function PrizeSection({ raffleData, tenantConfig }: PrizeSectionProps) {
                 {raffleData.blessedPrizes.length > 0 && (
                     <div className="mt-16">
                         <h3 className="text-3xl font-black text-white text-center mb-8">
-                            ✨ NÚMEROS BENDECIDOS
+                            ¡ESPERA, AÚN HAY MÁS!
                         </h3>
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {raffleData.blessedPrizes.map((prizeComplete) => (
