@@ -34,9 +34,6 @@ export function Header({ tenantConfig }: HeaderProps) {
     { label: 'Inicio', action: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
     { label: 'Premio', action: () => scrollToSection('prize-section') },
     { label: 'Paquetes', action: () => scrollToSection('packages-section') },
-    { label: 'Testimonios', action: () => scrollToSection('testimonials-section') },
-    { label: 'Ganadores', action: () => scrollToSection('winners-section') },
-    { label: 'FAQ', action: () => scrollToSection('faq-section') }
   ];
 
   return (
