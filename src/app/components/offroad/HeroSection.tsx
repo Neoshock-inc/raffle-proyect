@@ -183,7 +183,7 @@ export function HeroSection({ raffleData, tenantConfig }: HeroSectionProps) {
                         onClick={scrollToPackages}
                         className="bg-yellow-400 hover:bg-yellow-300 text-black font-black text-xl px-12 py-4 rounded-full transition-all duration-300 transform hover:scale-105 shadow-2xl"
                     >
-                        ¡PARTICIPAR AHORA!
+                        ¡QUIERO GANARLO!
                     </button>
                 </div>
             </div>

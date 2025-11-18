@@ -65,12 +65,12 @@ export const OffroadTemplate: React.FC<OffroadTemplateProps> = ({
       />
 
       {/* Testimonios */}
-      {tenantConfig.features.testimonials && (
+      {/* {tenantConfig.features.testimonials && (
         <TestimonialsSection
           raffleData={raffleData}
           tenantConfig={tenantConfig}
         />
-      )}
+      )} */}
 
       {/* Ganadores Anteriores */}
       {/* <WinnersSection
@@ -101,10 +101,10 @@ export const OffroadTemplate: React.FC<OffroadTemplateProps> = ({
       />
 
       {/* Botón flotante de WhatsApp parametrizado */}
-      <WhatsAppButton
+      {/* <WhatsAppButton
         tenantConfig={tenantConfig}
         className="animate-bounce"
-      />
+      /> */}
     </div>
   );
 };
