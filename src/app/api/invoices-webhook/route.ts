@@ -12,7 +12,8 @@ export async function POST(req: Request) {
     if (!record) {
       return NextResponse.json({ ok: false, error: 'Invalid payload' }, { status: 400 });
     }
-
+    console.log('record', record);
+    console.log('json', json);
     console.log('📥 Invoice Webhook:', {
       invoice_id: record.id,
       old_status: old_record?.status,
@@ -20,13 +21,11 @@ export async function POST(req: Request) {
       amount: record.total_price || record.amount
     });
 
-    // 🆕 EVENTO 1: OrderCreated - Cuando se REGISTRA una factura (pending)
-    if (!old_record?.id && record.id && record.status === 'pending') {
+    if (record.status === 'pending' && json?.type == 'INSERT') {
       console.log('🆕 Nueva factura registrada → Enviando OrderCreated');
       await FacebookService.sendOrderCreatedEvent(record);
     }
 
-    // ✅ EVENTO 2: Purchase - Cuando se COMPLETA una factura
     if (old_record?.status !== 'completed' && record.status === 'completed') {
       console.log('✅ Factura completada → Enviando Purchase');
       await FacebookService.sendPurchaseEvent(record);
