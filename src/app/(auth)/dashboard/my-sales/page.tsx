@@ -7,11 +7,11 @@ import {
 import {
     getReferralStatsByUser,
     getReferralParticipantsByUser
-} from '../../services/referidoService'
-import { authService } from '../../services/authService'
+} from '@/admin/services/referidoService'
+import { authService } from '@/admin/services/authService'
 import { toast } from 'sonner'
-import { getReferralCode } from '../../services/referralAuthService'
-import { buildReferralLink } from '../../utils/tenantUrl'
+import { getReferralCode } from '@/admin/services/referralAuthService'
+import { buildReferralLink } from '@/admin/utils/tenantUrl'
 
 const COLORS = ['#10B981', '#F59E0B']
 

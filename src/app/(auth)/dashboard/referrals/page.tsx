@@ -9,9 +9,9 @@ import {
     deleteReferido,
     toggleReferidoStatus,
     Referido
-} from '../../services/referidoService'
-import { buildReferralLink } from '../../utils/tenantUrl'
-import ReferidoModal from '../../components/ReferidoModal'
+} from '@/admin/services/referidoService'
+import { buildReferralLink } from '@/admin/utils/tenantUrl'
+import ReferidoModal from '@/admin/components/ReferidoModal'
 
 export default function ReferidosPage() {
     const [referidos, setReferidos] = useState<Referido[]>([])

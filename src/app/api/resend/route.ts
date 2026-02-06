@@ -1,7 +1,7 @@
 // src/app/api/resend/route.ts - VERSIÓN MULTI-TENANT
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import type { Invoice } from '../../types/invoices';
+import type { Invoice } from '@/types/invoices';
 import {
     getEmailConfigForTenant,
     getTenantInfo,
@@ -10,7 +10,7 @@ import {
     emailFooter,
     TenantInfo,
     TenantEmailConfig
-} from '../../lib/email/tenantEmail';
+} from '@/lib/email/tenantEmail';
 
 export async function POST(req: NextRequest) {
   let rawBody: any;

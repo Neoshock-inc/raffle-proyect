@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { getDashboardMetrics, getAllDashboardData } from '../services/metricsService';
-import { useTenantContext } from '../contexts/TenantContext';
+import { getDashboardMetrics, getAllDashboardData } from '@/admin/services/metricsService';
+import { useTenantContext } from '@/admin/contexts/TenantContext';
 import { DollarSign, Hash, Trophy, PieChart, TrendingUp, Calendar, MapPin, RefreshCw } from 'lucide-react';
-import PaymentMethodGaugeMini from '../components/PaymentMethodGauge';
-import SalesLineChart from '../components/SalesLineChart';
-import RecentEntriesColumnChart from '../components/RecentEntriesColumnChart';
-import EcuadorMapChart from '../components/SalesByProvinceMap';
-import SalesByPaymentMethodBarChart from '../components/SalesByPaymentMethodBarChart';
+import PaymentMethodGaugeMini from '@/admin/components/PaymentMethodGauge';
+import SalesLineChart from '@/admin/components/SalesLineChart';
+import RecentEntriesColumnChart from '@/admin/components/RecentEntriesColumnChart';
+import EcuadorMapChart from '@/admin/components/SalesByProvinceMap';
+import SalesByPaymentMethodBarChart from '@/admin/components/SalesByPaymentMethodBarChart';
 
 export default function DashboardPage() {
     const { isAdmin, currentTenant, loading: tenantLoading } = useTenantContext();

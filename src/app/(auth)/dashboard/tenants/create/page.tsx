@@ -5,10 +5,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, ArrowRight, Check, AlertCircle, Building2, Globe, Crown, UserPlus, Palette, Layout, Sparkles } from 'lucide-react'
 import React from 'react'
-import { useTenantManagement } from '@/app/(auth)/hooks/useTenantManagement'
-import { useTenantValidation } from '@/app/(auth)/hooks/useTenantValidation'
-import { CreateTenantData } from '@/app/(auth)/services/tenantService'
-import { PLANS } from '@/app/(auth)/utils/tenant'
+import { useTenantManagement } from '@/admin/hooks/useTenantManagement'
+import { useTenantValidation } from '@/admin/hooks/useTenantValidation'
+import { CreateTenantData } from '@/admin/services/tenantService'
+import { PLANS } from '@/admin/utils/tenant'
 
 interface StepData {
   // Paso 1: Datos básicos

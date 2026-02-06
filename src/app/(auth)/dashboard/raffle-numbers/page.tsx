@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { Plus, Ticket } from 'lucide-react'
-import { useRaffleEntries } from '../../hooks/useRaffleEntries' // CAMBIO: Usar el hook con tenant context
-import RaffleEntryModal from '../../components/RaffleEntryModal'
+import { useRaffleEntries } from '@/admin/hooks/useRaffleEntries' // CAMBIO: Usar el hook con tenant context
+import RaffleEntryModal from '@/admin/components/RaffleEntryModal'
 
 export default function EntradasRifaPage() {
     const [isModalOpen, setIsModalOpen] = useState(false)

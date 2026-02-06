@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { RaffleService } from '@/app/services/raffleService';
+import { RaffleService } from '@/services/raffleService';
 import { apiSuccess, apiError } from '../_shared/responses';
 import { withErrorHandler } from '../_shared/withErrorHandler';
 

@@ -1,8 +1,8 @@
 // src/app/api/purchase-token/route.ts - Actualizada para multi-tenant
 import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { RaffleService } from '@/app/services/raffleService';
-import { TenantService } from '@/app/services/tenantService';
+import { RaffleService } from '@/services/raffleService';
+import { TenantService } from '@/services/tenantService';
 import { apiSuccess, apiError } from '../_shared/responses';
 import { withErrorHandler } from '../_shared/withErrorHandler';
 

@@ -1,7 +1,7 @@
 // ============================================
 // 📄 app/api/webhooks/invoices/route.ts
 // ============================================
-import { FacebookService } from '@/app/lib/facebook';
+import { FacebookService } from '@/lib/facebook';
 import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {

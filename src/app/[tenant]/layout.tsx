@@ -1,6 +1,6 @@
 // src/app/[tenant]/layout.tsx - Fixed for Next.js 15
 import { ReactNode } from 'react';
-import { TenantService } from '../services/tenantService';
+import { TenantService } from '@/services/tenantService';
 
 interface TenantLayoutProps {
   children: ReactNode;

@@ -3,9 +3,9 @@
 import { useState, useCallback } from 'react'
 import { FileText } from 'lucide-react'
 import classNames from 'classnames'
-import { useInvoices } from '../../hooks/useInvoices'
+import { useInvoices } from '@/admin/hooks/useInvoices'
 import { InvoiceFormModal } from './InvoiceFormModal'
-import { Invoice } from '@/app/types/invoices'
+import { Invoice } from '@/types/invoices'
 
 const ITEMS_PER_PAGE = 10
 

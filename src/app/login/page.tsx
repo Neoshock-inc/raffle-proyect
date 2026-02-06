@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { signInWithEmail } from '../services/auth'
+import { signInWithEmail } from '@/services/auth'
 
 export default function LoginPage() {
     const router = useRouter()

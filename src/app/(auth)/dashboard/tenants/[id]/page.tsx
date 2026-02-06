@@ -5,29 +5,29 @@ import { useRouter } from 'next/navigation'
 import { TrendingUp, Globe, Gift, Users, Settings, XCircle, ArrowLeft } from 'lucide-react'
 
 // Services
-import { tenantService } from '@/app/(auth)/services/tenantService'
-import { raffleService } from '@/app/(auth)/services/rafflesService'
+import { tenantService } from '@/admin/services/tenantService'
+import { raffleService } from '@/admin/services/rafflesService'
 
 // Hooks
-import { useTenantSettings } from '@/app/(auth)/hooks/useTenantSettings'
-import { useLayoutManager } from '@/app/(auth)/hooks/useLayoutManager'
-import { usePlanManagement } from '@/app/(auth)/hooks/usePlanManagement'
+import { useTenantSettings } from '@/admin/hooks/useTenantSettings'
+import { useLayoutManager } from '@/admin/hooks/useLayoutManager'
+import { usePlanManagement } from '@/admin/hooks/usePlanManagement'
 
 // CORRECCIÓN: Cambiado de LayoutPreviewModal a LayoutPreview
-import { LayoutPreview } from '@/app/(auth)/components/LayoutPreview'
-import { PlanUpgradeModal } from '@/app/(auth)/components/tenant-details/modals/PlanUpgradeModal'
-import { StatsCards } from '@/app/(auth)/components/tenant-details/StatsCards'
-import { TabNavigation } from '@/app/(auth)/components/tenant-details/TabNavigation'
-import { DomainsTab } from '@/app/(auth)/components/tenant-details/tabs/DomainsTab'
-import { OverviewTab } from '@/app/(auth)/components/tenant-details/tabs/OverviewTab'
-import { RafflesTab } from '@/app/(auth)/components/tenant-details/tabs/RafflesTab'
-import { SettingsTab } from '@/app/(auth)/components/tenant-details/tabs/SettingsTab'
-import { UsersTab } from '@/app/(auth)/components/tenant-details/tabs/UsersTab'
-import { TenantHeader } from '@/app/(auth)/components/tenant-details/TenantHeader'
-import { TenantDetails, BasicRaffle } from '@/app/(auth)/types/tenant'
-import { getStatusBadge, getPlanInfo, getBaseUrl, getRaffleStatusBadge } from '@/app/(auth)/utils/tenant'
-import { formatDate } from '@/app/utils/templateHelpers'
-import { ConfigurationsTab } from '@/app/(auth)/components/tenant-details/tabs/ConfigurationsTab'
+import { LayoutPreview } from '@/admin/components/LayoutPreview'
+import { PlanUpgradeModal } from '@/admin/components/tenant-details/modals/PlanUpgradeModal'
+import { StatsCards } from '@/admin/components/tenant-details/StatsCards'
+import { TabNavigation } from '@/admin/components/tenant-details/TabNavigation'
+import { DomainsTab } from '@/admin/components/tenant-details/tabs/DomainsTab'
+import { OverviewTab } from '@/admin/components/tenant-details/tabs/OverviewTab'
+import { RafflesTab } from '@/admin/components/tenant-details/tabs/RafflesTab'
+import { SettingsTab } from '@/admin/components/tenant-details/tabs/SettingsTab'
+import { UsersTab } from '@/admin/components/tenant-details/tabs/UsersTab'
+import { TenantHeader } from '@/admin/components/tenant-details/TenantHeader'
+import { TenantDetails, BasicRaffle } from '@/admin/types/tenant'
+import { getStatusBadge, getPlanInfo, getBaseUrl, getRaffleStatusBadge } from '@/admin/utils/tenant'
+import { formatDate } from '@/utils/templateHelpers'
+import { ConfigurationsTab } from '@/admin/components/tenant-details/tabs/ConfigurationsTab'
 
 interface TenantDetailsPageProps {
   params: Promise<{ id: string }>

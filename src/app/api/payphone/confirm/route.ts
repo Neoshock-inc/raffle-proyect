@@ -1,7 +1,7 @@
 // 📁 app/api/payphone/confirm/route.ts (CON AXIOS)
 import { NextRequest, NextResponse } from 'next/server';
-import { generateRaffleNumbers } from '@/app/services/invoiceService';
-import { supabase } from '@/app/lib/supabase';
+import { generateRaffleNumbers } from '@/services/invoiceService';
+import { supabase } from '@/lib/supabase';
 import axios from 'axios';
 
 export async function POST(request: NextRequest) {

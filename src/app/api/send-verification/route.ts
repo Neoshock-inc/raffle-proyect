@@ -10,7 +10,7 @@ import {
     emailFooter,
     TenantInfo,
     TenantEmailConfig
-} from '../../lib/email/tenantEmail';
+} from '@/lib/email/tenantEmail';
 
 // Cliente Supabase para consultas específicas de referidos
 const supabase = createClient(

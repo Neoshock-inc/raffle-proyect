@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CreateRaffleData, RaffleStatus, UpdateRaffleData } from '../../types/raffle'
+import { CreateRaffleData, RaffleStatus, UpdateRaffleData } from '@/admin/types/raffle'
 
 interface Props {
   isOpen: boolean

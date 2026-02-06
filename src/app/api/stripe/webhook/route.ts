@@ -1,11 +1,11 @@
 // src/app/api/stripe/webhook/route.ts
 
 import { NextRequest, NextResponse } from 'next/server'
-import { stripe, stripeConfig } from '@/app/lib/stripe/server'
-import { supabase } from '@/app/lib/supabase'
+import { stripe, stripeConfig } from '@/lib/stripe/server'
+import { supabase } from '@/lib/supabase'
 import { headers } from 'next/headers'
 import Stripe from 'stripe'
-import { SubscriptionStatus, PlanType } from '@/app/types/subscription'
+import { SubscriptionStatus, PlanType } from '@/types/subscription'
 
 /**
  * Fix Stripe Invoice typing (subscription + payment_intent DO exist in the webhook)

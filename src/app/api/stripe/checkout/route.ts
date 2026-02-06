@@ -1,8 +1,8 @@
 // src/app/api/stripe/checkout/route.ts
 
 import { NextRequest, NextResponse } from 'next/server'
-import { subscriptionService } from '@/app/services/subscriptionService'
-import { CreateCheckoutRequest, PlanCode } from '@/app/types/subscription'
+import { subscriptionService } from '@/services/subscriptionService'
+import { CreateCheckoutRequest, PlanCode } from '@/types/subscription'
 import { z } from 'zod'
 
 /**
@@ -104,7 +104,7 @@ export async function GET() {
     const dbPlans = await subscriptionService.getPlans()
 
     // Convert to marketing format for UI
-    const { dbPlansToMarketing } = await import('@/app/utils/planAdapter')
+    const { dbPlansToMarketing } = await import('@/utils/planAdapter')
     const marketingPlans = dbPlansToMarketing(dbPlans)
 
     return NextResponse.json({

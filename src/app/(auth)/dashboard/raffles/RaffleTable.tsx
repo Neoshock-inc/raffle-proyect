@@ -1,4 +1,4 @@
-import { Raffle } from '../../types/raffle'
+import { Raffle } from '@/admin/types/raffle'
 
 interface Props {
     raffles: Raffle[]

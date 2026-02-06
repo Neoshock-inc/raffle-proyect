@@ -4,8 +4,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Search, Filter, Eye, Ban, MoreHorizontal, Globe, Users, TrendingUp, RefreshCw, AlertCircle, Edit, Trash2 } from 'lucide-react'
-import { useTenantManagement } from '../../hooks/useTenantManagement'
-import { TenantWithMetrics } from '../../services/tenantService'
+import { useTenantManagement } from '@/admin/hooks/useTenantManagement'
+import { TenantWithMetrics } from '@/admin/services/tenantService'
 
 interface FilterState {
   search: string

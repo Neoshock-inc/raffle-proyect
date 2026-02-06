@@ -2,13 +2,13 @@
 'use client'
 import React, { useState, useCallback } from 'react'
 import { Users, Plus, RefreshCw, AlertCircle, Edit, Trash2, Eye } from 'lucide-react'
-import { ConfirmDialog } from '../../components/ConfirmDialog'
-import { Pagination } from '../../components/participants/Pagination'
-import { ParticipantDetails } from '../../components/participants/ParticipantDetails'
-import { ParticipantForm } from '../../components/participants/ParticipantForm'
-import { ParticipantTable } from '../../components/participants/ParticipantTable'
-import { useParticipants } from '../../hooks/useParticipants'
-import { ParticipantWithStats } from '../../services/participantsService'
+import { ConfirmDialog } from '@/admin/components/ConfirmDialog'
+import { Pagination } from '@/admin/components/participants/Pagination'
+import { ParticipantDetails } from '@/admin/components/participants/ParticipantDetails'
+import { ParticipantForm } from '@/admin/components/participants/ParticipantForm'
+import { ParticipantTable } from '@/admin/components/participants/ParticipantTable'
+import { useParticipants } from '@/admin/hooks/useParticipants'
+import { ParticipantWithStats } from '@/admin/services/participantsService'
 
 export default function ParticipantesPage() {
     const [search, setSearch] = useState('')

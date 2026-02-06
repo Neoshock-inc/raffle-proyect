@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Ticket, Settings, Package, BarChart3, ArrowLeft } from 'lucide-react'
-import { useRaffle } from '../../../hooks/useRaffles'
-import type { UpdateRaffleData } from '../../../types/raffle'
+import { useRaffle } from '@/admin/hooks/useRaffles'
+import type { UpdateRaffleData } from '@/admin/types/raffle'
 import classNames from 'classnames'
 
-import RaffleGeneralTab from '@/app/(auth)/components/raffle/RaffleGeneralTab'
-import RaffleTicketsTab from '@/app/(auth)/components/raffle/RaffleTicketsTab'
-import RaffleStatsTab from '@/app/(auth)/components/raffle/RaffleStatsTab'
-import RaffleConfigTab from '@/app/(auth)/components/raffle/RaffleConfigTab'
+import RaffleGeneralTab from '@/admin/components/raffle/RaffleGeneralTab'
+import RaffleTicketsTab from '@/admin/components/raffle/RaffleTicketsTab'
+import RaffleStatsTab from '@/admin/components/raffle/RaffleStatsTab'
+import RaffleConfigTab from '@/admin/components/raffle/RaffleConfigTab'
 
 interface Props {
     id: string

@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { useRaffles } from '../../hooks/useRaffles'
+import { useRaffles } from '@/admin/hooks/useRaffles'
 import { Plus, Ticket, Edit, Trash, Eye } from 'lucide-react'
 import classNames from 'classnames'
-import type { CreateRaffleData, Raffle, UpdateRaffleData } from '../../types/raffle'
+import type { CreateRaffleData, Raffle, UpdateRaffleData } from '@/admin/types/raffle'
 import RaffleFormModal from './RaffleFormModal'
 import { useRouter } from 'next/navigation'
 

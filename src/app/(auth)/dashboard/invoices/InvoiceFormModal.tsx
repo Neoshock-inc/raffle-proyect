@@ -1,7 +1,7 @@
 'use client'
 
-import { InvoiceCreationData, Invoice, PaymentStatus, PaymentMethod } from '@/app/types/invoices'
-import { generateOrderNumber } from '@/app/services/invoiceService'
+import { InvoiceCreationData, Invoice, PaymentStatus, PaymentMethod } from '@/types/invoices'
+import { generateOrderNumber } from '@/services/invoiceService'
 import { useState, useEffect, useMemo } from 'react'
 
 interface Props {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { tenantService } from '../(auth)/services/tenantService';
+import { tenantService } from '@/admin/services/tenantService';
 
 interface Tenant {
     id: string;

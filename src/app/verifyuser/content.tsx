@@ -8,7 +8,7 @@ import {
     linkUserToReferral,
     ReferralInfo,
     TenantInfo
-} from '../(auth)/services/referralAuthService'
+} from '@/admin/services/referralAuthService'
 
 export default function VerifyUserContent() {
     const searchParams = useSearchParams()

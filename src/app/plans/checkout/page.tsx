@@ -1,6 +1,6 @@
 'use client'
 import { Suspense } from 'react'
-import CheckoutForm from '@/app/components/plans-checkout/CheckoutForm'
+import CheckoutForm from '@/components/plans-checkout/CheckoutForm'
 
 export default function Page() {
   return (

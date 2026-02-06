@@ -1,16 +1,16 @@
 // src/app/[tenant]/page.tsx - Fixed for Next.js 15
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
-import { DefaultTemplate } from '../components/templates/DefaultTemplate';
+import { DefaultTemplate } from '@/components/templates/DefaultTemplate';
 
-import { RaffleService } from '../services/raffleService';
-import { TenantService } from '../services/tenantService';
-import { TicketPackageService } from '../services/ticketPackageService';
-import { VibrantTemplate } from '../components/templates/VibrantTemplate';
-import { OffroadTemplate } from '../components/templates/OffroadTemplate';
-import { getBaseUrl } from '../(auth)/utils/tenant';
+import { RaffleService } from '@/services/raffleService';
+import { TenantService } from '@/services/tenantService';
+import { TicketPackageService } from '@/services/ticketPackageService';
+import { VibrantTemplate } from '@/components/templates/VibrantTemplate';
+import { OffroadTemplate } from '@/components/templates/OffroadTemplate';
+import { getBaseUrl } from '@/admin/utils/tenant';
 
-import { MetaPixel } from '../components/components/analytics/MetaPixel';
+import { MetaPixel } from '@/components/components/analytics/MetaPixel';
 
 // Mapeo de templates con nombres más descriptivos
 const templates = {

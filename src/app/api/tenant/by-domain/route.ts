@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { apiSuccess, apiError } from '../../_shared/responses';
 import { withErrorHandler } from '../../_shared/withErrorHandler';
 

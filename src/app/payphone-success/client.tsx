@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import PrizeWheel from '../components/PrizeWheel';
+import PrizeWheel from '@/components/PrizeWheel';
 
 interface AssignedNumber {
     number: string;

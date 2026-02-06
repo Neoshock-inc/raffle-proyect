@@ -3,8 +3,8 @@
 
 import { useState, useCallback } from 'react'
 import { Sparkles, Plus, Trash2, RefreshCw, AlertCircle, User, Trophy } from 'lucide-react'
-import { ITEMS_PER_PAGE, useBlessedNumbers } from '../../hooks/useBlessedNumbers'
-import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { ITEMS_PER_PAGE, useBlessedNumbers } from '@/admin/hooks/useBlessedNumbers'
+import { ConfirmDialog } from '@/admin/components/ConfirmDialog'
 
 export default function BlessedNumbersPage() {
     const [search, setSearch] = useState('')
