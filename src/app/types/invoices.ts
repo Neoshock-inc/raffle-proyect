@@ -42,7 +42,8 @@ export enum PaymentStatus {
     PENDING = 'pending',
     COMPLETED = 'completed',
     FAILED = 'failed',
-    REFUNDED = 'refunded'
+    REFUNDED = 'refunded',
+    CANCELED = 'canceled',
 }
 
 // Metodos de pago disponibles
@@ -54,5 +55,5 @@ export enum PaymentMethod {
     CRYPTO = 'crypto',
     PAYPHONE = 'payphone',
     OTHER = 'other',
-    STRIPE = 'stripe', // Agregado para Stripe
+    STRIPE = 'stripe',
 }

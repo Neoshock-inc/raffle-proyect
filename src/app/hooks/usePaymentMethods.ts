@@ -1,11 +1,15 @@
-// 📁 hooks/usePaymentMethods.ts (ACTUALIZADO)
+// hooks/usePaymentMethods.ts - Refactorizado con helpers compartidos
 import { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { PaymentMethod, PaymentStatus } from '../types/invoices';
-import { createInvoiceWithParticipant } from '../services/invoiceService';
 import { PurchaseData, CheckoutFormData, PaymentMethodType } from '../types/checkout';
-import { validateCheckoutForm } from '../utils/validationUtils';
 import { PaymentConfig } from '../(auth)/types/tenant';
+import {
+    validateBeforePayment,
+    validateTokenOnServer,
+    createPaymentInvoice,
+    PaymentContext
+} from './payments/paymentHelpers';
 
 export const usePaymentMethods = (
     orderNumber: string,
@@ -24,50 +28,27 @@ export const usePaymentMethods = (
     const [showPayPhoneModal, setShowPayPhoneModal] = useState(false);
     const [payphoneModalConfig, setPayphoneModalConfig] = useState<any>(null);
 
+    // Contexto compartido para todos los métodos de pago
+    const ctx: PaymentContext = {
+        orderNumber, purchaseData, formData, isOfLegalAge,
+        token, reffer, checkTokenValidity, setTokenExpired, generateNewOrderNumber
+    };
+
+    // ── Stripe ──────────────────────────────────────────────
     const handleStripePayment = async (): Promise<void> => {
-        const validation = validateCheckoutForm(formData, isOfLegalAge);
-        if (!validation.isValid) {
-            alert(validation.error);
-            return;
-        }
-
-        const isValid = await checkTokenValidity();
-        if (!isValid) {
-            setTokenExpired(true);
-            alert('Tu sesión ha expirado. Por favor, renueva la sesión.');
-            return;
-        }
-
-        if (!token || !purchaseData) {
-            alert('Error: Token de compra no válido. Por favor, regresa a la página anterior.');
-            return;
-        }
+        const check = await validateBeforePayment(ctx);
+        if (!check.valid) { alert(check.error); return; }
 
         setIsProcessing(true);
-
         try {
-            await createInvoiceWithParticipant({
-                orderNumber: orderNumber,
-                fullName: `${formData.name} ${formData.lastName}`,
-                email: formData.email,
-                phone: formData.phone,
-                country: formData.country,
-                status: PaymentStatus.PENDING,
-                paymentMethod: PaymentMethod.STRIPE,
-                province: formData.province,
-                city: formData.city,
-                address: formData.address,
-                amount: purchaseData.amount,
-                totalPrice: purchaseData.price,
-                referral_code: reffer || undefined
-            });
+            await createPaymentInvoice(ctx, PaymentMethod.STRIPE, PaymentStatus.PENDING);
 
             const res = await fetch('/api/create-checkout-session', {
                 method: 'POST',
                 body: JSON.stringify({
                     orderNumber,
-                    amount: purchaseData.amount,
-                    price: purchaseData.price,
+                    amount: purchaseData!.amount,
+                    price: purchaseData!.price,
                     name: `${formData.name} ${formData.lastName}`,
                     email: formData.email,
                     phone: formData.phone,
@@ -80,19 +61,15 @@ export const usePaymentMethods = (
             });
 
             const data = await res.json();
-
             if (data.id) {
                 const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
                 const result = await stripe?.redirectToCheckout({ sessionId: data.id });
-
                 if (result?.error) {
-                    console.error('Error en redirección de Stripe:', result.error);
                     throw new Error(result.error.message || 'Error en la redirección');
                 }
             } else {
                 throw new Error(data.error || 'No se pudo crear la sesión de Stripe');
             }
-
         } catch (error) {
             console.error('Error en el pago con Stripe:', error);
             alert('Hubo un error al procesar tu pago. Por favor, intenta de nuevo.');
@@ -102,24 +79,10 @@ export const usePaymentMethods = (
         }
     };
 
+    // ── PayPhone ────────────────────────────────────────────
     const handlePayPhonePayment = async (): Promise<void> => {
-        const validation = validateCheckoutForm(formData, isOfLegalAge);
-        if (!validation.isValid) {
-            alert(validation.error);
-            return;
-        }
-
-        const isValid = await checkTokenValidity();
-        if (!isValid) {
-            setTokenExpired(true);
-            alert('Tu sesión ha expirado. Por favor, renueva la sesión.');
-            return;
-        }
-
-        if (!token || !purchaseData) {
-            alert('Error: Token de compra no válido.');
-            return;
-        }
+        const check = await validateBeforePayment(ctx);
+        if (!check.valid) { alert(check.error); return; }
 
         if (!payphoneConfig) {
             alert('Error: Configuración de PayPhone no disponible.');
@@ -127,46 +90,13 @@ export const usePaymentMethods = (
         }
 
         setIsProcessing(true);
-
         try {
-            console.log('🔄 Iniciando proceso de pago PayPhone...');
+            const validatedData = await validateTokenOnServer(token!);
 
-            // 1. Validar token para obtener tenantId
-            const tokenValidation = await fetch('/api/validate-purchase', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token })
-            });
+            await createPaymentInvoice(
+                ctx, PaymentMethod.PAYPHONE, PaymentStatus.PENDING, validatedData.tenantId
+            );
 
-            if (!tokenValidation.ok) {
-                const errorData = await tokenValidation.json();
-                throw new Error(errorData.error || 'Token inválido o expirado');
-            }
-
-            const validatedData = await tokenValidation.json();
-            console.log('✅ Token validado:', validatedData);
-
-            // 2. Crear factura PENDING
-            console.log('📝 Creando factura PENDING...');
-            await createInvoiceWithParticipant({
-                orderNumber,
-                fullName: `${formData.name} ${formData.lastName}`,
-                email: formData.email,
-                phone: formData.phone,
-                country: formData.country,
-                status: PaymentStatus.PENDING,
-                paymentMethod: PaymentMethod.PAYPHONE,
-                province: formData.province,
-                city: formData.city,
-                address: formData.address,
-                amount: purchaseData.amount,
-                totalPrice: purchaseData.price,
-                referral_code: reffer || undefined
-            }, validatedData.tenantId);
-
-            console.log('✅ Factura PENDING creada exitosamente');
-
-            // 3. Formatear teléfono
             const cleanPhone = formData.phone.replace(/\D/g, '');
             const phoneNumber = cleanPhone.startsWith('593')
                 ? `+${cleanPhone}`
@@ -174,38 +104,22 @@ export const usePaymentMethods = (
                     ? `+593${cleanPhone.slice(1)}`
                     : `+593${cleanPhone}`;
 
-            // 4. Calcular montos en centavos
-            const totalAmount = purchaseData.price;
-            const amountInCents = Math.round(totalAmount * 100);
+            const amountInCents = Math.round(purchaseData!.price * 100);
 
-            // 5. Generar clientTransactionId único
-            const clientTransactionId = orderNumber;
-            // 6. Configurar modal de PayPhone
-            const modalConfig = {
+            setPayphoneModalConfig({
                 token: payphoneConfig.secret_key,
                 storeId: payphoneConfig.public_key,
                 amount: amountInCents,
                 amountWithoutTax: amountInCents,
-                clientTransactionId,
+                clientTransactionId: orderNumber,
                 reference: orderNumber,
                 phoneNumber,
                 email: formData.email,
                 documentId: formData.phone
-            };
-
-            console.log('📱 Configuración del modal PayPhone:', {
-                ...modalConfig,
-                token: modalConfig.token.substring(0, 10) + '...'
             });
-
-            // 7. Abrir modal
-            setPayphoneModalConfig(modalConfig);
             setShowPayPhoneModal(true);
-
-            console.log('✅ Modal de PayPhone configurado');
-
         } catch (error: any) {
-            console.error('❌ Error preparando pago PayPhone:', error);
+            console.error('Error preparando pago PayPhone:', error);
             alert(`Error: ${error.message || 'No se pudo iniciar el pago'}`);
             await generateNewOrderNumber();
         } finally {
@@ -213,77 +127,36 @@ export const usePaymentMethods = (
         }
     };
 
-    // Manejar cierre del modal
     const handleClosePayPhoneModal = () => {
         setShowPayPhoneModal(false);
         setPayphoneModalConfig(null);
     };
 
-    // Manejar éxito de PayPhone (no se usa porque redirige PayPhone)
     const handlePayPhoneSuccess = async (transactionData: any) => {
-        console.log('✅ Pago exitoso con PayPhone:', transactionData);
+        console.log('Pago exitoso con PayPhone:', transactionData);
         handleClosePayPhoneModal();
     };
 
-    // Manejar error de PayPhone
     const handlePayPhoneError = async (error: any) => {
-        console.error('❌ Error en pago PayPhone:', error);
+        console.error('Error en pago PayPhone:', error);
         handleClosePayPhoneModal();
         alert('Hubo un error al procesar tu pago con PayPhone. Por favor, intenta de nuevo.');
         await generateNewOrderNumber();
     };
 
-
+    // ── Transferencia Bancaria ──────────────────────────────
     const handleTransferPayment = async (): Promise<void> => {
-        const validation = validateCheckoutForm(formData, isOfLegalAge);
-        if (!validation.isValid) {
-            alert(validation.error);
-            return;
-        }
-
-        const isValid = await checkTokenValidity();
-        if (!isValid) {
-            setTokenExpired(true);
-            alert('Tu sesión ha expirado. Por favor, renueva la sesión.');
-            return;
-        }
-
-        if (!token || !purchaseData) {
-            alert('Error: Token de compra no válido. Por favor, regresa a la página anterior.');
-            return;
-        }
+        const check = await validateBeforePayment(ctx);
+        if (!check.valid) { alert(check.error); return; }
 
         setIsProcessing(true);
-
         try {
-            const tokenValidation = await fetch('/api/validate-purchase', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token })
-            });
+            const validatedData = await validateTokenOnServer(token!);
 
-            if (!tokenValidation.ok) {
-                const errorData = await tokenValidation.json();
-                throw new Error(errorData.error || 'Token inválido o expirado');
-            }
-
-            const validatedData = await tokenValidation.json();
-
-            await createInvoiceWithParticipant({
-                orderNumber: orderNumber,
-                fullName: `${formData.name} ${formData.lastName}`,
-                email: formData.email,
-                phone: formData.phone,
-                country: formData.country,
-                status: PaymentStatus.PENDING,
-                paymentMethod: PaymentMethod.BANK_TRANSFER,
-                province: formData.province,
-                city: formData.city,
-                address: formData.address,
-                amount: validatedData.amount,
-                totalPrice: validatedData.price,
-                referral_code: reffer || undefined
-            }, validatedData.tenantId);
+            await createPaymentInvoice(
+                ctx, PaymentMethod.BANK_TRANSFER, PaymentStatus.PENDING, validatedData.tenantId,
+                { amount: validatedData.amount, totalPrice: validatedData.price }
+            );
 
             await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -297,75 +170,35 @@ export const usePaymentMethods = (
         }
     };
 
+    // ── PayPal ──────────────────────────────────────────────
     const handlePayPalPayment = async (): Promise<{ success: boolean; error?: string }> => {
-        const validation = validateCheckoutForm(formData, isOfLegalAge);
-        if (!validation.isValid) {
-            return { success: false, error: validation.error };
-        }
-
-        const isValid = await checkTokenValidity();
-        if (!isValid) {
-            setTokenExpired(true);
-            return { success: false, error: 'Tu sesión ha expirado.' };
-        }
-
-        if (!token || !purchaseData) {
-            return { success: false, error: 'Token de compra no válido.' };
-        }
+        const check = await validateBeforePayment(ctx);
+        if (!check.valid) { return { success: false, error: check.error }; }
 
         setIsProcessing(true);
-
         return { success: true };
     };
 
     const handlePayPalApprove = async (): Promise<{ success: boolean; error?: string }> => {
         try {
-            const tokenValidation = await fetch('/api/validate-purchase', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token })
-            });
+            const validatedData = await validateTokenOnServer(token!);
 
-            if (!tokenValidation.ok) {
-                const errorData = await tokenValidation.json();
-                throw new Error(errorData.error || 'Token inválido o expirado');
-            }
-
-            const validatedData = await tokenValidation.json();
-
-            await createInvoiceWithParticipant({
-                orderNumber,
-                fullName: `${formData.name} ${formData.lastName}`,
-                email: formData.email,
-                phone: formData.phone,
-                country: formData.country,
-                status: PaymentStatus.COMPLETED,
-                paymentMethod: PaymentMethod.PAYPAL,
-                province: formData.province,
-                city: formData.city,
-                address: formData.address,
-                amount: purchaseData!.amount,
-                totalPrice: purchaseData!.price,
-                referral_code: reffer || undefined
-            }, validatedData.tenantId);
+            await createPaymentInvoice(
+                ctx, PaymentMethod.PAYPAL, PaymentStatus.COMPLETED, validatedData.tenantId
+            );
 
             const queryParams = new URLSearchParams({
                 email: formData.email,
                 amount: purchaseData!.amount.toString(),
                 orderNumber
             });
-
             window.location.href = `/success?${queryParams.toString()}`;
 
             return { success: true };
-
         } catch (error: any) {
             console.error('Error al procesar PayPal:', error);
             await generateNewOrderNumber();
-            return {
-                success: false,
-                error: error.message || 'Error al procesar el pago'
-            };
+            return { success: false, error: error.message || 'Error al procesar el pago' };
         } finally {
             setIsProcessing(false);
         }

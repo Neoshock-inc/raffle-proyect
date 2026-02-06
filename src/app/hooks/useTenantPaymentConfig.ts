@@ -1,5 +1,5 @@
-// 📁 hooks/useTenantPaymentConfig.ts
-import { useState, useEffect } from 'react'
+// hooks/useTenantPaymentConfig.ts
+import { useAsyncData } from './shared';
 
 interface PaymentConfig {
     id: string
@@ -19,7 +19,7 @@ interface PaymentConfig {
 }
 
 interface BankAccount {
-    id?: string // Opcional para retrocompatibilidad
+    id?: string
     bank_name: string
     account_number: string
     account_holder: string
@@ -31,40 +31,23 @@ interface TenantPaymentConfig {
     stripe?: PaymentConfig
     paypal?: PaymentConfig
     payphone?: PaymentConfig
-    bankAccounts: BankAccount[] // Cambiado de bank_account a bankAccounts array
+    bankAccounts: BankAccount[]
     availableMethods: string[]
-    bankInfo?: BankAccount // Para retrocompatibilidad, usar la primera cuenta bancaria
+    bankInfo?: BankAccount
 }
 
 export const useTenantPaymentConfig = (tenantId: string) => {
-    const [config, setConfig] = useState<TenantPaymentConfig | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-
-    useEffect(() => {
-        const fetchPaymentConfig = async () => {
-            if (!tenantId) return
-
-            try {
-                setLoading(true)
-                const response = await fetch(`/api/tenant-payment-config/${tenantId}`)
-
-                if (!response.ok) {
-                    throw new Error('Error al obtener configuración de pagos')
-                }
-
-                const data = await response.json()
-                setConfig(data)
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Error desconocido')
-                console.error('Error fetching payment config:', err)
-            } finally {
-                setLoading(false)
+    const { data: config, loading, error } = useAsyncData<TenantPaymentConfig>(
+        async () => {
+            const response = await fetch(`/api/tenant-payment-config/${tenantId}`);
+            if (!response.ok) {
+                throw new Error('Error al obtener configuración de pagos');
             }
-        }
+            return response.json();
+        },
+        [tenantId],
+        { enabled: !!tenantId }
+    );
 
-        fetchPaymentConfig()
-    }, [tenantId])
-
-    return { config, loading, error }
-}
+    return { config, loading, error };
+};

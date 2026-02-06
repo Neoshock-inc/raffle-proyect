@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { RaffleService } from '@/app/services/raffleService';
+import { apiSuccess, apiError } from '../_shared/responses';
+import { withErrorHandler } from '../_shared/withErrorHandler';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key';
 
@@ -16,56 +18,49 @@ interface TokenPayload {
     iat: number;
 }
 
-export async function POST(request: NextRequest) {
-    try {
-        const { token } = await request.json();
+async function handler(request: NextRequest) {
+    const { token } = await request.json();
 
-        if (!token) {
-            return NextResponse.json({ error: 'Token requerido' }, { status: 400 });
-        }
-
-        let tokenData: TokenPayload;
-        try {
-            tokenData = jwt.verify(token, JWT_SECRET) as TokenPayload;
-        } catch (jwtError: any) {
-            if (jwtError.name === 'TokenExpiredError') {
-                return NextResponse.json({ error: 'Token expirado' }, { status: 410 });
-            }
-            return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-        }
-
-        // ✅ Obtener la rifa específica del tenant
-        const raffle = await RaffleService.getRaffleById(tokenData.raffleId);
-        if (!raffle || raffle.tenant_id !== tokenData.tenantId) {
-            return NextResponse.json({ error: 'Token no válido para esta rifa' }, { status: 410 });
-        }
-
-        // Validaciones básicas del token
-        if (tokenData.amount <= 0 || tokenData.amount > 10000) {
-            return NextResponse.json({ error: 'Cantidad inválida en el token' }, { status: 400 });
-        }
-        if (tokenData.price <= 0) {
-            return NextResponse.json({ error: 'Precio inválido en el token' }, { status: 400 });
-        }
-
-        // Validación opcional: que el precio no exceda el máximo permitido
-        const maxPossiblePrice = tokenData.amount * raffle.price;
-        if (tokenData.price > maxPossiblePrice) {
-            return NextResponse.json({ error: 'Precio del token excede el máximo permitido' }, { status: 400 });
-        }
-
-        return NextResponse.json({
-            amount: tokenData.amount,
-            price: tokenData.price,
-            raffleId: tokenData.raffleId,
-            tenantId: tokenData.tenantId,
-            packageId: tokenData.packageId,
-            expiresAt: tokenData.exp * 1000,
-            timeRemaining: Math.max(0, tokenData.exp * 1000 - Date.now())
-        });
-
-    } catch (error) {
-        console.error('Error in validate-purchase-token:', error);
-        return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+    if (!token) {
+        return apiError('Token requerido', 400);
     }
+
+    let tokenData: TokenPayload;
+    try {
+        tokenData = jwt.verify(token, JWT_SECRET) as TokenPayload;
+    } catch (jwtError: any) {
+        if (jwtError.name === 'TokenExpiredError') {
+            return apiError('Token expirado', 410);
+        }
+        return apiError('Token inválido', 401);
+    }
+
+    const raffle = await RaffleService.getRaffleById(tokenData.raffleId);
+    if (!raffle || raffle.tenant_id !== tokenData.tenantId) {
+        return apiError('Token no válido para esta rifa', 410);
+    }
+
+    if (tokenData.amount <= 0 || tokenData.amount > 10000) {
+        return apiError('Cantidad inválida en el token', 400);
+    }
+    if (tokenData.price <= 0) {
+        return apiError('Precio inválido en el token', 400);
+    }
+
+    const maxPossiblePrice = tokenData.amount * raffle.price;
+    if (tokenData.price > maxPossiblePrice) {
+        return apiError('Precio del token excede el máximo permitido', 400);
+    }
+
+    return apiSuccess({
+        amount: tokenData.amount,
+        price: tokenData.price,
+        raffleId: tokenData.raffleId,
+        tenantId: tokenData.tenantId,
+        packageId: tokenData.packageId,
+        expiresAt: tokenData.exp * 1000,
+        timeRemaining: Math.max(0, tokenData.exp * 1000 - Date.now())
+    });
 }
+
+export const POST = withErrorHandler(handler, 'validate-purchase');

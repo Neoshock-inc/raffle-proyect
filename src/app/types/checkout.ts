@@ -1,10 +1,15 @@
-// 📁 types/checkout.ts (Actualizar la interfaz)
+// types/checkout.ts
+import { PaymentMethod, PaymentStatus } from './invoices';
+
+// Re-exportar para mantener compatibilidad de imports existentes
+export { PaymentMethod, PaymentStatus };
+
 export interface PurchaseData {
     amount: number;
     price: number;
     raffleId: string;
-    tenantId: string;        // 👈 NUEVO
-    tenantName?: string;     // 👈 NUEVO
+    tenantId: string;
+    tenantName?: string;
     expiresAt?: number;
 }
 
@@ -28,22 +33,6 @@ export interface CheckoutFormData {
     address: string;
 }
 
-// types/invoices.ts - Actualizar el enum PaymentMethod
-
-export enum PaymentMethod {
-    STRIPE = 'stripe',
-    PAYPHONE = 'payphone',
-    BANK_TRANSFER = 'bank_transfer',
-}
-
-export enum PaymentStatus {
-    PENDING = 'pending',
-    COMPLETED = 'completed',
-    FAILED = 'failed',
-    CANCELED = 'canceled',
-}
-
-// Agregar interface para los datos adicionales de PayPhone
 export interface PayPhoneTransactionData {
     payphone_transaction_id?: string;
     payphone_status?: string;

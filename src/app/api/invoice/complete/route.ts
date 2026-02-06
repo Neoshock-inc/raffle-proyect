@@ -1,32 +1,31 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { apiSuccess, apiError } from '../../_shared/responses';
+import { withErrorHandler } from '../../_shared/withErrorHandler';
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY! 
+    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function POST(req: NextRequest) {
-    try {
-        const { orderNumber, status } = await req.json();
+async function handler(req: NextRequest) {
+    const { orderNumber, status } = await req.json();
 
-        if (!orderNumber || !status) {
-            return NextResponse.json({ error: 'Faltan parámetros requeridos.' }, { status: 400 });
-        }
-
-        const { error } = await supabase
-            .from('invoices') 
-            .update({ status })
-            .eq('order_number', orderNumber);
-
-        if (error) {
-            console.error('Error al actualizar factura:', error);
-            return NextResponse.json({ error: 'Error al actualizar factura.' }, { status: 500 });
-        }
-
-        return NextResponse.json({ success: true });
-    } catch (err) {
-        console.error('Error en el endpoint /invoice/complete:', err);
-        return NextResponse.json({ error: 'Error interno del servidor.' }, { status: 500 });
+    if (!orderNumber || !status) {
+        return apiError('Faltan parámetros requeridos.', 400);
     }
+
+    const { error } = await supabase
+        .from('invoices')
+        .update({ status })
+        .eq('order_number', orderNumber);
+
+    if (error) {
+        console.error('Error al actualizar factura:', error);
+        return apiError('Error al actualizar factura.', 500);
+    }
+
+    return apiSuccess({ success: true });
 }
+
+export const POST = withErrorHandler(handler, 'invoice/complete');

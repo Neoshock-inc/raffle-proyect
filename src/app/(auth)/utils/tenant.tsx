@@ -48,16 +48,6 @@ export const getPlanInfo = (plan: string) => {
   }
 }
 
-export const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('es-ES', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
 export const getBaseUrl = () => {
   return process.env.NEXT_PUBLIC_BASE_URL || 'https://app.myfortunacloud.com'
 }

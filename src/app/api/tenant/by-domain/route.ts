@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { supabase } from '../../../lib/supabase';
+import { apiSuccess, apiError } from '../../_shared/responses';
+import { withErrorHandler } from '../../_shared/withErrorHandler';
 
-// Tipos
 type Tenant = {
     slug: string;
     name: string;
@@ -11,51 +12,45 @@ type Tenant = {
 type TenantDomain = {
     domain: string;
     verified: boolean;
-    tenants: Tenant | null; // 👈 un dominio pertenece a un único tenant
+    tenants: Tenant | null;
 };
 
-export async function GET(request: NextRequest) {
-    try {
-        const { searchParams } = new URL(request.url);
-        const domain = searchParams.get('domain');
+async function handler(request: NextRequest) {
+    const { searchParams } = new URL(request.url);
+    const domain = searchParams.get('domain');
 
-        if (!domain) {
-            return NextResponse.json({ error: 'Domain parameter is required' }, { status: 400 });
-        }
-
-        // Buscar en tenant_domains con join a tenants
-        const { data, error } = await supabase
-            .from('tenant_domains')
-            .select(
-                `
-        domain,
-        verified,
-        tenants (
-          slug,
-          name,
-          status
-        )
-      `
-            )
-            .eq('domain', domain)
-            .eq('verified', true)
-            .single<TenantDomain>();
-
-        if (error || !data || !data.tenants) {
-            return NextResponse.json({ error: 'Domain not found' }, { status: 404 });
-        }
-
-        if (data.tenants.status !== 'active') {
-            return NextResponse.json({ error: 'Tenant not active' }, { status: 403 });
-        }
-
-        return NextResponse.json({
-            slug: data.tenants.slug,
-            name: data.tenants.name,
-            domain: data.domain,
-        });
-    } catch (error) {
-        console.error('Error in by-domain API:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    if (!domain) {
+        return apiError('Domain parameter is required', 400);
     }
+
+    const { data, error } = await supabase
+        .from('tenant_domains')
+        .select(`
+            domain,
+            verified,
+            tenants (
+                slug,
+                name,
+                status
+            )
+        `)
+        .eq('domain', domain)
+        .eq('verified', true)
+        .single<TenantDomain>();
+
+    if (error || !data || !data.tenants) {
+        return apiError('Domain not found', 404);
+    }
+
+    if (data.tenants.status !== 'active') {
+        return apiError('Tenant not active', 403);
+    }
+
+    return apiSuccess({
+        slug: data.tenants.slug,
+        name: data.tenants.name,
+        domain: data.domain,
+    });
 }
+
+export const GET = withErrorHandler(handler, 'tenant/by-domain');

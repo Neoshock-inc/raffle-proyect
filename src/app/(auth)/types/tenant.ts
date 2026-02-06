@@ -1,19 +1,11 @@
+// src/(auth)/types/tenant.ts
+// Tipos de Tenant para admin - extienden los tipos base de database.ts
 
-// 📁 types/tenant.ts (Actualizado)
-export interface Tenant {
-  id: string
-  name: string
-  slug: string
-  description?: string
+import { Tenant as BaseTenant } from '@/app/types/database';
+
+// Re-exportar como Tenant para compatibilidad (layout es string en admin para flexibilidad)
+export interface Tenant extends Omit<BaseTenant, 'layout'> {
   layout: string
-  status: 'active' | 'suspended' | 'deleted'
-  plan: 'basic' | 'pro' | 'enterprise'
-  created_at: string
-  updated_at: string
-  deleted_at?: string
-  owner_name?: string
-  owner_email?: string
-  owner_phone?: string
 }
 
 export interface UserRole {
@@ -35,17 +27,14 @@ export interface PaymentConfig {
   public_key: string
   secret_key: string
   extra?: {
-    // Para PayPal
     client_id?: string
     client_secret?: string
     sandbox?: boolean
-    // Para cuenta bancaria
     bank_name?: string
     account_number?: string
     account_holder?: string
     routing_number?: string
     swift_code?: string
-    // Configuraciones adicionales
     webhook_url?: string
     currency?: string
   }
@@ -60,7 +49,7 @@ export interface EmailConfig {
   password?: string
   host?: string
   port?: number
-  api_key?: string // Para Resend
+  api_key?: string
   from_email?: string
   from_name?: string
   created_at: string

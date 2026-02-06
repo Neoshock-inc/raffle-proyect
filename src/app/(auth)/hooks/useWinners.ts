@@ -1,4 +1,6 @@
+// src/hooks/useWinners.ts - MIGRACIÓN MULTI-TENANT + HOOKS COMPARTIDOS
 import { useState, useEffect, useCallback } from 'react'
+import { usePaginatedFilter } from '@/app/hooks/shared'
 import {
     WinnerWithDetails,
     getWinnersWithDetails,
@@ -19,51 +21,40 @@ export function useWinners(searchTerm: string = '', raffleFilter: string = '') {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<Error | null>(null)
     const [updating, setUpdating] = useState(false)
-    const [page, setPage] = useState(1)
 
-    // Obtener contexto de tenant
     const { currentTenant, isAdmin, loading: tenantLoading } = useTenantContext()
 
-    // Filtrar ganadores
-    const filteredWinners = winners.filter(winner => {
-        const matchesSearch = searchTerm === '' ||
-            winner.participant_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            winner.participant_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            winner.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            winner.raffle_title.toLowerCase().includes(searchTerm.toLowerCase())
+    // Pre-filtrar por rifa (antes de pasar a usePaginatedFilter)
+    const raffleFilteredWinners = raffleFilter
+        ? winners.filter(w => w.raffle_id === raffleFilter)
+        : winners
 
-        const matchesRaffle = raffleFilter === '' || winner.raffle_id === raffleFilter
-
-        return matchesSearch && matchesRaffle
-    })
-
-    // Paginación
-    const totalPages = Math.ceil(filteredWinners.length / ITEMS_PER_PAGE)
-    const startIndex = (page - 1) * ITEMS_PER_PAGE
-    const paginatedWinners = filteredWinners.slice(startIndex, startIndex + ITEMS_PER_PAGE)
-
-    const pagination = {
-        page,
-        totalPages,
-        totalItems: filteredWinners.length,
-        itemsPerPage: ITEMS_PER_PAGE
-    }
+    // Usar hook compartido para filtrado por texto y paginación
+    const {
+        paginated: paginatedWinners,
+        filtered: filteredWinners,
+        pagination,
+        setPage
+    } = usePaginatedFilter(
+        raffleFilteredWinners,
+        searchTerm,
+        (winner, term) =>
+            winner.participant_name.toLowerCase().includes(term) ||
+            winner.participant_email.toLowerCase().includes(term) ||
+            winner.number.toLowerCase().includes(term) ||
+            winner.raffle_title.toLowerCase().includes(term),
+        ITEMS_PER_PAGE
+    )
 
     // Cargar datos
     const loadData = useCallback(async (forceRefresh = false) => {
-        // No cargar si el tenant aún está cargando
         if (tenantLoading) return
 
         try {
             setLoading(true)
             setError(null)
-
-            console.log('🏆 [WINNERS] Loading data for tenant:', currentTenant?.name || 'Global')
-
-            // CRÍTICO: Establecer el contexto de tenant antes de hacer consultas
             setTenantContext(currentTenant?.id || null, isAdmin)
 
-            // Agregar pequeño delay si es force refresh para asegurar contexto
             if (forceRefresh) {
                 await new Promise(resolve => setTimeout(resolve, 100))
             }
@@ -75,10 +66,8 @@ export function useWinners(searchTerm: string = '', raffleFilter: string = '') {
 
             setWinners(winnersData)
             setRaffles(rafflesData)
-
-            console.log('✅ [WINNERS] Data loaded:', { winners: winnersData.length, raffles: rafflesData.length })
         } catch (err) {
-            console.error('❌ [WINNERS] Error loading data:', err)
+            console.error('Error loading winners:', err)
             setError(err as Error)
         } finally {
             setLoading(false)
@@ -90,16 +79,11 @@ export function useWinners(searchTerm: string = '', raffleFilter: string = '') {
         try {
             setLoading(true)
             setError(null)
-
-            console.log('🏆 [WINNERS] Loading winners by raffle for tenant:', currentTenant?.name || 'Global')
-
-            // CRÍTICO: Establecer contexto antes de la consulta
             setTenantContext(currentTenant?.id || null, isAdmin)
-
             const data = await getWinnersByRaffle(raffleId)
             setWinners(data)
         } catch (err) {
-            console.error('❌ [WINNERS] Error loading winners by raffle:', err)
+            console.error('Error loading winners by raffle:', err)
             setError(err as Error)
         } finally {
             setLoading(false)
@@ -110,16 +94,11 @@ export function useWinners(searchTerm: string = '', raffleFilter: string = '') {
     const markAsWinner = useCallback(async (entryId: string) => {
         try {
             setUpdating(true)
-
-            console.log('🏆 [WINNERS] Marking as winner for tenant:', currentTenant?.name || 'Global')
-
-            // CRÍTICO: Establecer contexto antes de la operación
             setTenantContext(currentTenant?.id || null, isAdmin)
-
             await setWinner(entryId)
-            await loadData(true) // Recargar datos con force refresh
+            await loadData(true)
         } catch (err) {
-            console.error('❌ [WINNERS] Error marking as winner:', err)
+            console.error('Error marking as winner:', err)
             setError(err as Error)
             throw err
         } finally {
@@ -131,16 +110,11 @@ export function useWinners(searchTerm: string = '', raffleFilter: string = '') {
     const unmarkWinner = useCallback(async (entryId: string) => {
         try {
             setUpdating(true)
-
-            console.log('🏆 [WINNERS] Unmarking winner for tenant:', currentTenant?.name || 'Global')
-
-            // CRÍTICO: Establecer contexto antes de la operación
             setTenantContext(currentTenant?.id || null, isAdmin)
-
             await removeWinner(entryId)
-            await loadData(true) // Recargar datos con force refresh
+            await loadData(true)
         } catch (err) {
-            console.error('❌ [WINNERS] Error unmarking winner:', err)
+            console.error('Error unmarking winner:', err)
             setError(err as Error)
             throw err
         } finally {
@@ -152,17 +126,12 @@ export function useWinners(searchTerm: string = '', raffleFilter: string = '') {
     const selectRandom = useCallback(async (raffleId: string) => {
         try {
             setUpdating(true)
-
-            console.log('🏆 [WINNERS] Selecting random winner for tenant:', currentTenant?.name || 'Global')
-
-            // CRÍTICO: Establecer contexto antes de la operación
             setTenantContext(currentTenant?.id || null, isAdmin)
-
             const winner = await selectRandomWinner(raffleId)
-            await loadData(true) // Recargar datos con force refresh
+            await loadData(true)
             return winner
         } catch (err) {
-            console.error('❌ [WINNERS] Error selecting random winner:', err)
+            console.error('Error selecting random winner:', err)
             setError(err as Error)
             throw err
         } finally {
@@ -170,30 +139,16 @@ export function useWinners(searchTerm: string = '', raffleFilter: string = '') {
         }
     }, [loadData, currentTenant, isAdmin])
 
-    // Refrescar datos
     const refreshData = useCallback(() => {
-        console.log('🔄 [WINNERS] Manual refresh triggered')
         loadData(true)
     }, [loadData])
 
     // Efecto para cargar datos cuando cambie el tenant
     useEffect(() => {
-        console.log('🔄 [WINNERS] Tenant context changed:', {
-            tenantId: currentTenant?.id,
-            tenantName: currentTenant?.name,
-            isAdmin,
-            tenantLoading
-        })
-
         if (!tenantLoading) {
-            loadData(true) // Force refresh cuando cambie el tenant
+            loadData(true)
         }
     }, [currentTenant?.id, tenantLoading, loadData])
-
-    // Resetear página cuando cambian los filtros
-    useEffect(() => {
-        setPage(1)
-    }, [searchTerm, raffleFilter])
 
     return {
         winners: paginatedWinners,

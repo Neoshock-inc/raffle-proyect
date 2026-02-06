@@ -1,44 +1,19 @@
-// src/types/raffle.ts
+// src/(auth)/types/raffle.ts
+// Tipos de Raffle para admin - extienden los tipos base de database.ts
 
-export interface Raffle {
-    id: string
-    title: string
-    description?: string
-    price: number
-    total_numbers: number
-    draw_date: string
-    is_active: boolean
-    created_at: string
-    updated_at?: string
+import { Raffle as BaseRaffle, RaffleMedia as BaseRaffleMedia } from '@/app/types/database';
 
-    // Campos de personalización
-    primary_color: string
-    secondary_color: string
-    background_color: string
-    text_color: string
-    logo_url?: string
-    banner_url?: string
+// Re-exportar tipo base para que importadores existentes no se rompan
+export type RaffleStatus = 'draft' | 'active' | 'paused' | 'completed' | 'cancelled'
 
-    // Configuraciones
-    show_countdown: boolean
-    show_progress_bar: boolean
-    max_tickets_per_user?: number
-    min_tickets_to_activate: number
-
-    // Metadatos
-    status: RaffleStatus
-    category_id?: string
+// Raffle extendido con relaciones (para dashboard admin)
+export interface Raffle extends BaseRaffle {
     organization_id?: string
-    MARKETING_BOOST_PERCENTAGE?: number
-
-    // Relaciones
     category?: RaffleCategory
     media?: RaffleMedia[]
     carousel?: RaffleCarouselSlide[]
     design_config?: RaffleDesignConfig
 }
-
-export type RaffleStatus = 'draft' | 'active' | 'paused' | 'completed' | 'cancelled'
 
 export interface RaffleCategory {
     id: string
@@ -50,19 +25,10 @@ export interface RaffleCategory {
     created_at: string
 }
 
-export interface RaffleMedia {
-    id: string
-    raffle_id: string
-    media_type: 'image' | 'video' | 'document'
-    file_url: string
-    file_name?: string
+// RaffleMedia extendido con campos adicionales de admin
+export interface RaffleMedia extends BaseRaffleMedia {
     file_size?: number
     mime_type?: string
-    alt_text?: string
-    caption?: string
-    display_order: number
-    is_featured: boolean
-    is_active: boolean
     created_at: string
 }
 
@@ -81,8 +47,6 @@ export interface RaffleCarouselSlide {
     text_position: 'left' | 'center' | 'right' | 'top' | 'bottom'
     is_active: boolean
     created_at: string
-
-    // Relación
     media?: RaffleMedia
 }
 
@@ -108,28 +72,17 @@ export interface RaffleDesignConfig {
     id: string
     raffle_id: string
     theme_id?: string
-
-    // Tipografía
     heading_font: string
     body_font: string
     font_size_base: number
-
-    // Layout
     layout_style: 'classic' | 'modern' | 'minimal' | 'bold'
     card_shadow: boolean
     rounded_corners: boolean
-
-    // Animaciones
     enable_animations: boolean
     transition_speed: 'slow' | 'normal' | 'fast'
-
-    // Custom CSS
     custom_css?: string
-
     created_at: string
     updated_at: string
-
-    // Relación
     theme?: RaffleTheme
 }
 
@@ -143,7 +96,7 @@ export interface RaffleIcon {
     created_at: string
 }
 
-// Tipos para formularios y operaciones
+// Tipos para formularios y operaciones admin
 export interface CreateRaffleData {
     title: string
     description?: string
@@ -182,7 +135,6 @@ export interface RaffleListResponse {
     pagination: RafflePagination
 }
 
-// Tipos para upload de archivos
 export interface UploadMediaData {
     raffle_id: string
     media_type: 'image' | 'video' | 'document'
@@ -201,7 +153,6 @@ export interface MediaUploadResponse {
     mime_type: string
 }
 
-// Estados de la aplicación
 export interface RaffleState {
     raffles: Raffle[]
     selectedRaffle: Raffle | null
@@ -218,7 +169,6 @@ export interface RaffleFormState {
     submitting: boolean
 }
 
-// Tipos para hooks
 export interface UseRafflesOptions {
     filters?: RaffleFilters
     enabled?: boolean

@@ -95,7 +95,7 @@ export interface Raffle {
   total_numbers: number;
   draw_date: string;
   is_active: boolean;
-  status: 'draft' | 'active' | 'paused' | 'completed';
+  status: 'draft' | 'active' | 'paused' | 'completed' | 'cancelled';
   primary_color: string;
   secondary_color: string;
   background_color: string;

@@ -8,30 +8,19 @@ export interface TicketPackage {
   name: string;
   amount: number;
   base_price: number;
-  
-  // Promociones
   promotion_type: PromotionType;
-  promotion_value: number; // porcentaje para discount, cantidad extra para bonus
-  
-  // Colores
+  promotion_value: number;
   primary_color: string;
   secondary_color: string;
-  
-  // Configuración
   badge_text?: string;
   is_featured: boolean;
   is_active: boolean;
   display_order: number;
-  
-  // Límites
   max_purchases_per_user?: number;
   stock_limit?: number;
   current_stock: number;
-  
-  // Fechas de promoción
   promotion_start_date?: string;
   promotion_end_date?: string;
-  
   created_at: string;
   updated_at: string;
 }
@@ -71,52 +60,6 @@ export interface UseTicketPackagesOptions {
   refetchInterval?: number;
 }
 
-// Utility functions for promotions
-export const getPromotionLabel = (type: PromotionType, value?: number): string => {
-  switch (type) {
-    case 'discount':
-      return `${value}% OFF`;
-    case 'bonus':
-      return `+${value} GRATIS`;
-    case '2x1':
-      return '2x1';
-    case '3x2':
-      return '3x2';
-    default:
-      return '';
-  }
-};
-
-export const calculateFinalPrice = (ticketPackage: TicketPackage): number => {
-  const { base_price, promotion_type, promotion_value } = ticketPackage;
-
-  switch (promotion_type) {
-    case 'discount':
-      return base_price * (1 - promotion_value / 100);
-    case '2x1':
-    case '3x2':
-      // Para promociones de cantidad, el precio base se mantiene pero obtienes más tickets
-      return base_price;
-    default:
-      return base_price;
-  }
-};
-
-export const calculateTotalTickets = (ticketPackage: TicketPackage): number => {
-  const { amount, promotion_type, promotion_value } = ticketPackage;
-  
-  switch (promotion_type) {
-    case 'bonus':
-      return amount + promotion_value;
-    case '2x1':
-      return amount * 2;
-    case '3x2':
-      return Math.floor(amount / 2) * 3 + (amount % 2);
-    default:
-      return amount;
-  }
-};
-
 export interface TicketOption {
     id: string;
     name: string;
@@ -131,3 +74,7 @@ export interface TicketOption {
     is_available: boolean;
     is_featured?: boolean;
 }
+
+// Re-exportar funciones utilitarias para compatibilidad de imports existentes
+// @deprecated - Importar desde '@/app/utils/ticketPackageUtils' directamente
+export { getPromotionLabel, calculateFinalPrice, calculateTotalTickets } from '@/app/utils/ticketPackageUtils';

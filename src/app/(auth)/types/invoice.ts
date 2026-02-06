@@ -1,9 +1,11 @@
-// types/invoice.ts
+// src/(auth)/types/invoice.ts
+// Tipos de Invoice para admin - extienden los tipos base de invoices.ts
 
-import { InvoiceCreationData } from "@/app/types/invoices"
+import { Invoice as BaseInvoice, InvoiceCreationData } from '@/app/types/invoices'
 
 export type InvoiceStatus = 'paid' | 'pending' | 'failed'
 
+// Invoice simplificado para listados admin (subset del tipo base)
 export interface Invoice {
   id: string
   order_number: string

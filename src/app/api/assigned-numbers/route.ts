@@ -1,44 +1,45 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { supabase } from '../../lib/supabase';
+import { apiSuccess, apiError } from '../_shared/responses';
+import { withErrorHandler } from '../_shared/withErrorHandler';
 
-export async function GET(req: NextRequest) {
+async function handler(req: NextRequest) {
     const participantId = req.nextUrl.searchParams.get('participantId');
 
     if (!participantId) {
-        return NextResponse.json({ error: 'participantId requerido' }, { status: 400 });
+        return apiError('participantId requerido', 400);
     }
 
-    // Obtener todos los números que le pertenecen al participante
     const { data: entries, error: entriesError } = await supabase
         .from('raffle_entries')
         .select('number, raffle_id')
         .eq('participant_id', participantId);
 
     if (entriesError) {
-        return NextResponse.json({ error: 'Error al buscar entradas' }, { status: 500 });
+        return apiError('Error al buscar entradas', 500);
     }
 
     const numbers = entries.map(entry => entry.number);
 
-    // Obtener los números bendecidos asignados a este participante
     const { data: blessed, error: blessedError } = await supabase
         .from('blessed_numbers')
         .select('number, is_minor_prize')
         .eq('assigned_to', participantId);
 
     if (blessedError) {
-        return NextResponse.json({ error: 'Error al buscar números ganadores' }, { status: 500 });
+        return apiError('Error al buscar números ganadores', 500);
     }
 
     const blessedMap = new Map<string, { is_minor_prize: boolean }>();
     blessed.forEach(b => blessedMap.set(b.number, { is_minor_prize: b.is_minor_prize }));
 
-    // Unir info
     const result = numbers.map(number => ({
         number,
         is_blessed: blessedMap.has(number),
         is_minor_prize: blessedMap.get(number)?.is_minor_prize ?? false
     }));
 
-    return NextResponse.json({ numbers: result });
+    return apiSuccess({ numbers: result });
 }
+
+export const GET = withErrorHandler(handler, 'assigned-numbers');

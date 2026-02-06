@@ -1,9 +1,3 @@
-export interface Raffle {
-    id: string;
-    title: string;
-    description: string;
-    price: number;
-    total_numbers: number;
-    drawDate: string;
-    isActive: boolean;
-}
+// @deprecated - Usar imports desde '@/app/types/database' directamente
+// Este archivo se mantiene como puente de compatibilidad
+export type { Raffle } from './database';

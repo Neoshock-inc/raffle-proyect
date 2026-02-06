@@ -1,57 +1,34 @@
 // hooks/useTicketPackages.ts
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { CalculatedTicketPackage } from '../types/ticketPackages';
 import { getActiveTicketPackages, packageToTicketOption } from '../services/raffleService';
+import { useAsyncData } from './shared';
 
 interface UseTicketPackagesReturn {
     ticketPackages: CalculatedTicketPackage[];
-    ticketOptions: any[]; // Compatible con tu TicketOption actual
+    ticketOptions: any[];
     loading: boolean;
     error: string | null;
     refetch: () => Promise<void>;
 }
 
 export function useTicketPackages(): UseTicketPackagesReturn {
-    const [ticketPackages, setTicketPackages] = useState<CalculatedTicketPackage[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { data, loading, error, refetch } = useAsyncData<CalculatedTicketPackage[]>(
+        () => getActiveTicketPackages(),
+        []
+    );
 
-    const fetchTicketPackages = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            const packages = await getActiveTicketPackages();
-            setTicketPackages(packages);
-
-        } catch (err) {
-            console.error('Error fetching ticket packages:', err);
-            setError(err instanceof Error ? err.message : 'Error desconocido');
-
-            // En caso de error, crear paquetes por defecto como fallback
-            setTicketPackages([]);
-
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchTicketPackages();
-    }, []);
-
-    // Convertir a formato compatible con TicketOption
-    const ticketOptions = ticketPackages.map(packageToTicketOption);
-
-    const refetch = async () => {
-        await fetchTicketPackages();
-    };
+    const ticketPackages = data ?? [];
+    const ticketOptions = useMemo(
+        () => ticketPackages.map(packageToTicketOption),
+        [ticketPackages]
+    );
 
     return {
         ticketPackages,
         ticketOptions,
         loading,
         error,
-        refetch
+        refetch,
     };
 }

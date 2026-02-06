@@ -1,53 +1,42 @@
 // hooks/useRaffleData.ts
-import { useState, useEffect } from 'react';
+import { useCallback } from 'react';
 import { getBlessedNumbers, getSoldTicketsCount } from '../services/numberService';
 import { getActiveRaffle } from '../services/raffleService';
 import { BlessedNumber } from '../types/tickets';
-import { Raffle } from '../types/raffles';
+import { Raffle } from '../types/database';
+import { useAsyncData } from './shared';
+
+interface RaffleDataResult {
+    raffle: Raffle;
+    blessedNumbers: BlessedNumber[];
+    soldTickets: number;
+}
 
 export const useRaffleData = () => {
-    const [soldTickets, setSoldTickets] = useState(350);
-    const [blessedNumbers, setBlessedNumbers] = useState<BlessedNumber[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [raffle, setRaffle] = useState<Raffle | null>(null);
+    const { data, loading, error, refetch } = useAsyncData<RaffleDataResult>(
+        async () => {
+            const raffle = await getActiveRaffle();
+            const [blessedNumbers, soldTickets] = await Promise.all([
+                getBlessedNumbers(raffle.id),
+                getSoldTicketsCount(raffle.id),
+            ]);
+            return { raffle, blessedNumbers, soldTickets };
+        },
+        []
+    );
 
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                setLoading(true);
-                const raffle = await getActiveRaffle();
-                const blessedData = await getBlessedNumbers(raffle.id);
-                const soldCount = await getSoldTicketsCount(raffle.id);
-
-                setBlessedNumbers(blessedData);
-                setSoldTickets(soldCount);
-                setRaffle(raffle);
-            } catch (err: any) {
-                console.error("Error cargando datos:", err);
-                setError("No se pudieron cargar los datos. Intente nuevamente.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadData();
-    }, []);
-
-    const handleNumberClaimed = (updatedNumber: BlessedNumber) => {
-        setBlessedNumbers(prevNumbers =>
-            prevNumbers.map(number =>
-                number.id === updatedNumber.id ? updatedNumber : number
-            )
-        );
-    };
+    const handleNumberClaimed = useCallback((updatedNumber: BlessedNumber) => {
+        // Note: this no longer updates local state since data comes from useAsyncData
+        // If needed, refetch to get updated data
+        refetch();
+    }, [refetch]);
 
     return {
-        soldTickets,
-        blessedNumbers,
+        soldTickets: data?.soldTickets ?? 350,
+        blessedNumbers: data?.blessedNumbers ?? [],
         loading,
         error,
-        raffle,
-        handleNumberClaimed
+        raffle: data?.raffle ?? null,
+        handleNumberClaimed,
     };
 };
