@@ -4,11 +4,44 @@ import { useEffect, useState, useCallback } from 'react';
 import { getDashboardMetrics, getAllDashboardData } from '@/admin/services/metricsService';
 import { useTenantContext } from '@/admin/contexts/TenantContext';
 import { DollarSign, Hash, Trophy, PieChart, TrendingUp, Calendar, MapPin, RefreshCw } from 'lucide-react';
+import { Button } from '@/admin/components/ui';
+import DashboardMetricCard from '@/admin/components/DashboardMetricCard';
 import PaymentMethodGaugeMini from '@/admin/components/PaymentMethodGauge';
 import SalesLineChart from '@/admin/components/SalesLineChart';
 import RecentEntriesColumnChart from '@/admin/components/RecentEntriesColumnChart';
-import EcuadorMapChart from '@/admin/components/SalesByProvinceMap';
+import dynamic from 'next/dynamic';
+
+const EcuadorMapChart = dynamic(
+    () => import('@/admin/components/SalesByProvinceMap'),
+    { ssr: false, loading: () => (
+        <div className="text-gray-400 text-center h-[400px] flex items-center justify-center">
+            <div className="space-y-2">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mx-auto"></div>
+                <p className="text-sm">Cargando mapa...</p>
+            </div>
+        </div>
+    )}
+);
 import SalesByPaymentMethodBarChart from '@/admin/components/SalesByPaymentMethodBarChart';
+
+const SUMMARY_COLORS = {
+    indigo: {
+        bg: 'bg-indigo-50 dark:bg-indigo-900/20',
+        text: 'text-indigo-600 dark:text-indigo-400',
+    },
+    emerald: {
+        bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+        text: 'text-emerald-600 dark:text-emerald-400',
+    },
+    violet: {
+        bg: 'bg-violet-50 dark:bg-violet-900/20',
+        text: 'text-violet-600 dark:text-violet-400',
+    },
+    amber: {
+        bg: 'bg-amber-50 dark:bg-amber-900/20',
+        text: 'text-amber-600 dark:text-amber-400',
+    },
+} as const;
 
 export default function DashboardPage() {
     const { isAdmin, currentTenant, loading: tenantLoading } = useTenantContext();
@@ -35,7 +68,6 @@ export default function DashboardPage() {
     const [dataLoading, setDataLoading] = useState(false);
     const [lastRefresh, setLastRefresh] = useState(new Date());
 
-    // Función para cargar los datos del dashboard
     const loadDashboardData = useCallback(async (forceRefresh = false) => {
         if (tenantLoading) return;
 
@@ -53,7 +85,6 @@ export default function DashboardPage() {
                 timestamp: new Date().toISOString()
             });
 
-            // Agregar un pequeño delay para asegurar que el contexto se haya propagado
             if (forceRefresh) {
                 await new Promise(resolve => setTimeout(resolve, 100));
             }
@@ -87,7 +118,6 @@ export default function DashboardPage() {
         }
     }, [currentTenant, isAdmin, tenantLoading]);
 
-    // Cargar datos cuando cambie el tenant o se inicialice el contexto
     useEffect(() => {
         console.log('🔄 Dashboard effect triggered:', {
             tenantLoading,
@@ -97,11 +127,10 @@ export default function DashboardPage() {
         });
 
         if (!tenantLoading) {
-            loadDashboardData(true); // Forzar refresh cuando cambie el tenant
+            loadDashboardData(true);
         }
-    }, [currentTenant?.id, tenantLoading, loadDashboardData]); // CLAVE: Observar currentTenant?.id
+    }, [currentTenant?.id, tenantLoading, loadDashboardData]);
 
-    // Función manual de refresh
     const handleManualRefresh = () => {
         console.log('🔄 Manual refresh triggered');
         loadDashboardData(true);
@@ -109,125 +138,98 @@ export default function DashboardPage() {
 
     if (tenantLoading) {
         return (
-            <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+            <div className="p-6 space-y-6 bg-gray-50 dark:bg-gray-950 min-h-screen">
                 <div className="flex items-center justify-center h-64">
                     <div className="space-y-2 text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-                        <p className="text-gray-600">Cargando configuración de tenant...</p>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mx-auto"></div>
+                        <p className="text-gray-600 dark:text-gray-400">Cargando configuración de tenant...</p>
                     </div>
                 </div>
             </div>
         );
     }
 
+    const tenantLabel = currentTenant ? currentTenant.name : 'Global';
+
     return (
-        <div className="p-2 space-y-6 bg-gray-50 min-h-screen">
-            {/* Header con debug info */}
-            <div className="mb-6">
-                <div className="flex items-center justify-between mb-2">
-                    <h1 className="text-3xl font-bold text-gray-900">Dashboard Analytics</h1>
-
-                    {/* Botón de refresh manual */}
-                    <div className="flex items-center space-x-3">
-                        <button
-                            onClick={handleManualRefresh}
-                            disabled={dataLoading}
-                            className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50"
-                        >
-                            <RefreshCw className={`h-4 w-4 ${dataLoading ? 'animate-spin' : ''}`} />
-                            <span>Actualizar</span>
-                        </button>
-
-                        {/* Indicador de estado */}
-                        {dataLoading && (
-                            <div className="flex items-center space-x-2">
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                                <span className="text-sm text-gray-600">Cargando...</span>
-                            </div>
-                        )}
-                    </div>
+        <div className="p-4 md:p-6 space-y-6 bg-gray-50 dark:bg-gray-950 min-h-screen">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Dashboard Analytics</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                        {tenantLabel} &middot; Actualizado {lastRefresh.toLocaleTimeString()}
+                    </p>
+                </div>
+                <div className="flex items-center space-x-3">
+                    <Button
+                        variant="secondary"
+                        onClick={handleManualRefresh}
+                        disabled={dataLoading}
+                        className="rounded-xl"
+                        icon={<RefreshCw className={`h-4 w-4 ${dataLoading ? 'animate-spin' : ''}`} />}
+                    >
+                        Actualizar
+                    </Button>
+                    {dataLoading && (
+                        <div className="flex items-center space-x-2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500"></div>
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Cargando...</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Metrics Cards */}
+            {/* Metric Cards */}
             {metrics && !dataLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Total Ventas</p>
-                                <p className="text-2xl font-bold text-gray-900">
-                                    ${metrics.totalSales.toFixed(2)}
-                                </p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    {currentTenant ? `Solo ${currentTenant.name}` : 'Todos los tenants'}
-                                </p>
-                            </div>
-                            <DollarSign className="w-8 h-8 text-green-500" />
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Números Vendidos</p>
-                                <p className="text-2xl font-bold text-gray-900">
-                                    {metrics.totalNumbersSold.toLocaleString()}
-                                </p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    {currentTenant ? `Solo ${currentTenant.name}` : 'Todos los tenants'}
-                                </p>
-                            </div>
-                            <Hash className="w-8 h-8 text-blue-500" />
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Total Ganadores</p>
-                                <p className="text-2xl font-bold text-gray-900">
-                                    {metrics.totalWinners}
-                                </p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    {currentTenant ? `Solo ${currentTenant.name}` : 'Todos los tenants'}
-                                </p>
-                            </div>
-                            <Trophy className="w-8 h-8 text-yellow-500" />
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Método de Pago</p>
-                                <div className="mt-2">
-                                    <PaymentMethodGaugeMini
-                                        transferPercentage={metrics.transferPercentage}
-                                        stripePercentage={metrics.stripePercentage}
-                                    />
-                                </div>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    {currentTenant ? `Solo ${currentTenant.name}` : 'Todos los tenants'}
-                                </p>
-                            </div>
-                            <PieChart className="w-8 h-8 text-purple-500" />
-                        </div>
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <DashboardMetricCard
+                        icon={<DollarSign className="w-5 h-5" />}
+                        title="Total Ventas"
+                        value={`$${metrics.totalSales.toFixed(2)}`}
+                        subtitle={currentTenant ? `Solo ${currentTenant.name}` : 'Todos los tenants'}
+                        iconBgColor="bg-emerald-50 dark:bg-emerald-900/30"
+                        iconColor="text-emerald-500"
+                    />
+                    <DashboardMetricCard
+                        icon={<Hash className="w-5 h-5" />}
+                        title="Números Vendidos"
+                        value={metrics.totalNumbersSold.toLocaleString()}
+                        subtitle={currentTenant ? `Solo ${currentTenant.name}` : 'Todos los tenants'}
+                        iconBgColor="bg-indigo-50 dark:bg-indigo-900/30"
+                        iconColor="text-indigo-500"
+                    />
+                    <DashboardMetricCard
+                        icon={<Trophy className="w-5 h-5" />}
+                        title="Total Ganadores"
+                        value={metrics.totalWinners}
+                        subtitle={currentTenant ? `Solo ${currentTenant.name}` : 'Todos los tenants'}
+                        iconBgColor="bg-amber-50 dark:bg-amber-900/30"
+                        iconColor="text-amber-500"
+                    />
+                    <DashboardMetricCard
+                        icon={<PieChart className="w-5 h-5" />}
+                        title="Tasa de Conversión"
+                        value={`${metrics.conversionRate.toFixed(1)}%`}
+                        subtitle={currentTenant ? `Solo ${currentTenant.name}` : 'Todos los tenants'}
+                        iconBgColor="bg-violet-50 dark:bg-violet-900/30"
+                        iconColor="text-violet-500"
+                    />
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="bg-white rounded-lg shadow p-6 animate-pulse">
-                            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                            <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                        <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm shadow-gray-200/50 dark:shadow-gray-900/50 p-6 animate-pulse">
+                            <div className="h-11 w-11 bg-gray-200 dark:bg-gray-700 rounded-xl mb-4"></div>
+                            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg w-1/2 mb-2"></div>
+                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
                         </div>
                     ))}
                 </div>
             )}
 
             {/* Chart Navigation */}
-            <div className="flex flex-wrap gap-2 mb-6">
+            <div className="flex flex-wrap gap-2">
                 {[
                     { id: 'sales', label: 'Ventas Diarias', icon: TrendingUp },
                     { id: 'payment', label: 'Métodos de Pago', icon: PieChart },
@@ -237,9 +239,9 @@ export default function DashboardPage() {
                     <button
                         key={id}
                         onClick={() => setSelectedChart(id)}
-                        className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${selectedChart === id
-                            ? 'bg-blue-500 text-white shadow-lg'
-                            : 'bg-white text-gray-700 hover:bg-gray-50 shadow'
+                        className={`flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedChart === id
+                            ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25'
+                            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm'
                             }`}
                     >
                         <Icon className="w-4 h-4 mr-2" />
@@ -248,143 +250,182 @@ export default function DashboardPage() {
                 ))}
             </div>
 
-            {/* Dashboard Visualizations */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Ventas por día */}
-                <div className={`bg-white rounded-lg shadow p-6 h-96 transition-all ${selectedChart === 'sales' ? 'ring-2 ring-blue-500 shadow-lg' : ''
+            {/* Dashboard Visualizations — 3-column grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                {/* Ventas por día — spans 2 cols */}
+                <div className={`lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl shadow-sm shadow-gray-200/50 dark:shadow-gray-900/50 p-6 h-72 transition-all ${selectedChart === 'sales' ? 'ring-2 ring-indigo-500/50 shadow-md' : ''
                     }`}>
-                    <h3 className="text-lg font-semibold mb-4 flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
-                            <TrendingUp className="w-5 h-5 mr-2 text-blue-500" />
-                            Ventas Diarias (Últimos 30 días)
+                            <TrendingUp className="w-5 h-5 mr-2 text-indigo-500" />
+                            <div>
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Ventas Diarias</h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Últimos 30 días</p>
+                            </div>
                         </div>
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                            {currentTenant ? currentTenant.name : 'Global'}
+                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2.5 py-1 rounded-full">
+                            {tenantLabel}
                         </span>
-                    </h3>
+                    </div>
                     {graphsData && !dataLoading ? (
-                        <div className="h-80">
+                        <div className="h-48">
                             <SalesLineChart data={graphsData.salesByDay} />
                         </div>
                     ) : (
-                        <div className="text-gray-400 text-center h-80 flex items-center justify-center">
+                        <div className="text-gray-400 text-center h-48 flex items-center justify-center">
                             <div className="space-y-2">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-                                <p>Cargando gráfico de ventas...</p>
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mx-auto"></div>
+                                <p className="text-sm">Cargando gráfico de ventas...</p>
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* Mapa de Ecuador */}
-                <div className={`bg-white rounded-lg shadow p-6 h-96 transition-all ${selectedChart === 'map' ? 'ring-2 ring-blue-500 shadow-lg' : ''
+                {/* Payment Donut — 1 col */}
+                <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm shadow-gray-200/50 dark:shadow-gray-900/50 p-6 h-72 transition-all ${selectedChart === 'payment' ? 'ring-2 ring-indigo-500/50 shadow-md' : ''
                     }`}>
-                    <h3 className="text-lg font-semibold mb-4 flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center">
-                            <MapPin className="w-5 h-5 mr-2 text-red-500" />
-                            Distribución de Ventas por Región
+                            <PieChart className="w-5 h-5 mr-2 text-indigo-500" />
+                            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Método de Pago</h3>
                         </div>
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                            {currentTenant ? currentTenant.name : 'Global'}
+                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2.5 py-1 rounded-full">
+                            {tenantLabel}
                         </span>
-                    </h3>
+                    </div>
+                    {metrics && !dataLoading ? (
+                        <PaymentMethodGaugeMini
+                            transferPercentage={metrics.transferPercentage}
+                            stripePercentage={metrics.stripePercentage}
+                        />
+                    ) : (
+                        <div className="text-gray-400 text-center h-48 flex items-center justify-center">
+                            <div className="space-y-2">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mx-auto"></div>
+                                <p className="text-sm">Cargando...</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Mapa de Ecuador — spans 2 cols */}
+                <div className={`lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl shadow-sm shadow-gray-200/50 dark:shadow-gray-900/50 p-6 h-[450px] transition-all ${selectedChart === 'map' ? 'ring-2 ring-indigo-500/50 shadow-md' : ''
+                    }`}>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center">
+                            <MapPin className="w-5 h-5 mr-2 text-indigo-500" />
+                            <div>
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Distribución de Ventas</h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Por región</p>
+                            </div>
+                        </div>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2.5 py-1 rounded-full">
+                            {tenantLabel}
+                        </span>
+                    </div>
                     {graphsData && !dataLoading ? (
-                        <div className="h-80">
+                        <div className="h-[400px]">
                             <EcuadorMapChart salesList={graphsData.salesByProvince} />
                         </div>
                     ) : (
-                        <div className="text-gray-400 text-center h-80 flex items-center justify-center">
-                            <div className="space-y-2">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mx-auto"></div>
-                                <p>Cargando mapa de ventas por provincia...</p>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Ventas por método de pago */}
-                <div className={`bg-white rounded-lg shadow p-6 h-96 transition-all ${selectedChart === 'payment' ? 'ring-2 ring-blue-500 shadow-lg' : ''
-                    }`}>
-                    <h3 className="text-lg font-semibold mb-4 flex items-center justify-between">
-                        <div className="flex items-center">
-                            <PieChart className="w-5 h-5 mr-2 text-indigo-500" />
-                            Ventas por Método de Pago
-                        </div>
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                            {currentTenant ? currentTenant.name : 'Global'}
-                        </span>
-                    </h3>
-                    {graphsData && !dataLoading ? (
-                        <div className="h-80">
-                            <SalesByPaymentMethodBarChart data={graphsData.salesByPaymentMethod} />
-                        </div>
-                    ) : (
-                        <div className="text-gray-400 text-center h-80 flex items-center justify-center">
+                        <div className="text-gray-400 text-center h-[400px] flex items-center justify-center">
                             <div className="space-y-2">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mx-auto"></div>
-                                <p>Cargando gráfico de métodos de pago...</p>
+                                <p className="text-sm">Cargando mapa...</p>
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* Entradas recientes a rifas */}
-                <div className={`bg-white rounded-lg shadow p-6 h-96 transition-all ${selectedChart === 'entries' ? 'ring-2 ring-blue-500 shadow-lg' : ''
+                {/* Entradas recientes — 1 col */}
+                <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm shadow-gray-200/50 dark:shadow-gray-900/50 p-6 h-[450px] transition-all ${selectedChart === 'entries' ? 'ring-2 ring-indigo-500/50 shadow-md' : ''
                     }`}>
-                    <h3 className="text-lg font-semibold mb-4 flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
-                            <Calendar className="w-5 h-5 mr-2 text-purple-500" />
-                            Entradas Recientes (Últimas 24h)
+                            <Calendar className="w-5 h-5 mr-2 text-indigo-500" />
+                            <div>
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Entradas</h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Últimas 24h</p>
+                            </div>
                         </div>
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                            {currentTenant ? currentTenant.name : 'Global'}
+                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2.5 py-1 rounded-full">
+                            {tenantLabel}
                         </span>
-                    </h3>
+                    </div>
                     {graphsData && !dataLoading ? (
-                        <div className="h-80">
+                        <div className="h-[400px]">
                             <RecentEntriesColumnChart data={graphsData.recentEntries} />
                         </div>
                     ) : (
-                        <div className="text-gray-400 text-center h-80 flex items-center justify-center">
+                        <div className="text-gray-400 text-center h-60 flex items-center justify-center">
                             <div className="space-y-2">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
-                                <p>Cargando gráfico de entradas...</p>
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mx-auto"></div>
+                                <p className="text-sm">Cargando...</p>
                             </div>
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Summary Stats con información de contexto */}
+            {/* Ventas por Método de Pago — full width */}
+            <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm shadow-gray-200/50 dark:shadow-gray-900/50 p-6 h-72 transition-all ${selectedChart === 'payment' ? 'ring-2 ring-indigo-500/50 shadow-md' : ''
+                }`}>
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                        <PieChart className="w-5 h-5 mr-2 text-indigo-500" />
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Ventas por Método de Pago</h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Distribución de ingresos</p>
+                        </div>
+                    </div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2.5 py-1 rounded-full">
+                        {tenantLabel}
+                    </span>
+                </div>
+                {graphsData && !dataLoading ? (
+                    <div className="h-48">
+                        <SalesByPaymentMethodBarChart data={graphsData.salesByPaymentMethod} />
+                    </div>
+                ) : (
+                    <div className="text-gray-400 text-center h-48 flex items-center justify-center">
+                        <div className="space-y-2">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mx-auto"></div>
+                            <p className="text-sm">Cargando gráfico de métodos de pago...</p>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Summary Stats */}
             {metrics && graphsData && !dataLoading && (
-                <div className="mt-8 bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm shadow-gray-200/50 dark:shadow-gray-900/50 p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold">Resumen de Actividad</h3>
-                        <div className="text-xs text-gray-500">
-                            Actualizado: {lastRefresh.toLocaleString()}
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Resumen de Actividad</h3>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <span>Actualizado: {lastRefresh.toLocaleString()}</span>
                             {currentTenant && (
-                                <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                                <span className="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-full">
                                     {currentTenant.name}
                                 </span>
                             )}
                         </div>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                        <div className="p-4 bg-blue-50 rounded-lg">
-                            <p className="text-sm text-gray-600">Conversión</p>
-                            <p className="text-xl font-bold text-blue-600">{metrics.conversionRate.toFixed(1)}%</p>
+                        <div className={`p-4 ${SUMMARY_COLORS.indigo.bg} rounded-xl`}>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Conversión</p>
+                            <p className={`text-xl font-bold ${SUMMARY_COLORS.indigo.text}`}>{metrics.conversionRate.toFixed(1)}%</p>
                         </div>
-                        <div className="p-4 bg-green-50 rounded-lg">
-                            <p className="text-sm text-gray-600">Transferencias</p>
-                            <p className="text-xl font-bold text-green-600">${metrics.transferSales.toFixed(2)}</p>
+                        <div className={`p-4 ${SUMMARY_COLORS.emerald.bg} rounded-xl`}>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Transferencias</p>
+                            <p className={`text-xl font-bold ${SUMMARY_COLORS.emerald.text}`}>${metrics.transferSales.toFixed(2)}</p>
                         </div>
-                        <div className="p-4 bg-purple-50 rounded-lg">
-                            <p className="text-sm text-gray-600">Stripe</p>
-                            <p className="text-xl font-bold text-purple-600">${metrics.stripeSales.toFixed(2)}</p>
+                        <div className={`p-4 ${SUMMARY_COLORS.violet.bg} rounded-xl`}>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Stripe</p>
+                            <p className={`text-xl font-bold ${SUMMARY_COLORS.violet.text}`}>${metrics.stripeSales.toFixed(2)}</p>
                         </div>
-                        <div className="p-4 bg-yellow-50 rounded-lg">
-                            <p className="text-sm text-gray-600">Entradas Totales</p>
-                            <p className="text-xl font-bold text-yellow-600">
+                        <div className={`p-4 ${SUMMARY_COLORS.amber.bg} rounded-xl`}>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Entradas Totales</p>
+                            <p className={`text-xl font-bold ${SUMMARY_COLORS.amber.text}`}>
                                 {graphsData.recentEntries.reduce((sum: number, item: any) => sum + (item.entradas || 0), 0)}
                             </p>
                         </div>

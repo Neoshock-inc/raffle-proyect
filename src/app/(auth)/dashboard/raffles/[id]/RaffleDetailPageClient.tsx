@@ -1,22 +1,24 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Ticket, Settings, Package, BarChart3, ArrowLeft } from 'lucide-react'
+import { Ticket, Settings, Package, BarChart3, ArrowLeft, Hash } from 'lucide-react'
 import { useRaffle } from '@/admin/hooks/useRaffles'
 import type { UpdateRaffleData } from '@/admin/types/raffle'
-import classNames from 'classnames'
+import { cn } from '@/admin/components/ui/cn'
+import { Badge } from '@/admin/components/ui/Badge'
 
 import RaffleGeneralTab from '@/admin/components/raffle/RaffleGeneralTab'
 import RaffleTicketsTab from '@/admin/components/raffle/RaffleTicketsTab'
 import RaffleStatsTab from '@/admin/components/raffle/RaffleStatsTab'
 import RaffleConfigTab from '@/admin/components/raffle/RaffleConfigTab'
+import RaffleNumbersTab from '@/admin/components/raffle/RaffleNumbersTab'
 
 interface Props {
     id: string
 }
 
-type TabType = 'general' | 'tickets' | 'config' | 'stats'
+type TabType = 'general' | 'tickets' | 'numbers' | 'config' | 'stats'
 
 export default function RaffleDetailPage({ id }: Props) {
     const router = useRouter()
@@ -27,6 +29,7 @@ export default function RaffleDetailPage({ id }: Props) {
     const tabs = [
         { id: 'general' as TabType, name: 'General', icon: Ticket },
         { id: 'tickets' as TabType, name: 'Paquetes de Tickets', icon: Package },
+        { id: 'numbers' as TabType, name: 'Números', icon: Hash },
         { id: 'config' as TabType, name: 'Configuración', icon: Settings },
         { id: 'stats' as TabType, name: 'Estadísticas', icon: BarChart3 },
     ]
@@ -34,18 +37,16 @@ export default function RaffleDetailPage({ id }: Props) {
     const handleUpdate = async (data: UpdateRaffleData) => {
         try {
             await updateRaffle(data)
-            // updateRaffle ya actualiza el estado local, no necesitamos refetch
         } catch (error) {
             console.error('Error updating raffle:', error)
-            // El error ya se muestra en el hook, pero podemos agregar lógica adicional aquí si es necesario
-            throw error // Re-throw para que los componentes hijos puedan manejarlo
+            throw error
         }
     }
 
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
             </div>
         )
     }
@@ -53,12 +54,12 @@ export default function RaffleDetailPage({ id }: Props) {
     if (error || !raffle) {
         return (
             <div className="text-center py-12">
-                <div className="text-red-600 mb-4">
+                <div className="text-red-600 dark:text-red-400 mb-4">
                     {error || 'Rifa no encontrada'}
                 </div>
                 <button
                     onClick={() => router.push('/dashboard/raffles')}
-                    className="px-4 py-2 bg-sky-600 text-white rounded-md hover:bg-sky-700"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
                 >
                     Volver a Rifas
                 </button>
@@ -73,7 +74,7 @@ export default function RaffleDetailPage({ id }: Props) {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => router.push('/dashboard/raffles')}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
                         disabled={updating}
                     >
                         <ArrowLeft className="h-5 w-5" />
@@ -81,37 +82,34 @@ export default function RaffleDetailPage({ id }: Props) {
                     </button>
                 </div>
                 {updating && (
-                    <div className="flex items-center gap-2 text-sky-600">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-sky-600"></div>
+                    <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500"></div>
                         <span className="text-sm">Actualizando...</span>
                     </div>
                 )}
             </div>
 
             {/* Header de la rifa */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm shadow-gray-200/50 dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-700 p-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <div className="bg-sky-700 text-white p-3 rounded-full">
+                        <div className="bg-indigo-700 dark:bg-indigo-600 text-white p-3 rounded-full">
                             <Ticket className="h-6 w-6" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">{raffle.title}</h1>
-                            <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50">{raffle.title}</h1>
+                            <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mt-1">
                                 <span>ID: {raffle.id}</span>
                                 <span>•</span>
-                                <span className={classNames(
-                                    'px-2 py-1 rounded-full text-xs font-semibold',
-                                    {
-                                        'bg-green-100 text-green-800': raffle.status === 'active',
-                                        'bg-yellow-100 text-yellow-800': raffle.status === 'draft',
-                                        'bg-blue-100 text-blue-800': raffle.status === 'paused',
-                                        'bg-gray-100 text-gray-800': raffle.status === 'completed',
-                                        'bg-red-100 text-red-800': raffle.status === 'cancelled'
-                                    }
-                                )}>
+                                <Badge variant={
+                                    raffle.status === 'active' ? 'success'
+                                    : raffle.status === 'draft' ? 'warning'
+                                    : raffle.status === 'paused' ? 'info'
+                                    : raffle.status === 'cancelled' ? 'danger'
+                                    : 'neutral'
+                                }>
                                     {raffle.status}
-                                </span>
+                                </Badge>
                                 <span>•</span>
                                 <span>${raffle.price} por ticket</span>
                                 <span>•</span>
@@ -120,8 +118,8 @@ export default function RaffleDetailPage({ id }: Props) {
                         </div>
                     </div>
                     <div className="text-right">
-                        <div className="text-sm text-gray-600">Sorteo</div>
-                        <div className="font-semibold text-gray-900">
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Sorteo</div>
+                        <div className="font-semibold text-gray-900 dark:text-gray-50">
                             {new Date(raffle.draw_date).toLocaleDateString()}
                         </div>
                     </div>
@@ -129,9 +127,9 @@ export default function RaffleDetailPage({ id }: Props) {
             </div>
 
             {/* Tabs Navigation */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="border-b border-gray-200">
-                    <nav className="flex space-x-8 px-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm shadow-gray-200/50 dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-700">
+                <div className="border-b border-gray-200 dark:border-gray-700">
+                    <nav className="flex space-x-8 px-6 overflow-x-auto">
                         {tabs.map((tab) => {
                             const Icon = tab.icon
                             return (
@@ -139,11 +137,11 @@ export default function RaffleDetailPage({ id }: Props) {
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
                                     disabled={updating}
-                                    className={classNames(
+                                    className={cn(
                                         'flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition whitespace-nowrap',
                                         activeTab === tab.id
-                                            ? 'border-sky-500 text-sky-600'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                                            ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                                            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600',
                                         updating && 'opacity-50 cursor-not-allowed'
                                     )}
                                 >
@@ -168,6 +166,9 @@ export default function RaffleDetailPage({ id }: Props) {
                             raffle={raffle}
                             onRaffleUpdate={handleUpdate}
                         />
+                    )}
+                    {activeTab === 'numbers' && (
+                        <RaffleNumbersTab raffle={raffle} />
                     )}
                     {activeTab === 'config' && (
                         <RaffleConfigTab

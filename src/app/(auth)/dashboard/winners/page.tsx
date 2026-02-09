@@ -1,6 +1,7 @@
 'use client'
 import React, { useState, useCallback } from 'react'
 import { Trophy, Plus, RefreshCw, AlertCircle, Shuffle, Target, TrendingUp } from 'lucide-react'
+import { Button, Input, Select } from '@/admin/components/ui'
 import { ConfirmDialog } from '@/admin/components/ConfirmDialog'
 import { Pagination } from '@/admin/components/participants/Pagination'
 import { WinnerDetails } from '@/admin/components/winners/WinnerDetails'
@@ -135,85 +136,84 @@ export default function WinnersPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="bg-sky-700 text-white p-2 rounded-full">
+                    <div className="bg-indigo-700 text-white p-2 rounded-full">
                         <Trophy className="h-5 w-5" />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900">Ganadores</h2>
-                        <p className="text-gray-600">Gestión de ganadores y sorteos</p>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Ganadores</h2>
+                        <p className="text-gray-600 dark:text-gray-400">Gestión de ganadores y sorteos</p>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <button
+                    <Button
+                        variant="secondary"
                         onClick={refreshData}
                         disabled={loading}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50"
+                        icon={<RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />}
                     >
-                        <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                         Actualizar
-                    </button>
+                    </Button>
 
-                    <button
+                    <Button
                         onClick={() => setManualFormOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                        icon={<Target className="h-4 w-4" />}
                     >
-                        <Target className="h-4 w-4" />
                         Selección Manual
-                    </button>
+                    </Button>
                 </div>
             </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div className="flex items-center">
                         <div className="p-2 bg-yellow-100 rounded-lg">
                             <Trophy className="h-6 w-6 text-yellow-600" />
                         </div>
                         <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Total Ganadores</p>
-                            <p className="text-2xl font-semibold text-gray-900">{filteredWinners.length}</p>
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Ganadores</p>
+                            <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{filteredWinners.length}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div className="flex items-center">
                         <div className="p-2 bg-green-100 rounded-lg">
                             <TrendingUp className="h-6 w-6 text-green-600" />
                         </div>
                         <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Premios Entregados</p>
-                            <p className="text-2xl font-semibold text-gray-900">
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Premios Entregados</p>
+                            <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                                 {filteredWinners.filter(w => w.payment_status === 'PAID').length}
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div className="flex items-center">
                         <div className="p-2 bg-blue-100 rounded-lg">
-                            <Trophy className="h-6 w-6 text-blue-600" />
+                            <Trophy className="h-6 w-6 text-indigo-600" />
                         </div>
                         <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Rifas Activas</p>
-                            <p className="text-2xl font-semibold text-gray-900">
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Rifas Activas</p>
+                            <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                                 {raffles.filter(r => r.status === 'active').length}
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div className="flex items-center">
                         <div className="p-2 bg-purple-100 rounded-lg">
                             <Trophy className="h-6 w-6 text-purple-600" />
                         </div>
                         <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Valor Total Premios</p>
-                            <p className="text-2xl font-semibold text-gray-900">
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Valor Total Premios</p>
+                            <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                                 ${filteredWinners.reduce((sum, w) => sum + (w.invoice_details?.total_price || 0), 0).toFixed(2)}
                             </p>
                         </div>
@@ -223,103 +223,84 @@ export default function WinnersPage() {
 
             {/* Error Message */}
             {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-2">
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-center gap-2">
                     <AlertCircle className="h-5 w-5 text-red-500" />
-                    <p className="text-red-700">{error.message}</p>
+                    <p className="text-red-700 dark:text-red-400">{error.message}</p>
                 </div>
             )}
 
             {/* Filters */}
-            <div className="bg-white rounded-lg shadow p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Search */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Buscar
-                        </label>
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Buscar por participante, email o número..."
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700"
-                        />
-                    </div>
+                    <Input
+                        label="Buscar"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Buscar por participante, email o número..."
+                    />
 
                     {/* Raffle Filter */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Filtrar por Rifa
-                        </label>
-                        <select
-                            title='Filtrar por Rifa'
-                            value={raffleFilter}
-                            onChange={(e) => setRaffleFilter(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700"
-                        >
-                            <option value="">Todas las rifas</option>
-                            {raffles.map((raffle) => (
-                                <option key={raffle.id} value={raffle.id}>
-                                    {raffle.title}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                    <Select
+                        label="Filtrar por Rifa"
+                        title="Filtrar por Rifa"
+                        value={raffleFilter}
+                        onChange={(e) => setRaffleFilter(e.target.value)}
+                    >
+                        <option value="">Todas las rifas</option>
+                        {raffles.map((raffle) => (
+                            <option key={raffle.id} value={raffle.id}>
+                                {raffle.title}
+                            </option>
+                        ))}
+                    </Select>
 
                     {/* Raffle Selection for Wheel */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Rifa para Sorteo
-                        </label>
-                        <div className="flex gap-2">
-                            <select
-                                title='Seleccionar Rifa para Ruleta'
-                                value={selectedRaffleForWheel}
-                                onChange={(e) => setSelectedRaffleForWheel(e.target.value)}
-                                className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700"
-                            >
-                                <option value="">Seleccionar rifa...</option>
-                                {raffles.map((raffle) => (
-                                    <option key={raffle.id} value={raffle.id}>
-                                        {raffle.title}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
+                    <Select
+                        label="Rifa para Sorteo"
+                        title="Seleccionar Rifa para Ruleta"
+                        value={selectedRaffleForWheel}
+                        onChange={(e) => setSelectedRaffleForWheel(e.target.value)}
+                    >
+                        <option value="">Seleccionar rifa...</option>
+                        {raffles.map((raffle) => (
+                            <option key={raffle.id} value={raffle.id}>
+                                {raffle.title}
+                            </option>
+                        ))}
+                    </Select>
                 </div>
 
                 {/* Action Buttons */}
                 {selectedRaffleForWheel && (
-                    <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200">
-                        <button
+                    <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <Button
                             onClick={handleOpenWheel}
                             disabled={loading || !selectedRaffleForWheel}
-                            className="flex items-center gap-2 px-4 py-2 bg-sky-700 text-white rounded-md hover:bg-[#900000] disabled:opacity-50"
+                            icon={<Shuffle className="h-4 w-4" />}
                         >
-                            <Shuffle className="h-4 w-4" />
                             Maquina de la Suerte
-                        </button>
+                        </Button>
 
-                        <button
+                        <Button
+                            variant="success"
                             onClick={handleSelectRandomWinner}
                             disabled={updating || !selectedRaffleForWheel}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+                            icon={<Plus className="h-4 w-4" />}
                         >
-                            <Plus className="h-4 w-4" />
                             {updating ? 'Seleccionando...' : 'Ganador Aleatorio'}
-                        </button>
+                        </Button>
                     </div>
                 )}
             </div>
 
             {/* Selected Raffle Info */}
             {selectedRaffle && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h3 className="font-medium text-blue-900 mb-1">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <h3 className="font-medium text-blue-900 dark:text-blue-200 mb-1">
                         Rifa Seleccionada: {selectedRaffle.title}
                     </h3>
-                    <p className="text-sm text-blue-700">
+                    <p className="text-sm text-indigo-700 dark:text-indigo-400">
                         Fecha de sorteo: {new Date(selectedRaffle.draw_date).toLocaleDateString('es-ES')} •
                         Estado: {selectedRaffle.status}
                     </p>

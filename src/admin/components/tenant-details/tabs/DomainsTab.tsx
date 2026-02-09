@@ -14,19 +14,19 @@ export function DomainsTab({ tenant, isBasicPlan, getBaseUrl, formatDate, onUpgr
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                     Configuración de Dominios
                 </h3>
                 {!isBasicPlan ? (
                     <button
                         type="button"
-                        className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+                        className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
                     >
                         <Globe className="-ml-0.5 mr-1.5 h-5 w-5" />
                         Agregar Dominio
                     </button>
                 ) : (
-                    <div className="flex items-center text-sm text-gray-500">
+                    <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                         <Lock className="h-4 w-4 mr-1" />
                         Plan básico
                     </div>
@@ -66,19 +66,19 @@ export function DomainsTab({ tenant, isBasicPlan, getBaseUrl, formatDate, onUpgr
                 </div>
             )}
 
-            <div className="bg-white border border-gray-200 rounded-lg">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
                 {tenant.tenant_domains && tenant.tenant_domains.length > 0 ? (
-                    <div className="divide-y divide-gray-200">
+                    <div className="divide-y divide-gray-200 dark:divide-gray-700">
                         {tenant.tenant_domains.map((domain, index) => (
                             <div key={index} className="p-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center">
                                         <Globe className="h-5 w-5 text-gray-400 mr-3" />
                                         <div>
-                                            <p className="text-sm font-medium text-gray-900">
+                                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                                 {domain.domain}
                                             </p>
-                                            <p className="text-sm text-gray-500">
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">
                                                 Agregado {formatDate(domain.created_at)}
                                             </p>
                                         </div>
@@ -117,11 +117,11 @@ export function DomainsTab({ tenant, isBasicPlan, getBaseUrl, formatDate, onUpgr
                     </div>
                 ) : (
                     <div className="p-8 text-center">
-                        <Globe className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <h4 className="text-lg font-medium text-gray-900 mb-2">
+                        <Globe className="h-12 w-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+                        <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                             {isBasicPlan ? 'Dominio por Defecto' : 'No hay dominios configurados'}
                         </h4>
-                        <p className="text-gray-500 mb-4">
+                        <p className="text-gray-500 dark:text-gray-400 mb-4">
                             {isBasicPlan
                                 ? `Tu tenant está disponible en https://${tenant.slug}.${getBaseUrl().replace(/^https?:\/\//, '')}`
                                 : 'Agrega un dominio para que los usuarios puedan acceder al tenant.'
@@ -130,7 +130,7 @@ export function DomainsTab({ tenant, isBasicPlan, getBaseUrl, formatDate, onUpgr
                         {!isBasicPlan && (
                             <button
                                 type="button"
-                                className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+                                className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
                             >
                                 <Globe className="-ml-0.5 mr-1.5 h-5 w-5" />
                                 Agregar Primer Dominio

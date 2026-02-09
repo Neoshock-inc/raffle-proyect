@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Plus, Search, Filter, Eye, Ban, MoreHorizontal, Globe, Users, TrendingUp, RefreshCw, AlertCircle, Edit, Trash2 } from 'lucide-react'
 import { useTenantManagement } from '@/admin/hooks/useTenantManagement'
 import { TenantWithMetrics } from '@/admin/services/tenantService'
+import { Button, Input, Select, Badge } from '@/admin/components/ui'
 
 interface FilterState {
   search: string
@@ -90,42 +91,22 @@ export default function TenantsPage() {
     }
   }
 
-  const getStatusBadge = (tenant: TenantWithMetrics) => {
-    // Ahora usar el campo 'status' en lugar de 'layout'
-    const status = tenant.status || 'active'
-
-    const statusConfig = {
-      active: { label: 'Activo', className: 'bg-green-100 text-green-800' },
-      suspended: { label: 'Suspendido', className: 'bg-yellow-100 text-yellow-800' },
-      deleted: { label: 'Eliminado', className: 'bg-red-100 text-red-800' }
-    }
-
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.active
-
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.className}`}>
-        {config.label}
-      </span>
-    )
+  const statusBadgeMap: Record<string, 'success' | 'warning' | 'danger'> = {
+    active: 'success',
+    suspended: 'warning',
+    deleted: 'danger',
   }
 
-  const getPlanBadge = (tenant: TenantWithMetrics) => {
-    // Usar el campo 'plan' real en lugar de simular basado en métricas
-    const plan = tenant.plan || 'basic'
+  const statusLabelMap: Record<string, string> = {
+    active: 'Activo',
+    suspended: 'Suspendido',
+    deleted: 'Eliminado',
+  }
 
-    const planConfig = {
-      basic: { label: 'Basic', className: 'bg-gray-100 text-gray-800' },
-      pro: { label: 'Pro', className: 'bg-blue-100 text-blue-800' },
-      enterprise: { label: 'Enterprise', className: 'bg-purple-100 text-purple-800' }
-    }
-
-    const config = planConfig[plan as keyof typeof planConfig] || planConfig.basic
-
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.className}`}>
-        {config.label}
-      </span>
-    )
+  const planBadgeMap: Record<string, 'neutral' | 'info' | 'success'> = {
+    basic: 'neutral',
+    professional: 'info',
+    enterprise: 'success',
   }
 
   const getActiveTenantsCount = () => {
@@ -145,18 +126,18 @@ export default function TenantsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-sky-700 text-white p-2 rounded-full">
+            <div className="bg-indigo-700 text-white p-2 rounded-full">
               <Users className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Tenants</h2>
-              <p className="text-gray-600">Cargando lista de tenants...</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tenants</h2>
+              <p className="text-gray-600 dark:text-gray-400">Cargando lista de tenants...</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-700 mx-auto"></div>
-          <p className="mt-4 text-center text-gray-600">Cargando tenants...</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-700 mx-auto"></div>
+          <p className="mt-4 text-center text-gray-600 dark:text-gray-400">Cargando tenants...</p>
         </div>
       </div>
     )
@@ -167,85 +148,84 @@ export default function TenantsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="bg-sky-700 text-white p-2 rounded-full">
+          <div className="bg-indigo-700 text-white p-2 rounded-full">
             <Users className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Tenants</h2>
-            <p className="text-gray-600">Gestión de tenants y configuraciones</p>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tenants</h2>
+            <p className="text-gray-600 dark:text-gray-400">Gestión de tenants y configuraciones</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="secondary"
             onClick={() => refreshData()}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50"
+            icon={<RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />}
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Actualizar
-          </button>
+          </Button>
 
-          <button
+          <Button
             onClick={() => router.push('/dashboard/tenants/create')}
-            className="flex items-center gap-2 px-4 py-2 bg-sky-700 text-white rounded-md hover:bg-sky-800"
+            icon={<Plus className="h-4 w-4" />}
           >
-            <Plus className="h-4 w-4" />
             Nuevo Tenant
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg">
-              <Users className="h-6 w-6 text-blue-600" />
+              <Users className="h-6 w-6 text-indigo-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Tenants</p>
-              <p className="text-2xl font-semibold text-gray-900">{totalCount}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Tenants</p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{totalCount}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
               <TrendingUp className="h-6 w-6 text-green-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Activos</p>
-              <p className="text-2xl font-semibold text-gray-900">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Activos</p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                 {getActiveTenantsCount()}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="p-2 bg-yellow-100 rounded-lg">
               <AlertCircle className="h-6 w-6 text-yellow-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Suspendidos</p>
-              <p className="text-2xl font-semibold text-gray-900">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Suspendidos</p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                 {getSuspendedTenantsCount()}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="p-2 bg-purple-100 rounded-lg">
               <Globe className="h-6 w-6 text-purple-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Usuarios</p>
-              <p className="text-2xl font-semibold text-gray-900">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Usuarios</p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                 {tenants.reduce((sum: number, t: TenantWithMetrics) => sum + t.user_count, 0)}
               </p>
             </div>
@@ -263,122 +243,102 @@ export default function TenantsPage() {
 
       {/* Search and Filters */}
       <div className="flex items-center space-x-4">
-        <div className="relative flex-1 max-w-md">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            type="text"
+        <div className="flex-1 max-w-md">
+          <Input
+            icon={<Search className="h-5 w-5" />}
             value={filters.search}
             onChange={(e) => handleFilterChange('search', e.target.value)}
             placeholder="Buscar por nombre o slug..."
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-sky-500 focus:border-sky-500"
           />
         </div>
 
-        <button
-          type="button"
+        <Button
+          variant={showFilters ? 'primary' : 'secondary'}
           onClick={() => setShowFilters(!showFilters)}
-          className={`inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium transition-colors ${showFilters
-            ? 'border-sky-500 text-sky-700 bg-sky-50'
-            : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
-            }`}
+          icon={<Filter className="h-4 w-4" />}
         >
-          <Filter className="h-4 w-4 mr-2" />
           Filtros
-        </button>
+        </Button>
       </div>
 
       {/* Advanced Filters */}
       {showFilters && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Estado
-              </label>
-              <select
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-700 focus:ring-sky-700 sm:text-sm"
-                value={filters.status}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
-              >
-                <option value="all">Todos</option>
-                <option value="active">Activo</option>
-                <option value="suspended">Suspendido</option>
-                <option value="deleted">Eliminado</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ordenar por
-              </label>
-              <select
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-700 focus:ring-sky-700 sm:text-sm"
-                value={filters.sortBy}
-                onChange={(e) => handleFilterChange('sortBy', e.target.value as FilterState['sortBy'])}
-              >
-                <option value="created_at">Fecha de creación</option>
-                <option value="name">Nombre</option>
-                <option value="user_count">Número de usuarios</option>
-                <option value="raffle_count">Número de rifas</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Orden
-              </label>
-              <select
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-700 focus:ring-sky-700 sm:text-sm"
-                value={filters.sortOrder}
-                onChange={(e) => handleFilterChange('sortOrder', e.target.value as 'asc' | 'desc')}
-              >
-                <option value="desc">Descendente</option>
-                <option value="asc">Ascendente</option>
-              </select>
-            </div>
+            <Select
+              label="Estado"
+              value={filters.status}
+              onChange={(e) => handleFilterChange('status', e.target.value)}
+              options={[
+                { value: 'all', label: 'Todos' },
+                { value: 'active', label: 'Activo' },
+                { value: 'suspended', label: 'Suspendido' },
+                { value: 'deleted', label: 'Eliminado' },
+              ]}
+            />
+            <Select
+              label="Ordenar por"
+              value={filters.sortBy}
+              onChange={(e) => handleFilterChange('sortBy', e.target.value as FilterState['sortBy'])}
+              options={[
+                { value: 'created_at', label: 'Fecha de creación' },
+                { value: 'name', label: 'Nombre' },
+                { value: 'user_count', label: 'Número de usuarios' },
+                { value: 'raffle_count', label: 'Número de rifas' },
+              ]}
+            />
+            <Select
+              label="Orden"
+              value={filters.sortOrder}
+              onChange={(e) => handleFilterChange('sortOrder', e.target.value as 'asc' | 'desc')}
+              options={[
+                { value: 'desc', label: 'Descendente' },
+                { value: 'asc', label: 'Ascendente' },
+              ]}
+            />
           </div>
         </div>
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full table-fixed divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="w-full table-fixed divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Tenant
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Slug
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Dominio
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Estado
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Plan
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Creado
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Uso
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {tenants.length > 0 ? (
                 tenants.map((tenant: TenantWithMetrics) => (
-                  <tr key={tenant.id} className="hover:bg-gray-50">
+                  <tr key={tenant.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {tenant.name}
                         </div>
                         {tenant.description && (
@@ -389,12 +349,12 @@ export default function TenantsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 font-mono">
+                      <div className="text-sm text-gray-900 dark:text-gray-100 font-mono">
                         {tenant.slug}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
+                      <div className="flex items-center text-sm text-gray-900 dark:text-gray-100">
                         <Globe className="h-4 w-4 text-gray-400 mr-2" />
                         <span className="truncate max-w-xs">
                           {tenant.primary_domain || 'Sin dominio'}
@@ -405,10 +365,14 @@ export default function TenantsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(tenant)}
+                      <Badge variant={statusBadgeMap[tenant.status || 'active'] || 'success'}>
+                        {statusLabelMap[tenant.status || 'active'] || 'Activo'}
+                      </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {getPlanBadge(tenant)}
+                      <Badge variant={planBadgeMap[tenant.plan || 'basic'] || 'neutral'}>
+                        {(tenant.plan || 'basic').charAt(0).toUpperCase() + (tenant.plan || 'basic').slice(1)}
+                      </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div>
@@ -422,7 +386,7 @@ export default function TenantsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-gray-900 dark:text-gray-100">
                         <div className="flex items-center mb-1" title="Usuarios">
                           <Users className="h-3 w-3 text-gray-400 mr-1" />
                           <span className="font-medium">{tenant.user_count}</span>
@@ -437,7 +401,7 @@ export default function TenantsPage() {
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => router.push(`/dashboard/tenants/${tenant.id}`)}
-                          className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                          className="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50"
                           title="Ver detalles"
                         >
                           <Eye className="h-4 w-4" />
@@ -489,7 +453,7 @@ export default function TenantsPage() {
                         <p className="mt-1">Intenta con otros términos de búsqueda</p>
                         <button
                           onClick={() => handleFilterChange('search', '')}
-                          className="mt-4 text-sky-600 hover:text-sky-800 font-medium"
+                          className="mt-4 text-indigo-600 hover:text-indigo-800 font-medium"
                         >
                           Limpiar búsqueda
                         </button>
@@ -499,13 +463,13 @@ export default function TenantsPage() {
                         <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                         <p className="text-lg font-medium">No hay tenants</p>
                         <p className="mt-1">Comienza creando tu primer tenant</p>
-                        <button
+                        <Button
+                          className="mt-4"
                           onClick={() => router.push('/dashboard/tenants/create')}
-                          className="mt-4 inline-flex items-center px-4 py-2 bg-sky-700 text-white rounded-md hover:bg-sky-800"
+                          icon={<Plus className="h-4 w-4" />}
                         >
-                          <Plus className="h-4 w-4 mr-2" />
                           Crear primer tenant
-                        </button>
+                        </Button>
                       </div>
                     )}
                   </td>
@@ -518,10 +482,10 @@ export default function TenantsPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 rounded-lg shadow">
+        <div className="bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6 rounded-lg shadow">
           <div className="flex-1 flex justify-between items-center">
             <div>
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
                 Mostrando <span className="font-medium">{(currentPage - 1) * 10 + 1}</span> a{' '}
                 <span className="font-medium">
                   {Math.min(currentPage * 10, totalCount)}
@@ -530,13 +494,14 @@ export default function TenantsPage() {
               </p>
             </div>
             <div className="flex space-x-2">
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1 || loading}
-                className="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Anterior
-              </button>
+              </Button>
 
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 const pageNumber = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i
@@ -548,8 +513,8 @@ export default function TenantsPage() {
                     onClick={() => setCurrentPage(pageNumber)}
                     disabled={loading}
                     className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors disabled:opacity-50 ${currentPage === pageNumber
-                      ? 'z-10 bg-sky-50 border-sky-500 text-sky-600'
-                      : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                      ? 'z-10 bg-indigo-50 dark:bg-indigo-900/50 border-indigo-500 text-indigo-600 dark:text-indigo-300'
+                      : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                       }`}
                   >
                     {pageNumber}
@@ -557,13 +522,14 @@ export default function TenantsPage() {
                 )
               })}
 
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages || loading}
-                className="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Siguiente
-              </button>
+              </Button>
             </div>
           </div>
         </div>

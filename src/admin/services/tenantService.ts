@@ -16,7 +16,7 @@ export interface CreateTenantData {
   domain: string;
   template?: string;
   description?: string;
-  plan?: 'basic' | 'pro' | 'enterprise';
+  plan?: 'basic' | 'professional' | 'enterprise';
   ownerEmail: string;
   ownerName: string;
   ownerPhone?: string;
@@ -546,7 +546,7 @@ export const tenantService = {
         deleted: (totalResult.count || 0) - (activeResult.count || 0) - (suspendedResult.count || 0),
         by_plan: {
           basic: planCounts.basic || 0,
-          pro: planCounts.pro || 0,
+          professional: planCounts.professional || 0,
           enterprise: planCounts.enterprise || 0
         }
       }
@@ -559,7 +559,7 @@ export const tenantService = {
         deleted: 0,
         by_plan: {
           basic: 0,
-          pro: 0,
+          professional: 0,
           enterprise: 0
         }
       }

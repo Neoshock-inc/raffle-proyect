@@ -138,6 +138,47 @@ export const useRaffles = (options: UseRafflesOptions = {}) => {
     }
   }
 
+  const duplicateRaffle = async (sourceRaffle: Raffle, copyAssignments = false): Promise<Raffle> => {
+    try {
+      const duplicateData: CreateRaffleData = {
+        title: `${sourceRaffle.title} (copia)`,
+        description: sourceRaffle.description || '',
+        price: sourceRaffle.price,
+        total_numbers: sourceRaffle.total_numbers,
+        draw_date: new Date().toISOString(),
+        primary_color: sourceRaffle.primary_color,
+        secondary_color: sourceRaffle.secondary_color,
+        background_color: sourceRaffle.background_color,
+        text_color: sourceRaffle.text_color,
+        logo_url: sourceRaffle.logo_url,
+        banner_url: sourceRaffle.banner_url,
+        show_countdown: sourceRaffle.show_countdown,
+        show_progress_bar: sourceRaffle.show_progress_bar,
+        max_tickets_per_user: sourceRaffle.max_tickets_per_user,
+        min_tickets_to_activate: sourceRaffle.min_tickets_to_activate,
+        MARKETING_BOOST_PERCENTAGE: sourceRaffle.MARKETING_BOOST_PERCENTAGE,
+        category_id: sourceRaffle.category_id,
+        pool_id: sourceRaffle.pool_id,
+        raffle_type: sourceRaffle.raffle_type,
+      }
+
+      const newRaffle = await raffleService.createRaffle(duplicateData)
+
+      if (copyAssignments) {
+        const { numberPoolService } = await import('../services/numberPoolService')
+        await numberPoolService.duplicateAssignments(sourceRaffle.id, newRaffle.id)
+      }
+
+      setRaffles(prev => [newRaffle, ...prev])
+      toast.success(copyAssignments ? 'Rifa duplicada con asignaciones' : 'Rifa duplicada exitosamente')
+      return newRaffle
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al duplicar rifa'
+      toast.error(errorMessage)
+      throw err
+    }
+  }
+
   const updateStatus = async (id: string, status: RaffleStatus): Promise<void> => {
     try {
       console.log('🔄 [RAFFLES] Updating raffle status for tenant:', currentTenant?.name || 'Global')
@@ -180,6 +221,7 @@ export const useRaffles = (options: UseRafflesOptions = {}) => {
     createRaffle,
     updateRaffle,
     deleteRaffle,
+    duplicateRaffle,
     updateStatus,
     refetch,
     changePage,

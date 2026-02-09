@@ -7,7 +7,7 @@ export interface Tenant {
   layout: 'default' | 'latina' | 'offroad' | 'minimal';
   status: 'active' | 'suspended' | 'deleted';
   description?: string;
-  plan: 'basic' | 'pro' | 'enterprise';
+  plan: 'basic' | 'professional' | 'enterprise';
   owner_name?: string;
   owner_email?: string;
   owner_phone?: string;
@@ -111,6 +111,44 @@ export interface Raffle {
   created_at: string;
   updated_at: string;
   MARKETING_BOOST_PERCENTAGE?: number;
+  pool_id?: string;
+  raffle_type?: 'daily_am' | 'daily_pm' | 'weekly' | 'biweekly';
+}
+
+export interface NumberPool {
+  id: string;
+  tenant_id: string;
+  name: string;
+  total_numbers: number;
+  status: 'active' | 'completed' | 'archived';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RaffleNumberAssignment {
+  id: string;
+  raffle_id: string;
+  referral_id: string;
+  range_start: number;
+  range_end: number;
+  status: 'assigned' | 'returned';
+  assigned_at: string;
+  returned_at?: string;
+  referral?: {
+    id: string;
+    name: string;
+    referral_code: string;
+  };
+}
+
+export interface RaffleNumberStatus {
+  referral_id: string;
+  referral_name: string;
+  referral_code: string;
+  range_start: number;
+  range_end: number;
+  total_in_range: number;
+  sold_in_range: number;
 }
 
 export interface RaffleMedia {

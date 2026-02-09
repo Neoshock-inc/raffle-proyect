@@ -8,7 +8,7 @@ export interface LayoutTemplate {
     description: string
     preview: string
     features: string[]
-    available: ('basic' | 'pro' | 'enterprise')[]
+    available: ('basic' | 'professional' | 'enterprise')[]
     category?: 'modern' | 'classic' | 'creative' | 'premium' | 'futuristic' | 'cultural' | 'adventure'
     color_scheme?: 'light' | 'dark' | 'auto'
     responsive?: boolean
@@ -19,7 +19,7 @@ export interface LayoutTemplate {
 export function useLayoutSelection(
     allLayouts: LayoutTemplate[],
     currentLayout: string,
-    userPlan: 'basic' | 'pro' | 'enterprise',
+    userPlan: 'basic' | 'professional' | 'enterprise',
     onLayoutChange?: (layoutId: string) => void
 ) {
     const [selectedLayout, setSelectedLayout] = useState(currentLayout)
@@ -76,13 +76,13 @@ export function useLayoutSelection(
         const layout = allLayouts.find(l => l.id === layoutId)
         if (!layout) return null
 
-        const planHierarchy = ['basic', 'pro', 'enterprise']
+        const planHierarchy = ['basic', 'professional', 'enterprise']
         const currentPlanIndex = planHierarchy.indexOf(userPlan)
 
         for (const plan of layout.available) {
             const planIndex = planHierarchy.indexOf(plan)
             if (planIndex > currentPlanIndex) {
-                return plan as 'pro' | 'enterprise'
+                return plan as 'professional' | 'enterprise'
             }
         }
         return null

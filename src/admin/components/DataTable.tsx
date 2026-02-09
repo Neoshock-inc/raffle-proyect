@@ -1,40 +1,10 @@
 import { SetStateAction, useEffect, useRef, useState } from 'react';
 
 import { Pencil, Trash, Eye, Plus, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
-
-function cn(...classes: string[]) {
-    return classes.filter(Boolean).join(' ');
-}
-
-function Input({ type, placeholder, value, onChange, className }: any) {
-    return (
-        <input
-            type={type}
-            placeholder={placeholder}
-            value={value}
-            onChange={onChange}
-            className={`border rounded-lg px-3 py-2 text-sm focus:outline-none ${className}`}
-        />
-    );
-}
-
-function Button({ variant, size, children, className, onClick, disabled }: any) {
-    const baseStyles = 'px-4 py-2 rounded focus:outline-none flex items-center gap-1';
-    const variantStyles = variant === 'ghost'
-        ? 'bg-transparent hover:bg-gray-100'
-        : 'bg-blue-500 text-white hover:bg-blue-600';
-    const sizeStyles = size === 'sm' ? 'text-sm' : 'text-base';
-
-    return (
-        <button
-            onClick={onClick}
-            disabled={disabled}
-            className={`${baseStyles} ${variantStyles} ${sizeStyles} ${className}`}
-        >
-            {children}
-        </button>
-    );
-}
+import { cn } from './ui/cn';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Badge } from './ui/Badge';
 
 function formatDate(dateString: string): string {
     const date = new Date(dateString);
@@ -49,11 +19,22 @@ function formatDate(dateString: string): string {
     return new Intl.DateTimeFormat('es-ES', options).format(date);
 }
 
-interface Column {
+function formatCurrency(value: number): string {
+    return `$${value.toFixed(2)}`;
+}
+
+export interface Column<T = any> {
     key: string;
     label: string;
+    render?: (value: any, row: T) => React.ReactNode;
     isStatus?: boolean;
     isBoolean?: boolean;
+    isDate?: boolean;
+    isCurrency?: boolean;
+    align?: 'left' | 'center' | 'right';
+    className?: string;
+    minWidth?: string;
+    maxWidth?: string;
 }
 
 interface TableAction {
@@ -63,26 +44,36 @@ interface TableAction {
     create?: boolean;
 }
 
-interface DataTableProps {
-    title: string;
-    data: any[];
-    columns: Column[];
+export interface CustomAction {
+    label: string;
+    onClick: (item: any) => void;
+    confirm?: boolean;
+}
+
+interface DataTableProps<T = any> {
+    title?: string;
+    data: T[];
+    columns: Column<T>[];
     actions?: TableAction;
-    filterable?: boolean;
-    searchable?: boolean;
+    customActions?: (row: T) => CustomAction[];
     onAction?: {
         onRead?: (item: any) => void;
         onEdit?: (item: any) => void;
         onDelete?: (item: any) => void;
         onCreate?: () => void;
     };
-    customActions?: (row: any) => CustomAction[];
-}
-
-interface CustomAction {
-    label: string;
-    onClick: (item: any) => void;
-    confirm?: boolean;
+    filterable?: boolean;
+    searchable?: boolean;
+    searchPlaceholder?: string;
+    rowsPerPage?: number;
+    loading?: boolean;
+    loadingRows?: number;
+    emptyMessage?: string;
+    emptyAction?: React.ReactNode;
+    headerRight?: React.ReactNode;
+    height?: string | 'auto';
+    maxHeight?: string;
+    getRowKey?: (row: T, i: number) => string | number;
 }
 
 interface MenuProps {
@@ -108,11 +99,11 @@ function Menu({ row, customActions }: MenuProps) {
 
     return (
         <div className="relative overflow-visible" ref={ref}>
-            <button onClick={() => setOpen((prev) => !prev)} className="p-1 hover:bg-gray-100 rounded">
+            <button onClick={() => setOpen((prev) => !prev)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
                 <MoreVertical className="w-4 h-4" />
             </button>
             {open && (
-                <div className="absolute right-0 mt-2 w-44 bg-white border shadow-lg rounded-md z-50">
+                <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-gray-800 border dark:border-gray-600 shadow-lg rounded-md z-50">
                     {items.map((action, index) => (
                         <button
                             key={index}
@@ -122,7 +113,7 @@ function Menu({ row, customActions }: MenuProps) {
                                     action.onClick(row);
                                 }
                             }}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-300"
                         >
                             {action.label}
                         </button>
@@ -133,7 +124,23 @@ function Menu({ row, customActions }: MenuProps) {
     );
 }
 
-export default function DataTable({
+function statusVariant(status: string): 'success' | 'warning' | 'danger' | 'neutral' {
+    switch (status?.toLowerCase()) {
+        case 'completed':
+        case 'completado':
+            return 'success';
+        case 'pending':
+        case 'pendiente':
+            return 'warning';
+        case 'failed':
+        case 'fallido':
+            return 'danger';
+        default:
+            return 'neutral';
+    }
+}
+
+export default function DataTable<T = any>({
     title,
     data,
     columns,
@@ -142,15 +149,24 @@ export default function DataTable({
     onAction,
     filterable = false,
     searchable = false,
-}: DataTableProps) {
+    searchPlaceholder = 'Buscar...',
+    rowsPerPage = 10,
+    loading = false,
+    loadingRows = 5,
+    emptyMessage = 'No se han encontrado registros.',
+    emptyAction,
+    headerRight,
+    height = 'auto',
+    maxHeight,
+    getRowKey,
+}: DataTableProps<T>) {
     const [query, setQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const rowsPerPage = 10;
 
     const filteredData = searchable
         ? data.filter((row) =>
             columns.some((col) =>
-                String(row[col.key] ?? '')
+                String((row as any)[col.key] ?? '')
                     .toLowerCase()
                     .includes(query.toLowerCase())
             )
@@ -161,73 +177,109 @@ export default function DataTable({
     const startIndex = (currentPage - 1) * rowsPerPage;
     const currentData = filteredData.slice(startIndex, startIndex + rowsPerPage);
 
-    const statusColor = (status: string) => {
-        switch (status?.toLowerCase()) {
-            case 'completed':
-            case 'completado':
-                return 'text-green-600 bg-green-100';
-            case 'pending':
-            case 'pendiente':
-                return 'text-yellow-600 bg-yellow-100';
-            case 'failed':
-            case 'fallido':
-                return 'text-red-600 bg-red-100';
-            default:
-                return 'text-gray-600 bg-gray-100';
+    const hasActions = actions.read || actions.edit || actions.delete || customActions;
+
+    const renderCell = (col: Column<T>, row: T) => {
+        const value = (row as any)[col.key];
+
+        // Custom render takes priority
+        if (col.render) {
+            return col.render(value, row);
+        }
+
+        // isStatus
+        if (col.isStatus) {
+            return (
+                <Badge variant={statusVariant(value)}>
+                    {value}
+                </Badge>
+            );
+        }
+
+        // isBoolean
+        if (col.isBoolean || typeof value === 'boolean') {
+            return (
+                <Badge variant={value ? 'success' : 'danger'}>
+                    {value ? 'Sí' : 'No'}
+                </Badge>
+            );
+        }
+
+        // isDate
+        if (col.isDate && value) {
+            return formatDate(value);
+        }
+
+        // isCurrency
+        if (col.isCurrency && typeof value === 'number') {
+            return formatCurrency(value);
+        }
+
+        return value;
+    };
+
+    const alignClass = (align?: string) => {
+        switch (align) {
+            case 'center': return 'text-center';
+            case 'right': return 'text-right';
+            default: return 'text-left';
         }
     };
 
-    const booleanColor = (value: boolean) => {
-        return value
-            ? 'text-green-600 bg-green-100'
-            : 'text-red-600 bg-red-100';
-    };
-
     return (
-        <div className="bg-white p-4 rounded-lg shadow">
+        <div className="bg-white dark:bg-gray-900 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-2">
-                <h2 className="font-semibold text-lg">{title}</h2>
-                <div className="flex gap-2">
+                {title && <h2 className="font-semibold text-lg dark:text-gray-100">{title}</h2>}
+                <div className="flex gap-2 items-center ml-auto">
                     {searchable && (
                         <Input
                             type="text"
-                            placeholder="Buscar..."
+                            placeholder={searchPlaceholder}
                             className="max-w-xs"
                             value={query}
-                            onChange={(e: { target: { value: SetStateAction<string> } }) => {
+                            onChange={(e) => {
                                 setQuery(e.target.value);
                                 setCurrentPage(1);
                             }}
                         />
                     )}
                     {actions.create && (
-                        <Button variant="default" size="sm" onClick={() => onAction?.onCreate?.()}>
-                            <Plus className="w-4 h-4" />
+                        <Button size="sm" icon={<Plus className="w-4 h-4" />} onClick={() => onAction?.onCreate?.()}>
+                            Crear
                         </Button>
                     )}
+                    {headerRight}
                 </div>
             </div>
 
-            <div className="h-[250px] max-h-[300px] overflow-y-auto">
+            <div
+                className="overflow-y-auto"
+                style={{
+                    height: height === 'auto' ? undefined : height,
+                    maxHeight: maxHeight || undefined,
+                }}
+            >
                 <table className="w-full text-sm text-left">
                     <thead>
-                        <tr className="border-b">
+                        <tr className="border-b dark:border-gray-700">
                             {columns.map((col) => (
                                 <th
                                     key={col.key}
                                     className={cn(
-                                        "py-2 px-3 text-left capitalize text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis",
-                                        col.key === 'telefono' ? 'min-w-[120px] max-w-[140px]' : '',
-                                        col.key === 'nombre' ? 'min-w-[160px] max-w-[180px]' : '',
-                                        col.key === 'orden' ? 'min-w-[180px] max-w-[200px]' : '',
-                                        col.key === 'cantidad' || col.key === 'total' ? 'text-right min-w-[60px]' : ''
+                                        "py-2 px-3 capitalize text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis",
+                                        alignClass(col.align),
+                                        col.className
                                     )}
+                                    style={{
+                                        minWidth: col.minWidth || undefined,
+                                        maxWidth: col.maxWidth || undefined,
+                                    }}
                                     title={col.label}
                                 >
                                     {col.label}
                                 </th>
                             ))}
-                            {(actions.read || actions.edit || actions.delete) && (
+                            {hasActions && (
                                 <th className="py-2 px-3 text-left capitalize text-sm font-semibold whitespace-nowrap">
                                     Acciones
                                 </th>
@@ -235,52 +287,54 @@ export default function DataTable({
                         </tr>
                     </thead>
                     <tbody>
-                        {currentData.length === 0 ? (
+                        {loading ? (
+                            [...Array(loadingRows)].map((_, i) => (
+                                <tr key={`skeleton-${i}`} className="border-b dark:border-gray-700">
+                                    {columns.map((col) => (
+                                        <td key={col.key} className="py-2 px-3">
+                                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-2/3" />
+                                        </td>
+                                    ))}
+                                    {hasActions && (
+                                        <td className="py-2 px-3">
+                                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-6" />
+                                        </td>
+                                    )}
+                                </tr>
+                            ))
+                        ) : currentData.length === 0 ? (
                             <tr>
                                 <td
-                                    colSpan={columns.length + (actions.read || actions.edit || actions.delete ? 1 : 0)}
-                                    className="text-center py-4 text-gray-500"
+                                    colSpan={columns.length + (hasActions ? 1 : 0)}
+                                    className="text-center py-8 text-gray-500 dark:text-gray-400"
                                 >
-                                    No se han encontrado registros.
+                                    <div>{emptyMessage}</div>
+                                    {emptyAction && <div className="mt-2">{emptyAction}</div>}
                                 </td>
                             </tr>
                         ) : (
                             currentData.map((row, i) => (
-                                <tr key={i} className="border-b hover:bg-gray-50">
+                                <tr
+                                    key={getRowKey ? getRowKey(row, i) : i}
+                                    className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                >
                                     {columns.map((col) => (
                                         <td
                                             key={col.key}
                                             className={cn(
-                                                "py-2 px-3 text-sm",
-                                                col.key === 'telefono' ? 'min-w-[120px] max-w-[140px] truncate overflow-hidden text-ellipsis' : '',
-                                                col.key === 'nombre' ? 'min-w-[160px] max-w-[180px] truncate overflow-hidden text-ellipsis' : '',
-                                                col.key === 'orden' ? 'min-w-[180px] max-w-[200px] truncate overflow-hidden text-ellipsis' : '',
-                                                col.key === 'cantidad' || col.key === 'total' ? 'text-right min-w-[60px] font-mono' : '',
-                                                'whitespace-nowrap'
+                                                "py-2 px-3 text-sm whitespace-nowrap",
+                                                alignClass(col.align),
+                                                col.className
                                             )}
+                                            style={{
+                                                minWidth: col.minWidth || undefined,
+                                                maxWidth: col.maxWidth || undefined,
+                                            }}
                                         >
-                                            {col.isStatus ? (
-                                                <span className={cn(
-                                                    'px-2 py-1 rounded-full text-xs font-medium',
-                                                    statusColor(row[col.key])
-                                                )}>
-                                                    {row[col.key]}
-                                                </span>
-                                            ) : col.isBoolean || typeof row[col.key] === 'boolean' ? (
-                                                <span className={cn(
-                                                    'px-2 py-1 rounded-full text-xs font-medium',
-                                                    booleanColor(row[col.key])
-                                                )}>
-                                                    {row[col.key] ? 'Sí' : 'No'}
-                                                </span>
-                                            ) : col.key === 'purchased_at' ? (
-                                                formatDate(row[col.key])
-                                            ) : (
-                                                row[col.key]
-                                            )}
+                                            {renderCell(col, row)}
                                         </td>
                                     ))}
-                                    {(actions.read || actions.edit || actions.delete || customActions) ? (
+                                    {hasActions ? (
                                         <td className="py-2 px-3">
                                             <div className="relative">
                                                 <Menu row={row} customActions={customActions} />
@@ -295,14 +349,14 @@ export default function DataTable({
             </div>
 
             {totalPages > 1 && (
-                <div className="flex justify-end gap-2 mt-4 text-sm items-center">
+                <div className="flex justify-end gap-2 mt-4 text-sm items-center dark:text-gray-300">
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
                     >
-                        <ChevronLeft className="w-4 h-4 text-blue-500" />
+                        <ChevronLeft className="w-4 h-4 text-indigo-500" />
                     </Button>
                     <span className="px-2 py-1">
                         Página {currentPage} de {totalPages}
@@ -313,7 +367,7 @@ export default function DataTable({
                         onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}
                     >
-                        <ChevronRight className="w-4 h-4 text-blue-500" />
+                        <ChevronRight className="w-4 h-4 text-indigo-500" />
                     </Button>
                 </div>
             )}

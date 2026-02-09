@@ -167,7 +167,15 @@ const TestimonialCard: React.FC<{ testimonial: Testimonial }> = ({ testimonial }
 };
 
 // Componente principal
-const AppleRaffleLanding: React.FC = () => {
+interface AppleProps {
+    previewMode?: boolean;
+    device?: 'desktop' | 'tablet' | 'mobile';
+    [key: string]: unknown;
+}
+
+const AppleRaffleLanding: React.FC<AppleProps> = ({ previewMode = false, device = 'desktop' }) => {
+    const isMobile = device === 'mobile';
+    const isTablet = device === 'tablet';
     const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number }>({
         days: 0, hours: 0, minutes: 0, seconds: 0
     });
@@ -285,7 +293,7 @@ const AppleRaffleLanding: React.FC = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
             {/* Header */}
-            <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-200">
+            <header className={`bg-white/80 backdrop-blur-md ${previewMode ? 'relative' : 'sticky top-0'} z-10 border-b border-gray-200`}>
                 <div className="container mx-auto px-6 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
@@ -296,7 +304,7 @@ const AppleRaffleLanding: React.FC = () => {
                                 AppleRaffle
                             </h1>
                         </div>
-                        <nav className="hidden md:flex space-x-8">
+                        <nav className={`${isMobile ? 'hidden' : 'hidden md:flex'} space-x-8`}>
                             <a href="#productos" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
                                 Productos
                             </a>
@@ -315,7 +323,7 @@ const AppleRaffleLanding: React.FC = () => {
             <section className="py-20 px-6">
                 <div className="container mx-auto text-center">
                     <div className="max-w-4xl mx-auto">
-                        <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                        <h2 className={`${isMobile ? 'text-3xl' : isTablet ? 'text-4xl' : 'text-5xl md:text-6xl'} font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent`}>
                             Gana los Últimos
                             <br />
                             Productos Apple
@@ -370,7 +378,7 @@ const AppleRaffleLanding: React.FC = () => {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'} gap-8`}>
                         {products.map((product) => (
                             <ProductCard key={product.id} product={product} />
                         ))}
@@ -388,7 +396,7 @@ const AppleRaffleLanding: React.FC = () => {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'} gap-8 max-w-4xl mx-auto`}>
                         {specialOffers.map((offer) => (
                             <SpecialOfferCard key={offer.id} offer={offer} />
                         ))}
@@ -406,7 +414,7 @@ const AppleRaffleLanding: React.FC = () => {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'} gap-8`}>
                         {testimonials.map((testimonial) => (
                             <TestimonialCard key={testimonial.id} testimonial={testimonial} />
                         ))}
@@ -444,7 +452,7 @@ const AppleRaffleLanding: React.FC = () => {
             {/* Footer */}
             <footer className="bg-gray-900 text-white py-16 px-6">
                 <div className="container mx-auto">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-4'} gap-8`}>
                         <div>
                             <div className="flex items-center space-x-3 mb-6">
                                 <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">

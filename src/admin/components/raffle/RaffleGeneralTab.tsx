@@ -72,7 +72,7 @@ function EditableField({
     if (type === 'textarea') {
         return (
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     {label} {required && <span className="text-red-500">*</span>}
                 </label>
                 <div className="relative">
@@ -83,8 +83,8 @@ function EditableField({
                         readOnly={!isEditing}
                         rows={4}
                         className={`w-full px-3 py-2 border rounded-md resize-vertical ${isEditing
-                                ? 'border-sky-300 focus:border-sky-500 focus:ring-sky-500'
-                                : 'border-gray-300 bg-gray-50 cursor-pointer'
+                                ? 'border-indigo-300 focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100'
+                                : 'border-gray-300 bg-gray-50 cursor-pointer dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100'
                             }`}
                         onClick={() => !isEditing && setIsEditing(true)}
                     />
@@ -106,7 +106,7 @@ function EditableField({
                     ) : (
                         <button
                             onClick={() => setIsEditing(true)}
-                            className="absolute top-2 right-2 p-1 text-gray-400 hover:text-sky-600"
+                            className="absolute top-2 right-2 p-1 text-gray-400 hover:text-indigo-600"
                         >
                             <Pencil className="h-4 w-4" />
                         </button>
@@ -131,7 +131,7 @@ function EditableField({
                     min={min}
                     max={max}
                     className={`w-full px-3 py-2 border rounded-md ${isEditing
-                            ? 'border-sky-300 focus:border-sky-500 focus:ring-sky-500'
+                            ? 'border-indigo-300 focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100'
                             : 'border-gray-300 bg-gray-50 cursor-pointer'
                         } ${type === 'color' ? 'h-12' : ''}`}
                     onClick={() => !isEditing && type !== 'color' && setIsEditing(true)}
@@ -159,7 +159,7 @@ function EditableField({
                     ) : (
                         <button
                             onClick={() => setIsEditing(true)}
-                            className="absolute top-2 right-2 p-1 text-gray-400 hover:text-sky-600"
+                            className="absolute top-2 right-2 p-1 text-gray-400 hover:text-indigo-600"
                         >
                             <Pencil className="h-4 w-4" />
                         </button>
@@ -206,8 +206,8 @@ export default function RaffleGeneralTab({ raffle, onUpdate }: Props) {
     return (
         <div className="p-6 space-y-8">
             <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Información General</h3>
-                <span className="text-sm text-gray-500">ID: {raffle.id}</span>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Información General</h3>
+                <span className="text-sm text-gray-500 dark:text-gray-400">ID: {raffle.id}</span>
             </div>
 
             {/* Información básica de la rifa */}
@@ -221,13 +221,13 @@ export default function RaffleGeneralTab({ raffle, onUpdate }: Props) {
                 />
 
                 <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Estado <span className="text-red-500">*</span>
                     </label>
                     <select
                         value={localRaffle.status}
                         onChange={(e) => handleFieldUpdate('status', e.target.value as RaffleStatus)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-sky-500 focus:ring-sky-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
                     >
                         <option value="draft">Borrador</option>
                         <option value="active">Activa</option>
@@ -258,14 +258,14 @@ export default function RaffleGeneralTab({ raffle, onUpdate }: Props) {
                 />
 
                 <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Fecha del Sorteo <span className="text-red-500">*</span>
                     </label>
                     <input
                         type="datetime-local"
                         value={formatDateForInput(localRaffle.draw_date)}
                         onChange={(e) => handleDateChange(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-sky-500 focus:ring-sky-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
                     />
                 </div>
             </div>
@@ -281,7 +281,7 @@ export default function RaffleGeneralTab({ raffle, onUpdate }: Props) {
 
             {/* URLs de imágenes */}
             <div className="space-y-4">
-                <h4 className="text-md font-medium text-gray-900">Imágenes</h4>
+                <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Imágenes</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <EditableField
                         label="URL del Logo"
@@ -300,7 +300,7 @@ export default function RaffleGeneralTab({ raffle, onUpdate }: Props) {
 
             {/* Configuración visual */}
             <div className="space-y-4">
-                <h4 className="text-md font-medium text-gray-900">Colores de la Interfaz</h4>
+                <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Colores de la Interfaz</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <EditableField
                         label="Color Primario"

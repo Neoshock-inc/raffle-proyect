@@ -21,8 +21,8 @@ export function RafflesTab({
     if (loading) {
         return (
             <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
-                <p className="mt-2 text-sm text-gray-500">Cargando rifas...</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 dark:border-green-400 mx-auto"></div>
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Cargando rifas...</p>
             </div>
         )
     }
@@ -30,22 +30,22 @@ export function RafflesTab({
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                     Rifas del Tenant
                 </h3>
                 <button
                     type="button"
                     onClick={onCreateRaffle}
-                    className="inline-flex items-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500"
+                    className="inline-flex items-center rounded-md bg-green-600 dark:bg-green-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 dark:hover:bg-green-600"
                 >
                     <Plus className="-ml-0.5 mr-1.5 h-5 w-5" />
                     Nueva Rifa
                 </button>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-lg">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
                 {raffles && raffles.length > 0 ? (
-                    <div className="divide-y divide-gray-200">
+                    <div className="divide-y divide-gray-200 dark:divide-gray-700">
                         {raffles.map((raffle) => (
                             <div key={raffle.id} className="p-4">
                                 <div className="flex items-center justify-between">
@@ -53,12 +53,12 @@ export function RafflesTab({
                                         <Gift className="h-5 w-5 text-green-400 mr-3 flex-shrink-0" />
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center space-x-2 mb-1">
-                                                <p className="text-sm font-medium text-gray-900 truncate">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                                                     {raffle.title}
                                                 </p>
                                                 {getRaffleStatusBadge(raffle.status)}
                                             </div>
-                                            <div className="flex items-center text-sm text-gray-500 space-x-4">
+                                            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 space-x-4">
                                                 <span>${raffle.price}</span>
                                                 <span>{raffle.total_numbers} números</span>
                                                 <span>
@@ -85,17 +85,17 @@ export function RafflesTab({
                     </div>
                 ) : (
                     <div className="p-8 text-center">
-                        <Gift className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <h4 className="text-lg font-medium text-gray-900 mb-2">
+                        <Gift className="h-12 w-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+                        <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                             No hay rifas creadas
                         </h4>
-                        <p className="text-gray-500 mb-4">
+                        <p className="text-gray-500 dark:text-gray-400 mb-4">
                             Crea la primera rifa para este tenant y comienza a generar ingresos.
                         </p>
                         <button
                             type="button"
                             onClick={onCreateRaffle}
-                            className="inline-flex items-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500"
+                            className="inline-flex items-center rounded-md bg-green-600 dark:bg-green-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 dark:hover:bg-green-600"
                         >
                             <Plus className="-ml-0.5 mr-1.5 h-5 w-5" />
                             Crear Primera Rifa

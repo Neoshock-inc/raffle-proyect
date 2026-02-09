@@ -11,7 +11,7 @@ interface Tenant {
     layout: 'default' | 'latina' | 'offroad' | 'minimal';
     status: 'active' | 'suspended' | 'deleted';
     description?: string;
-    plan: 'basic' | 'pro' | 'enterprise';
+    plan: 'basic' | 'professional' | 'enterprise';
     owner_name?: string;
     owner_email?: string;
     owner_phone?: string;

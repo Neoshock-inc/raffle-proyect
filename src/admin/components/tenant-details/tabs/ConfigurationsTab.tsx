@@ -63,9 +63,9 @@ const PAYMENT_PROVIDERS: PaymentProviderConfig[] = [
         name: 'PayPal',
         description: 'Pagos con PayPal',
         icon: DollarSign,
-        iconColor: 'text-blue-600',
-        iconBg: 'bg-blue-100',
-        buttonColor: 'bg-blue-600 hover:bg-blue-700',
+        iconColor: 'text-indigo-600',
+        iconBg: 'bg-indigo-100',
+        buttonColor: 'bg-indigo-600 hover:bg-indigo-700',
         fields: [
             {
                 key: 'client_id',
@@ -243,7 +243,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
     if (loading) {
         return (
             <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
                 <span className="ml-2 text-gray-600">Cargando configuraciones...</span>
             </div>
         )
@@ -252,21 +252,21 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
     return (
         <div className="space-y-8">
             <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                     Configuraciones del Tenant
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                     Configura los métodos de pago y servicios de email para tu tenant
                 </p>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-lg">
-                <div className="px-6 py-4 border-b border-gray-200">
-                    <h4 className="text-base font-medium text-gray-900 flex items-center">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h4 className="text-base font-medium text-gray-900 dark:text-gray-100 flex items-center">
                         <CreditCard className="h-5 w-5 mr-2" />
                         Métodos de Pago
                     </h4>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         Configura los proveedores de pago disponibles para tu tenant
                     </p>
                 </div>
@@ -284,8 +284,8 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                             <Icon className={`h-5 w-5 ${provider.iconColor}`} />
                                         </div>
                                         <div>
-                                            <h5 className="font-medium text-gray-900">{provider.name}</h5>
-                                            <p className="text-sm text-gray-500">{provider.description}</p>
+                                            <h5 className="font-medium text-gray-900 dark:text-gray-100">{provider.name}</h5>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">{provider.description}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center space-x-2">
@@ -293,7 +293,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                             <button
                                                 onClick={() => handleTest('payment', provider.id)}
                                                 disabled={saving}
-                                                className="p-2 text-blue-600 hover:text-blue-500 hover:bg-blue-50 rounded-md"
+                                                className="p-2 text-indigo-600 hover:text-indigo-500 hover:bg-indigo-50 rounded-md"
                                                 title="Probar configuración"
                                             >
                                                 <TestTube className="h-4 w-4" />
@@ -307,7 +307,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                                 disabled={saving}
                                                 className="sr-only peer"
                                             />
-                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                                         </label>
                                     </div>
                                 </div>
@@ -322,9 +322,9 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                                             type="checkbox"
                                                             checked={providerConfig[field.key] || false}
                                                             onChange={(e) => handlePaymentConfigChange(provider.id, field.key, e.target.checked)}
-                                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-2"
+                                                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-2"
                                                         />
-                                                        <label className="text-sm text-gray-700">
+                                                        <label className="text-sm text-gray-700 dark:text-gray-300">
                                                             {field.label}
                                                         </label>
                                                     </div>
@@ -333,7 +333,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
 
                                             return (
                                                 <div key={field.key}>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                                         {field.label} {field.required && '*'}
                                                     </label>
                                                     {field.type === 'password' ? (
@@ -343,7 +343,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                                                 value={providerConfig[field.key] || ''}
                                                                 onChange={(e) => handlePaymentConfigChange(provider.id, field.key, e.target.value)}
                                                                 placeholder={field.placeholder}
-                                                                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                                                className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-800 dark:text-gray-200 focus:ring-indigo-500 focus:border-indigo-500"
                                                                 required={field.required}
                                                             />
                                                             <button
@@ -364,7 +364,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                                             value={providerConfig[field.key] || ''}
                                                             onChange={(e) => handlePaymentConfigChange(provider.id, field.key, e.target.value)}
                                                             placeholder={field.placeholder}
-                                                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-800 dark:text-gray-200 focus:ring-indigo-500 focus:border-indigo-500"
                                                             required={field.required}
                                                         />
                                                     )}
@@ -413,8 +413,8 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                     <Building2 className="h-5 w-5 text-green-600" />
                                 </div>
                                 <div>
-                                    <h5 className="font-medium text-gray-900">Cuentas Bancarias</h5>
-                                    <p className="text-sm text-gray-500">Transferencias bancarias directas</p>
+                                    <h5 className="font-medium text-gray-900 dark:text-gray-100">Cuentas Bancarias</h5>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Transferencias bancarias directas</p>
                                 </div>
                             </div>
                             <button
@@ -428,21 +428,21 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                         </div>
 
                         {bankAccounts.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500">
-                                <Building2 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                <Building2 className="h-12 w-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
                                 <p className="text-sm">No hay cuentas bancarias configuradas</p>
-                                <p className="text-xs text-gray-400 mt-1">
+                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                                     Haz clic en "Agregar Cuenta" para configurar tu primera cuenta bancaria
                                 </p>
                             </div>
                         ) : (
                             <div className="space-y-4">
                                 {bankAccounts.map((account, index) => (
-                                    <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                    <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
                                         <div className="flex items-center justify-between mb-4">
                                             <div className="flex items-center">
                                                 <div className={`h-3 w-3 rounded-full mr-2 ${account.enabled ? 'bg-green-500' : 'bg-gray-300'}`} />
-                                                <span className="text-sm font-medium text-gray-900">
+                                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                                     {account.bank_name || `Cuenta Bancaria ${index + 1}`}
                                                 </span>
                                                 {account.id && (
@@ -464,7 +464,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                         <div className="space-y-3">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                                         Nombre del Banco *
                                                     </label>
                                                     <input
@@ -472,12 +472,12 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                                         value={account.bank_name}
                                                         onChange={(e) => updateBankAccount(index, 'bank_name', e.target.value)}
                                                         placeholder="Ej: Banco Nacional"
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-800 dark:text-gray-200 focus:ring-indigo-500 focus:border-indigo-500"
                                                         required
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                                         Titular de la Cuenta *
                                                     </label>
                                                     <input
@@ -485,12 +485,12 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                                         value={account.account_holder}
                                                         onChange={(e) => updateBankAccount(index, 'account_holder', e.target.value)}
                                                         placeholder="Nombre completo del titular"
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-800 dark:text-gray-200 focus:ring-indigo-500 focus:border-indigo-500"
                                                         required
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                                         Número de Cuenta *
                                                     </label>
                                                     <input
@@ -498,12 +498,12 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                                         value={account.account_number}
                                                         onChange={(e) => updateBankAccount(index, 'account_number', e.target.value)}
                                                         placeholder="Número de cuenta"
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-800 dark:text-gray-200 focus:ring-indigo-500 focus:border-indigo-500"
                                                         required
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                                         Routing Number
                                                     </label>
                                                     <input
@@ -511,11 +511,11 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                                         value={account.routing_number}
                                                         onChange={(e) => updateBankAccount(index, 'routing_number', e.target.value)}
                                                         placeholder="Routing number (US)"
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-800 dark:text-gray-200 focus:ring-indigo-500 focus:border-indigo-500"
                                                     />
                                                 </div>
                                                 <div className="md:col-span-2">
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                                         SWIFT Code (Internacional)
                                                     </label>
                                                     <input
@@ -523,7 +523,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                                         value={account.swift_code}
                                                         onChange={(e) => updateBankAccount(index, 'swift_code', e.target.value)}
                                                         placeholder="Código SWIFT para transferencias internacionales"
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-800 dark:text-gray-200 focus:ring-indigo-500 focus:border-indigo-500"
                                                     />
                                                 </div>
                                             </div>
@@ -584,13 +584,13 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
             </div>
 
             {/* Configuraciones de Email */}
-            <div className="bg-white border border-gray-200 rounded-lg">
-                <div className="px-6 py-4 border-b border-gray-200">
-                    <h4 className="text-base font-medium text-gray-900 flex items-center">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h4 className="text-base font-medium text-gray-900 dark:text-gray-100 flex items-center">
                         <Mail className="h-5 w-5 mr-2" />
                         Configuración de Email
                     </h4>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         Configura el proveedor de email para notificaciones y comunicaciones
                     </p>
                 </div>
@@ -603,8 +603,8 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                     <Mail className="h-5 w-5 text-orange-600" />
                                 </div>
                                 <div>
-                                    <h5 className="font-medium text-gray-900">Resend</h5>
-                                    <p className="text-sm text-gray-500">API de email transaccional</p>
+                                    <h5 className="font-medium text-gray-900 dark:text-gray-100">Resend</h5>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">API de email transaccional</p>
                                 </div>
                             </div>
                             <div className="flex items-center space-x-2">
@@ -612,7 +612,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                     <button
                                         onClick={() => handleTest('email', 'resend')}
                                         disabled={saving}
-                                        className="p-2 text-blue-600 hover:text-blue-500 hover:bg-blue-50 rounded-md"
+                                        className="p-2 text-indigo-600 hover:text-indigo-500 hover:bg-indigo-50 rounded-md"
                                         title="Probar configuración"
                                     >
                                         <TestTube className="h-4 w-4" />
@@ -626,7 +626,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                         disabled={saving}
                                         className="sr-only peer"
                                     />
-                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                                 </label>
                             </div>
                         </div>
@@ -634,7 +634,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                         {emailForm.resend.enabled && (
                             <div className="space-y-3">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                         API Key *
                                     </label>
                                     <div className="relative">
@@ -643,7 +643,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                             value={emailForm.resend.api_key}
                                             onChange={(e) => handleEmailConfigChange('resend', 'api_key', e.target.value)}
                                             placeholder="re_..."
-                                            className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                            className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-800 dark:text-gray-200 focus:ring-indigo-500 focus:border-indigo-500"
                                             required
                                         />
                                         <button
@@ -660,7 +660,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                         From Email *
                                     </label>
                                     <input
@@ -668,12 +668,12 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                         value={emailForm.resend.from_email}
                                         onChange={(e) => handleEmailConfigChange('resend', 'from_email', e.target.value)}
                                         placeholder="noreply@tudominio.com"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-800 dark:text-gray-200 focus:ring-indigo-500 focus:border-indigo-500"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                         From Name
                                     </label>
                                     <input
@@ -681,7 +681,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
                                         value={emailForm.resend.from_name}
                                         onChange={(e) => handleEmailConfigChange('resend', 'from_name', e.target.value)}
                                         placeholder="Tu Empresa"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-800 dark:text-gray-200 focus:ring-indigo-500 focus:border-indigo-500"
                                     />
                                 </div>
                                 <div className="flex justify-end">
@@ -715,7 +715,7 @@ export function ConfigurationsTab({ tenantId }: ConfigurationsTabProps) {
             </div>
 
             {saving && (
-                <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+                <div className="fixed bottom-4 right-4 bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-lg z-50">
                     <div className="flex items-center">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                         Guardando configuración...

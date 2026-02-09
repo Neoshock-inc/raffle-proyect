@@ -2,7 +2,7 @@
 // 📁 types/plans.ts
 import { Activity, Crown, Zap } from 'lucide-react'
 
-export type PlanId = 'basic' | 'pro' | 'enterprise'
+export type PlanId = 'basic' | 'professional' | 'enterprise'
 
 export interface Plan {
     id: PlanId

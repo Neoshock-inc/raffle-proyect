@@ -35,7 +35,15 @@ interface TimeLeft {
     seconds: number;
 }
 
-const CyberpunkRaffleLanding: React.FC = () => {
+interface CyberpunkProps {
+    previewMode?: boolean;
+    device?: 'desktop' | 'tablet' | 'mobile';
+    [key: string]: unknown;
+}
+
+const CyberpunkRaffleLanding: React.FC<CyberpunkProps> = ({ previewMode = false, device = 'desktop' }) => {
+    const isMobile = device === 'mobile';
+    const isTablet = device === 'tablet';
     const [currentSlide, setCurrentSlide] = useState<number>(0);
     const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 5, hours: 12, minutes: 30, seconds: 45 });
     const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
@@ -175,16 +183,16 @@ const CyberpunkRaffleLanding: React.FC = () => {
     return (
         <div className="min-h-screen bg-black text-white overflow-hidden">
             {/* Efectos de fondo */}
-            <div className="fixed inset-0 bg-gradient-to-br from-purple-900/20 via-blue-900/20 to-cyan-900/20"></div>
+            <div className={`${previewMode ? 'absolute' : 'fixed'} inset-0 bg-gradient-to-br from-purple-900/20 via-blue-900/20 to-cyan-900/20`}></div>
 
             {/* Header */}
-            <header className="relative z-50 bg-black/80 backdrop-blur-md border-b border-cyan-500/30">
+            <header className="relative z-10 bg-black/80 backdrop-blur-md border-b border-cyan-500/30">
                 <div className="container mx-auto px-4 py-4">
                     <div className="flex items-center justify-between">
                         <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
                             CYBER<span className="text-pink-500">RIFAS</span>
                         </div>
-                        <nav className="hidden md:flex space-x-8">
+                        <nav className={`${isMobile ? 'hidden' : 'hidden md:flex'} space-x-8`}>
                             <a href="#" className="hover:text-cyan-400 transition-colors">Inicio</a>
                             <a href="#rifas" className="hover:text-cyan-400 transition-colors">Rifas Activas</a>
                             <a href="#numeros" className="hover:text-cyan-400 transition-colors">Comprar Números</a>
@@ -202,10 +210,10 @@ const CyberpunkRaffleLanding: React.FC = () => {
             <section className="relative z-10 pt-20 pb-32">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-12">
-                        <h1 className="text-6xl md:text-8xl font-black mb-6 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                        <h1 className={`${isMobile ? 'text-4xl' : isTablet ? 'text-6xl' : 'text-6xl md:text-8xl'} font-black mb-6 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent`}>
                             GANA EN GRANDE
                         </h1>
-                        <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
+                        <p className={`${isMobile ? 'text-base' : 'text-xl md:text-2xl'} text-gray-300 max-w-3xl mx-auto`}>
                             Participa en las rifas más emocionantes del futuro. Premios increíbles, probabilidades justas.
                         </p>
                     </div>
@@ -315,7 +323,7 @@ const CyberpunkRaffleLanding: React.FC = () => {
                     <h2 className="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
                         RIFAS ACTIVAS
                     </h2>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-4'} gap-6`}>
                         {filteredRaffles.map((raffle: ActiveRaffle) => (
                             <div key={raffle.id} className="bg-gradient-to-b from-gray-900/80 to-black/80 backdrop-blur-md rounded-2xl border border-cyan-500/30 p-6 hover:border-pink-500/50 transition-all duration-300 group hover:transform hover:scale-105">
                                 <div className="text-center mb-4">
@@ -355,7 +363,7 @@ const CyberpunkRaffleLanding: React.FC = () => {
 
                     <div className="max-w-6xl mx-auto">
                         <div className="bg-black/60 backdrop-blur-md rounded-3xl border border-yellow-500/30 p-8">
-                            <div className="grid grid-cols-10 gap-3 mb-8">
+                            <div className={`grid ${isMobile ? 'grid-cols-5 gap-2' : 'grid-cols-10 gap-3'} mb-8`}>
                                 {availableNumbers.map((number: number) => {
                                     const isSelected: boolean = selectedNumbers.includes(number);
                                     const isSold: boolean = soldNumbers.includes(number);
@@ -481,7 +489,7 @@ const CyberpunkRaffleLanding: React.FC = () => {
             {/* Estadísticas */}
             <section className="relative z-10 py-20">
                 <div className="container mx-auto px-4">
-                    <div className="grid md:grid-cols-3 gap-8">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : 'md:grid-cols-3'} gap-8`}>
                         <div className="text-center">
                             <div className="bg-gradient-to-b from-cyan-500 to-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Trophy className="w-8 h-8 text-white" />
@@ -511,7 +519,7 @@ const CyberpunkRaffleLanding: React.FC = () => {
             <section className="relative z-10 py-20">
                 <div className="container mx-auto px-4">
                     <div className="bg-gradient-to-r from-purple-900/80 via-pink-900/80 to-red-900/80 backdrop-blur-md rounded-3xl border border-purple-500/50 p-12 text-center">
-                        <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
+                        <h2 className={`${isMobile ? 'text-3xl' : 'text-4xl md:text-5xl'} font-bold mb-6 bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent`}>
                             ¿LISTO PARA GANAR?
                         </h2>
                         <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
@@ -527,7 +535,7 @@ const CyberpunkRaffleLanding: React.FC = () => {
             {/* Footer */}
             <footer className="relative z-10 bg-black/90 border-t border-cyan-500/30 py-12">
                 <div className="container mx-auto px-4">
-                    <div className="grid md:grid-cols-4 gap-8">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : 'md:grid-cols-4'} gap-8`}>
                         <div>
                             <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-4">
                                 CYBER<span className="text-pink-500">RIFAS</span>

@@ -1,7 +1,8 @@
 // src/(auth)/types/raffle.ts
 // Tipos de Raffle para admin - extienden los tipos base de database.ts
 
-import { Raffle as BaseRaffle, RaffleMedia as BaseRaffleMedia } from '@/types/database';
+import { Raffle as BaseRaffle, RaffleMedia as BaseRaffleMedia, NumberPool as BaseNumberPool } from '@/types/database';
+export type { NumberPool, RaffleNumberAssignment, RaffleNumberStatus } from '@/types/database';
 
 // Re-exportar tipo base para que importadores existentes no se rompan
 export type RaffleStatus = 'draft' | 'active' | 'paused' | 'completed' | 'cancelled'
@@ -106,9 +107,18 @@ export interface CreateRaffleData {
     primary_color?: string
     secondary_color?: string
     background_color?: string
+    text_color?: string
+    logo_url?: string
+    banner_url?: string
     category_id?: string
     show_countdown?: boolean
+    show_progress_bar?: boolean
     max_tickets_per_user?: number
+    min_tickets_to_activate?: number
+    status?: RaffleStatus
+    MARKETING_BOOST_PERCENTAGE?: number
+    pool_id?: string
+    raffle_type?: 'daily_am' | 'daily_pm' | 'weekly' | 'biweekly'
 }
 
 export interface UpdateRaffleData extends Partial<CreateRaffleData> {

@@ -1,8 +1,7 @@
-// src/app/components/ReferidoModal.tsx
+// src/admin/components/ReferidoModal.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     createReferido,
@@ -11,6 +10,10 @@ import {
     Referido,
 } from '../services/referidoService'
 import { buildReferralLink } from '../utils/tenantUrl'
+import { Modal } from './ui/Modal'
+import { Input } from './ui/Input'
+import { Checkbox } from './ui/Checkbox'
+import { Button } from './ui/Button'
 
 interface ReferidoModalProps {
     isOpen: boolean
@@ -169,186 +172,116 @@ export default function ReferidoModal({ isOpen, onClose, referido, onSuccess }: 
         updatePreviewUrl(upperValue)
     }
 
-    if (!isOpen) return null
-
     return (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-            <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={referido ? 'Editar Referido' : 'Nuevo Referido'}
+            size="lg"
+            footer={
+                <>
+                    <Button variant="secondary" onClick={onClose}>
+                        Cancelar
+                    </Button>
+                    <Button
+                        onClick={(e) => handleSubmit(e as unknown as React.FormEvent)}
+                        loading={loading}
+                    >
+                        {referido ? 'Actualizar' : 'Crear'}
+                    </Button>
+                </>
+            }
+        >
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <Input
+                    label="Nombre"
+                    required
+                    type="text"
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    error={errors.name}
+                    placeholder="Nombre del referido"
+                />
 
-                <div className="fixed inset-0 transition-opacity z-50" aria-hidden="true">
-                    <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={onClose}></div>
+                <Input
+                    label="Email"
+                    required
+                    type="email"
+                    id="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    error={errors.email}
+                    placeholder="email@ejemplo.com"
+                />
+
+                <Input
+                    label="Teléfono"
+                    type="tel"
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                    error={errors.phone}
+                    placeholder="+593 99 999 9999"
+                />
+
+                {/* Código de Referido */}
+                <div>
+                    <label htmlFor="referral_code" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Código de Referido <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex rounded-md shadow-sm">
+                        <input
+                            type="text"
+                            id="referral_code"
+                            value={formData.referral_code}
+                            onChange={(e) => handleReferralCodeChange(e.target.value)}
+                            className={`w-full px-3 py-2 border rounded-l-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 ${errors.referral_code ? 'border-red-300' : 'border-gray-300'}`}
+                            placeholder="CODIGO2025"
+                        />
+                        <button
+                            type="button"
+                            onClick={generateReferralCode}
+                            className="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400 font-medium text-sm bg-white dark:bg-gray-800 rounded-r-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                            Generar
+                        </button>
+                    </div>
+                    {errors.referral_code && (
+                        <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.referral_code}</p>
+                    )}
+                    {previewUrl && (
+                        <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
+                            <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">Enlace de referido:</p>
+                            <p className="text-xs text-indigo-600 dark:text-indigo-400 break-all font-mono">
+                                {previewUrl}
+                            </p>
+                        </div>
+                    )}
                 </div>
 
-                <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <Input
+                    label="Comisión (%)"
+                    type="number"
+                    id="commission_rate"
+                    min={0}
+                    max={100}
+                    step={0.1}
+                    value={formData.commission_rate * 100}
+                    onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        commission_rate: parseFloat(e.target.value) / 100
+                    }))}
+                    error={errors.commission_rate}
+                />
 
-                <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full z-60 relative">
-                    <form onSubmit={handleSubmit}>
-                        <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-medium text-gray-900">
-                                    {referido ? 'Editar Referido' : 'Nuevo Referido'}
-                                </h3>
-                                <button
-                                    type="button"
-                                    onClick={onClose}
-                                    className="text-gray-400 hover:text-gray-600"
-                                >
-                                    <X className="h-5 w-5" />
-                                </button>
-                            </div>
-
-                            <div className="space-y-4">
-                                {/* Nombre */}
-                                <div>
-                                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                                        Nombre *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="name"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                                        className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-700 sm:text-sm ${errors.name ? 'border-red-300' : ''
-                                            }`}
-                                        placeholder="Nombre del referido"
-                                    />
-                                    {errors.name && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-                                    )}
-                                </div>
-
-                                {/* Email */}
-                                <div>
-                                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                                        Email *
-                                    </label>
-                                    <input
-                                        type="email"
-                                        id="email"
-                                        value={formData.email}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                                        className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-700 sm:text-sm ${errors.email ? 'border-red-300' : ''
-                                            }`}
-                                        placeholder="email@ejemplo.com"
-                                    />
-                                    {errors.email && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-                                    )}
-                                </div>
-
-                                {/* Teléfono */}
-                                <div>
-                                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                                        Teléfono
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        id="phone"
-                                        value={formData.phone}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-700 sm:text-sm"
-                                        placeholder="+593 99 999 9999"
-                                    />
-                                    {errors.phone && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
-                                    )}
-                                </div>
-
-                                {/* Código de Referido */}
-                                <div>
-                                    <label htmlFor="referral_code" className="block text-sm font-medium text-gray-700">
-                                        Código de Referido *
-                                    </label>
-                                    <div className="mt-1 flex rounded-md shadow-sm">
-                                        <input
-                                            type="text"
-                                            id="referral_code"
-                                            value={formData.referral_code}
-                                            onChange={(e) => handleReferralCodeChange(e.target.value)}
-                                            className={`w-full px-3 py-2 border border-gray-300 rounded-l-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-700 sm:text-sm ${errors.referral_code ? 'border-red-300' : ''
-                                                }`}
-                                            placeholder="CODIGO2025"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={generateReferralCode}
-                                            className="inline-flex items-center px-4 py-2 border border-sky-700 text-sky-700 font-medium text-sm bg-white rounded-r-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-700"
-                                        >
-                                            Generar
-                                        </button>
-                                    </div>
-                                    {errors.referral_code && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.referral_code}</p>
-                                    )}
-                                    {previewUrl && (
-                                        <div className="mt-2 p-3 bg-gray-50 rounded-md">
-                                            <p className="text-sm text-gray-700 font-medium">Enlace de referido:</p>
-                                            <p className="text-xs text-blue-600 break-all font-mono">
-                                                {previewUrl}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Comisión */}
-                                <div>
-                                    <label htmlFor="commission_rate" className="block text-sm font-medium text-gray-700">
-                                        Comisión (%)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        id="commission_rate"
-                                        min="0"
-                                        max="100"
-                                        step="0.1"
-                                        value={formData.commission_rate * 100}
-                                        onChange={(e) => setFormData(prev => ({
-                                            ...prev,
-                                            commission_rate: parseFloat(e.target.value) / 100
-                                        }))}
-                                        className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-700 sm:text-sm ${errors.commission_rate ? 'border-red-300' : ''
-                                            }`}
-                                    />
-                                    {errors.commission_rate && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.commission_rate}</p>
-                                    )}
-                                </div>
-
-                                {/* Estado */}
-                                <div className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        id="is_active"
-                                        checked={formData.is_active}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-                                        className="h-4 w-4 text-sky-700 focus:ring-sky-700 border-gray-300 rounded"
-                                    />
-                                    <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
-                                        Referido activo
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-sky-700 text-base font-medium text-white hover:bg-[#600000] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-700 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {loading ? 'Guardando...' : (referido ? 'Actualizar' : 'Crear')}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                            >
-                                Cancelar
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+                <Checkbox
+                    label="Referido activo"
+                    id="is_active"
+                    checked={formData.is_active}
+                    onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+                />
+            </form>
+        </Modal>
     )
 }

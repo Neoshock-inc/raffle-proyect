@@ -14,7 +14,8 @@ const TENANT_FILTERED_TABLES = [
     'user_roles',
     'email_configs',
     'payment_configs',
-    'raffle_entries'
+    'raffle_entries',
+    'number_pools',
 ];
 
 // Tablas que NO deben ser filtradas (globales o de sistema)

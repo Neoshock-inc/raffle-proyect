@@ -384,14 +384,22 @@ const ticketOptions: EnhancedTicketOption[] = [
     }
 ];
 
-export default function RifaLanding() {
+interface OffRoadProps {
+    previewMode?: boolean;
+    device?: 'desktop' | 'tablet' | 'mobile';
+    [key: string]: unknown;
+}
+
+export default function RifaLanding({ previewMode = false, device = 'desktop' }: OffRoadProps) {
+    const isMobile = device === 'mobile';
+    const isTablet = device === 'tablet';
     const [referralCode] = useState<string | null>(null);
     const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800">
             {/* Header Hero con Carrusel */}
-            <header className="relative overflow-hidden h-screen text-white">
+            <header className={`relative overflow-hidden ${previewMode ? 'h-[600px]' : 'h-screen'} text-white`}>
                 {/* Carrusel de imágenes de fondo */}
                 <ImageCarousel />
 
@@ -432,7 +440,7 @@ export default function RifaLanding() {
             {/* Estadísticas */}
             <section className="py-16 px-4 bg-gray-800">
                 <div className="max-w-6xl mx-auto">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center text-white">
+                    <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4'} gap-8 text-center text-white`}>
                         <div>
                             <div className="text-4xl sm:text-5xl font-black text-yellow-400 mb-2">847</div>
                             <div className="text-sm sm:text-base text-gray-300">Ganadores Felices</div>
@@ -459,7 +467,7 @@ export default function RifaLanding() {
                     <h2 className="text-4xl sm:text-6xl font-black text-center text-white mb-16">
                         🏆 PREMIO PRINCIPAL
                     </h2>
-                    <div className="grid lg:grid-cols-2 gap-16 items-center">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : 'lg:grid-cols-2'} gap-16 items-center`}>
                         <div className="text-white">
                             <h3 className="text-3xl sm:text-5xl font-black mb-8 text-yellow-400">
                                 Ford Ranger Raptor 2024
@@ -537,7 +545,7 @@ export default function RifaLanding() {
                         Más números = más oportunidades de ganar
                     </p>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 mb-16">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'} gap-8 mb-16`}>
                         {ticketOptions.map((option) => (
                             <TicketCard
                                 key={option.package.id}
@@ -548,7 +556,7 @@ export default function RifaLanding() {
                     </div>
 
                     {/* Garantías */}
-                    <div className="grid md:grid-cols-3 gap-8 text-center text-white">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : 'md:grid-cols-3'} gap-8 text-center text-white`}>
                         <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 hover:border-green-400 transition-colors">
                             <div className="text-5xl mb-6">🔒</div>
                             <h3 className="font-black text-2xl mb-4">100% Seguro</h3>
@@ -574,7 +582,7 @@ export default function RifaLanding() {
                     <h2 className="text-4xl sm:text-6xl font-black text-center text-white mb-16">
                         💬 TESTIMONIOS REALES
                     </h2>
-                    <div className="grid md:grid-cols-2 gap-8">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'} gap-8`}>
                         {testimonials.map((testimonial) => (
                             <div key={testimonial.id} className="bg-gray-800 p-8 rounded-xl border border-gray-700 hover:border-yellow-400 transition-colors">
                                 <div className="flex items-center mb-6">
@@ -605,7 +613,7 @@ export default function RifaLanding() {
                     <h2 className="text-4xl sm:text-6xl font-black text-white mb-16">
                         🏆 GANADORES ANTERIORES
                     </h2>
-                    <div className="grid md:grid-cols-3 gap-8">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : 'md:grid-cols-3'} gap-8`}>
                         {previousWinners.map((winner) => (
                             <div key={winner.id} className="bg-gray-800 p-8 rounded-xl border border-gray-700 hover:border-green-400 transition-colors">
                                 <div className="text-6xl mb-4">{winner.image}</div>
@@ -677,7 +685,7 @@ export default function RifaLanding() {
             {/* Footer */}
             <footer className="bg-gray-900 border-t border-gray-700 py-16 px-4">
                 <div className="max-w-6xl mx-auto">
-                    <div className="grid md:grid-cols-4 gap-8 text-gray-400">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : 'md:grid-cols-4'} gap-8 text-gray-400`}>
                         <div>
                             <h3 className="text-2xl font-black text-white mb-6">🏎️ RIFA 4X4 EXTREMA</h3>
                             <p className="text-lg mb-4">El sorteo de 4x4 más confiable y transparente de Ecuador</p>
@@ -739,11 +747,13 @@ export default function RifaLanding() {
             </footer>
 
             {/* Botón flotante de WhatsApp */}
-            <div className="fixed bottom-6 right-6 z-50">
-                <button className="bg-green-500 hover:bg-green-400 text-white p-4 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-110 animate-bounce">
-                    <span className="text-2xl">💬</span>
-                </button>
-            </div>
+            {!previewMode && (
+                <div className="fixed bottom-6 right-6 z-50">
+                    <button className="bg-green-500 hover:bg-green-400 text-white p-4 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-110 animate-bounce">
+                        <span className="text-2xl">💬</span>
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

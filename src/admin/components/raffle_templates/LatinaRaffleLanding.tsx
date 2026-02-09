@@ -49,7 +49,15 @@ interface TimeLeft {
     seconds: number;
 }
 
-const LatinaRaffleLanding: React.FC = () => {
+interface LatinaProps {
+    previewMode?: boolean;
+    device?: 'desktop' | 'tablet' | 'mobile';
+    [key: string]: unknown;
+}
+
+const LatinaRaffleLanding: React.FC<LatinaProps> = ({ previewMode = false, device = 'desktop' }) => {
+    const isMobile = device === 'mobile';
+    const isTablet = device === 'tablet';
     const [currentSlide, setCurrentSlide] = useState<number>(0);
     const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 3, hours: 8, minutes: 45, seconds: 30 });
     const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
@@ -287,7 +295,7 @@ const LatinaRaffleLanding: React.FC = () => {
                                 RIFA <span className="text-yellow-300">LATINA</span>
                             </div>
                         </div>
-                        <nav className="hidden md:flex space-x-8 text-white">
+                        <nav className={`${isMobile ? 'hidden' : 'hidden md:flex'} space-x-8 text-white`}>
                             <a href="#inicio" className="hover:text-yellow-300 transition-colors font-semibold">Inicio</a>
                             <a href="#rifas" className="hover:text-yellow-300 transition-colors font-semibold">Rifas</a>
                             <a href="#paquetes" className="hover:text-yellow-300 transition-colors font-semibold">Paquetes</a>
@@ -404,7 +412,7 @@ const LatinaRaffleLanding: React.FC = () => {
                     </h2>
                     <p className="text-xl text-gray-600 text-center mb-12">¡Elige tu premio favorito y participa ya!</p>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'} gap-8`}>
                         {activeRaffles.map((raffle: ActiveRaffle) => (
                             <div key={raffle.id} className="bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-lg border-2 border-gray-100 p-6 hover:shadow-2xl transition-all duration-300 group hover:transform hover:scale-105">
 
@@ -459,7 +467,7 @@ const LatinaRaffleLanding: React.FC = () => {
                     </h2>
                     <p className="text-xl text-gray-600 text-center mb-12">¡Más números = Mayor probabilidad de ganar!</p>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-4'} gap-6 max-w-6xl mx-auto`}>
                         {numberPackages.map((pkg: NumberPackage) => (
                             <div
                                 key={pkg.id}
@@ -585,7 +593,7 @@ const LatinaRaffleLanding: React.FC = () => {
             {/* Estadísticas */}
             <section className="py-20 bg-white">
                 <div className="container mx-auto px-4">
-                    <div className="grid md:grid-cols-4 gap-8 text-center">
+                    <div className={`grid ${isMobile ? 'grid-cols-2' : 'md:grid-cols-4'} gap-8 text-center`}>
                         <div>
                             <div className="text-6xl mb-4">🎁</div>
                             <h3 className="text-4xl font-black text-red-500 mb-2">$2.5M+</h3>
@@ -654,7 +662,7 @@ const LatinaRaffleLanding: React.FC = () => {
             {/* Footer */}
             <footer className="bg-gray-800 text-white py-16">
                 <div className="container mx-auto px-4">
-                    <div className="grid md:grid-cols-4 gap-8 mb-8">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : 'md:grid-cols-4'} gap-8 mb-8`}>
                         <div>
                             <div className="flex items-center space-x-3 mb-6">
                                 <div className="text-4xl">🌴</div>

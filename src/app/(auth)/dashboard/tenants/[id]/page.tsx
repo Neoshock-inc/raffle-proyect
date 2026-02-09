@@ -203,9 +203,9 @@ export default function TenantDetailsPage({ params }: TenantDetailsPageProps) {
   // Loading & Error states
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Cargando detalles del tenant...</p>
         </div>
       </div>
@@ -214,7 +214,7 @@ export default function TenantDetailsPage({ params }: TenantDetailsPageProps) {
 
   if (error || !tenant) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
             <XCircle className="h-6 w-6 text-red-600" />
@@ -225,7 +225,7 @@ export default function TenantDetailsPage({ params }: TenantDetailsPageProps) {
           </p>
           <button
             onClick={() => router.push('/dashboard/tenants')}
-            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver a Tenants
@@ -238,7 +238,7 @@ export default function TenantDetailsPage({ params }: TenantDetailsPageProps) {
   const isBasicPlan = tenant.plan === 'basic'
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-3 sm:px-3 lg:px-8 py-3">
         <TenantHeader
           tenant={tenant}
@@ -252,7 +252,7 @@ export default function TenantDetailsPage({ params }: TenantDetailsPageProps) {
 
         <StatsCards tenant={tenant} />
 
-        <div className="bg-white shadow rounded-lg">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
           <TabNavigation
             tabs={tabs}
             activeTab={activeTab}

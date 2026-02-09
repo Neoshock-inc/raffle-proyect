@@ -62,7 +62,7 @@ export interface TenantDetails {
   layout: string
   created_at: string
   status: string | null
-  plan: 'basic' | 'pro' | 'enterprise'
+  plan: 'basic' | 'professional' | 'enterprise'
   description?: string
   tenant_domains: Array<{
     domain: string

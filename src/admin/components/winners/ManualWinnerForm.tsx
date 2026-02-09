@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { X, Search, Trophy } from 'lucide-react'
+import { Search, Trophy } from 'lucide-react'
+import { Modal } from '../ui/Modal'
+import { Input } from '../ui/Input'
+import { Button } from '../ui/Button'
+import { cn } from '../ui/cn'
 
 interface ManualWinnerFormProps {
     isOpen: boolean
@@ -55,11 +59,8 @@ export function ManualWinnerForm({
     const loadRaffleNumbers = async (raffleId: string) => {
         setLoadingNumbers(true)
         try {
-            // Aquí deberías llamar a tu servicio para obtener los números de la rifa
-            // Por ahora simulo la carga
             const { getRaffleEntries } = await import('../../services/winnersService')
             const entries = await getRaffleEntries(raffleId)
-
             setAvailableNumbers(entries)
         } catch (error) {
             console.error('Error loading raffle numbers:', error)
@@ -87,157 +88,130 @@ export function ManualWinnerForm({
         setWinnerNumber(number)
     }
 
-    if (!isOpen) return null
-
     return (
-        <>
-            {/* Overlay */}
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={onClose} />
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="Seleccionar Ganador Manual"
+            titleIcon={<Trophy className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />}
+            size="2xl"
+            footer={
+                <>
+                    <Button variant="secondary" onClick={onClose}>
+                        Cancelar
+                    </Button>
+                    <Button
+                        onClick={() => { if (selectedRaffle && winnerNumber) onSubmit(selectedRaffle, winnerNumber) }}
+                        disabled={!selectedRaffle || !winnerNumber}
+                        loading={loading}
+                    >
+                        Confirmar Ganador
+                    </Button>
+                </>
+            }
+        >
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Selección de Rifa */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Seleccionar Rifa
+                    </label>
+                    <select
+                        title='Seleccionar Rifa'
+                        value={selectedRaffle}
+                        onChange={(e) => setSelectedRaffle(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-gray-200"
+                        required
+                    >
+                        <option value="">Seleccione una rifa...</option>
+                        {raffles.map((raffle) => (
+                            <option key={raffle.id} value={raffle.id}>
+                                {raffle.title} - {new Date(raffle.draw_date).toLocaleDateString('es-ES')}
+                            </option>
+                        ))}
+                    </select>
+                </div>
 
-            {/* Modal */}
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
-                    {/* Header */}
-                    <div className="bg-sky-700 text-white px-6 py-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <Trophy className="h-6 w-6" />
-                                <div>
-                                    <h3 className="text-xl font-semibold">Seleccionar Ganador Manual</h3>
-                                    <p className="text-red-100">Elige una rifa y selecciona el número ganador</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={onClose}
-                                className="text-white hover:text-red-200 transition-colors"
-                            >
-                                <X className="h-6 w-6" />
-                            </button>
+                {/* Números Disponibles */}
+                {selectedRaffle && (
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Números Disponibles
+                        </label>
+
+                        {/* Buscador */}
+                        <div className="mb-4">
+                            <Input
+                                icon={<Search className="h-4 w-4" />}
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                placeholder="Buscar por número o participante..."
+                            />
                         </div>
-                    </div>
 
-                    {/* Content */}
-                    <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[calc(90vh-64px-64px)]">
-                        {/* Selección de Rifa */}
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Seleccionar Rifa
-                            </label>
-                            <select
-                                title='Seleccionar Rifa'
-                                value={selectedRaffle}
-                                onChange={(e) => setSelectedRaffle(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700"
-                                required
-                            >
-                                <option value="">Seleccione una rifa...</option>
-                                {raffles.map((raffle) => (
-                                    <option key={raffle.id} value={raffle.id}>
-                                        {raffle.title} - {new Date(raffle.draw_date).toLocaleDateString('es-ES')}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Números Disponibles */}
-                        {selectedRaffle && (
-                            <div className="mb-6">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Números Disponibles
-                                </label>
-
-                                {/* Buscador */}
-                                <div className="relative mb-4">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        placeholder="Buscar por número o participante..."
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700"
-                                    />
+                        {/* Lista de números */}
+                        <div className="border border-gray-300 dark:border-gray-600 rounded-md max-h-64 overflow-y-auto">
+                            {loadingNumbers ? (
+                                <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                                    Cargando números...
                                 </div>
-
-                                {/* Lista de números */}
-                                <div className="border border-gray-300 rounded-md max-h-64 overflow-y-auto">
-                                    {loadingNumbers ? (
-                                        <div className="p-4 text-center text-gray-500">
-                                            Cargando números...
-                                        </div>
-                                    ) : filteredNumbers.length === 0 ? (
-                                        <div className="p-4 text-center text-gray-500">
-                                            {availableNumbers.length === 0
-                                                ? 'No hay números disponibles en esta rifa'
-                                                : 'No se encontraron números con ese criterio de búsqueda'
-                                            }
-                                        </div>
-                                    ) : (
-                                        <div className="divide-y divide-gray-200">
-                                            {filteredNumbers.map((entry) => (
-                                                <div
-                                                    key={entry.id}
-                                                    className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors ${winnerNumber === entry.number ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-                                                        }`}
-                                                    onClick={() => selectNumber(entry.number)}
-                                                >
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center space-x-3">
-                                                            <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-bold text-sm">
-                                                                {entry.number}
-                                                            </div>
-                                                            <div>
-                                                                <div className="text-sm font-medium text-gray-900">
-                                                                    {entry.participant_name}
-                                                                </div>
-                                                                <div className="text-xs text-gray-500">
-                                                                    {entry.participant_email}
-                                                                </div>
-                                                            </div>
+                            ) : filteredNumbers.length === 0 ? (
+                                <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                                    {availableNumbers.length === 0
+                                        ? 'No hay números disponibles en esta rifa'
+                                        : 'No se encontraron números con ese criterio de búsqueda'
+                                    }
+                                </div>
+                            ) : (
+                                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                                    {filteredNumbers.map((entry) => (
+                                        <div
+                                            key={entry.id}
+                                            className={cn(
+                                                'p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors',
+                                                winnerNumber === entry.number && 'bg-indigo-50 dark:bg-indigo-900/30 border-l-4 border-indigo-500'
+                                            )}
+                                            onClick={() => selectNumber(entry.number)}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center space-x-3">
+                                                    <div className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300 px-2 py-1 rounded-full font-bold text-sm">
+                                                        {entry.number}
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-sm font-medium text-gray-900 dark:text-gray-200">
+                                                            {entry.participant_name}
                                                         </div>
-                                                        {winnerNumber === entry.number && (
-                                                            <div className="text-blue-600">
-                                                                <Trophy className="h-4 w-4" />
-                                                            </div>
-                                                        )}
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                            {entry.participant_email}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            ))}
+                                                {winnerNumber === entry.number && (
+                                                    <div className="text-indigo-600 dark:text-indigo-400">
+                                                        <Trophy className="h-4 w-4" />
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    )}
+                                    ))}
                                 </div>
-                            </div>
-                        )}
-
-                        {/* Número Ganador Seleccionado */}
-                        {winnerNumber && (
-                            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                                <h4 className="font-medium text-yellow-800 mb-2">Número Ganador Seleccionado:</h4>
-                                <div className="text-2xl font-bold text-sky-700">
-                                    {winnerNumber}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Botones */}
-                        <div className="flex justify-end gap-4">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={!selectedRaffle || !winnerNumber || loading}
-                                className="px-6 py-2 bg-sky-700 text-white rounded-md hover:bg-[#900000] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                {loading ? 'Procesando...' : 'Confirmar Ganador'}
-                            </button>
+                            )}
                         </div>
-                    </form>
-                </div>
-            </div>
-        </>
+                    </div>
+                )}
+
+                {/* Número Ganador Seleccionado */}
+                {winnerNumber && (
+                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                        <h4 className="font-medium text-yellow-800 dark:text-yellow-300 mb-2">Número Ganador Seleccionado:</h4>
+                        <div className="text-2xl font-bold text-indigo-700 dark:text-indigo-400">
+                            {winnerNumber}
+                        </div>
+                    </div>
+                )}
+            </form>
+        </Modal>
     )
 }

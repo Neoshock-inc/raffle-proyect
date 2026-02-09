@@ -266,7 +266,7 @@ export const LayoutPreview = ({
                             {/* Preview Content */}
                             <div className="w-full h-full overflow-auto">
                                 {renderMode === 'component' ? (
-                                    <div className="w-full h-full">
+                                    <div className="w-full h-full" style={{ transform: 'scale(1)', isolation: 'isolate' }}>
                                         {renderComponent()}
                                     </div>
                                 ) : previewUrl ? (
@@ -352,7 +352,7 @@ export const LayoutPreview = ({
 
                         <button
                             onClick={handleClose}
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
                         >
                             Cerrar Preview
                         </button>
@@ -376,7 +376,7 @@ export const LayoutSelector = ({
     selectedLayout: string
     onLayoutSelect: (layoutId: string) => void
     onPreview?: (layout: LayoutTemplate) => void
-    userPlan: 'basic' | 'pro' | 'enterprise'
+    userPlan: 'basic' | 'professional' | 'enterprise'
     className?: string
 }) => {
     return (
@@ -492,7 +492,7 @@ export const LayoutSelector = ({
                                         <span
                                             key={plan}
                                             className={`inline-block w-2 h-2 rounded-full ${plan === 'basic' ? 'bg-gray-400' :
-                                                plan === 'pro' ? 'bg-blue-400' : 'bg-purple-400'
+                                                plan === 'professional' ? 'bg-blue-400' : 'bg-purple-400'
                                                 }`}
                                             title={`Plan ${plan}`}
                                         />

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState, useMemo } from 'react';
-import { MapContainer, TileLayer, GeoJSON, CircleMarker, Popup } from 'react-leaflet';
+import { MapContainer, GeoJSON, CircleMarker, Popup } from 'react-leaflet';
 import { FeatureCollection } from 'geojson';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -129,7 +129,6 @@ export default function EcuadorMapChart({ salesList }: EcuadorMapChartProps) {
         processedSalesData.forEach(item => {
             map[item.provincia] = item.ventas;
         });
-        console.log('Sales by province map:', map);
         return map;
     }, [processedSalesData]);
 
@@ -214,8 +213,6 @@ export default function EcuadorMapChart({ salesList }: EcuadorMapChartProps) {
         const normalizedProvinceName = normalizeProvinceName(rawProvinceName);
         const sales = salesByProvince[normalizedProvinceName] || 0;
 
-        console.log(`Province: ${rawProvinceName} -> ${normalizedProvinceName}, Sales: ${sales}`);
-
         let fillColor = '#f0f0f0'; // Color por defecto (sin ventas)
 
         if (sales > 0 && salesRange.max > 0) {
@@ -232,17 +229,17 @@ export default function EcuadorMapChart({ salesList }: EcuadorMapChartProps) {
             fillColor,
             weight: 1,
             opacity: 1,
-            color: 'white',
-            fillOpacity: 0.7
+            color: '#cbd5e1',
+            fillOpacity: 0.85
         };
     };
 
     return (
-        <div style={{ height: '100%', width: '100%', position: 'relative' }}>
+        <div style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}>
             {loading && (
                 <div style={{
                     position: 'absolute',
-                    zIndex: 1000,
+                    zIndex: 10,
                     background: 'rgba(255,255,255,0.7)',
                     width: '100%',
                     height: '100%',
@@ -260,7 +257,7 @@ export default function EcuadorMapChart({ salesList }: EcuadorMapChartProps) {
             {error && (
                 <div style={{
                     position: 'absolute',
-                    zIndex: 1000,
+                    zIndex: 10,
                     background: 'rgba(255,255,255,0.9)',
                     width: '100%',
                     height: '100%',
@@ -279,6 +276,7 @@ export default function EcuadorMapChart({ salesList }: EcuadorMapChartProps) {
                 center={[-1.8312, -78.1834]}
                 zoom={7}
                 minZoom={6}
+                zoomControl={false}
                 // maxBounds={ecuadorContinentalBounds}
                 style={{ height: '90%', width: '100%' }}
                 ref={(instance) => {
@@ -287,12 +285,6 @@ export default function EcuadorMapChart({ salesList }: EcuadorMapChartProps) {
                     }
                 }}
             >
-                <TileLayer
-                    attribution='&copy; OpenStreetMap contributors'
-                    url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-                    noWrap={true}
-                />
-
                 {/* Renderizar provincias con colores */}
                 {geoData && (
                     <GeoJSON
@@ -342,13 +334,13 @@ export default function EcuadorMapChart({ salesList }: EcuadorMapChartProps) {
             {salesRange.max > 0 && (
                 <div style={{
                     position: 'absolute',
-                    bottom: '10px',
+                    bottom: '50px',
                     right: '10px',
                     background: 'rgba(255,255,255,0.9)',
                     padding: '10px',
                     borderRadius: '5px',
                     fontSize: '12px',
-                    zIndex: 1000
+                    zIndex: 10
                 }}>
                     <div className="font-medium mb-2">Ventas por Región</div>
                     <div className="space-y-1">

@@ -19,7 +19,7 @@ const AVAILABLE_LAYOUTS = [
         preview: '/images/templates/screencapture-nextjsauk1epd2-5qhr-3000-96435430-local-credentialless-webcontainer-io-2025-09-08-21_10_54.png',
         component: AppleRaffleLanding,
         features: ['Diseño minimalista', 'Animaciones suaves', 'Responsive design', 'Colores corporativos'],
-        available: ['basic' as const, 'pro' as const, 'enterprise' as const],
+        available: ['basic' as const, 'professional' as const, 'enterprise' as const],
         category: 'modern' as const,
         color_scheme: 'light' as const,
         responsive: true,
@@ -32,7 +32,7 @@ const AVAILABLE_LAYOUTS = [
         preview: '/images/templates/screencapture-nextjsauk1epd2-5qhr-3000-96435430-local-credentialless-webcontainer-io-2025-09-08-21_10_13.png',
         component: CyberpunkRaffleLanding,
         features: ['Efectos neon', 'Estética futurista', 'Animaciones dinámicas', 'Tema oscuro'],
-        available: ['pro' as const, 'enterprise' as const],
+        available: ['professional' as const, 'enterprise' as const],
         category: 'futuristic' as const,
         color_scheme: 'dark' as const,
         responsive: true,
@@ -45,7 +45,7 @@ const AVAILABLE_LAYOUTS = [
         preview: '/images/templates/screencapture-nextjsauk1epd2-5qhr-3000-96435430-local-credentialless-webcontainer-io-2025-09-08-21_09_34.png',
         component: LatinaRaffleLanding,
         features: ['Colores vibrantes', 'Estilo festivo', 'Elementos culturales', 'Diseño alegre'],
-        available: ['basic' as const, 'pro' as const, 'enterprise' as const],
+        available: ['basic' as const, 'professional' as const, 'enterprise' as const],
         category: 'cultural' as const,
         color_scheme: 'light' as const,
         responsive: true,
@@ -58,7 +58,7 @@ const AVAILABLE_LAYOUTS = [
         preview: '/images/templates/screencapture-nextjsauk1epd2-5qhr-3000-96435430-local-credentialless-webcontainer-io-2025-09-08-21_07_09.png',
         component: LuxuryRaffleLanding,
         features: ['Diseño premium', 'Elementos dorados', 'Tipografía elegante', 'Exclusividad'],
-        available: ['enterprise' as const, 'pro' as const],
+        available: ['enterprise' as const, 'professional' as const],
         category: 'premium' as const,
         color_scheme: 'dark' as const,
         responsive: true,
@@ -71,7 +71,7 @@ const AVAILABLE_LAYOUTS = [
         preview: '/images/templates/screencapture-nextjsauk1epd2-5qhr-3000-96435430-local-credentialless-webcontainer-io-2025-09-08-21_06_25.png',
         component: RifaOffRoadLanding,
         features: ['Tema aventurero', 'Colores terrosos', 'Diseño robusto', 'Estilo deportivo'],
-        available: ['pro' as const, 'enterprise' as const],
+        available: ['professional' as const, 'enterprise' as const],
         category: 'adventure' as const,
         color_scheme: 'light' as const,
         responsive: true,
@@ -81,7 +81,7 @@ const AVAILABLE_LAYOUTS = [
 
 interface UseLayoutManagerProps {
     currentLayout: string
-    userPlan: 'basic' | 'pro' | 'enterprise'
+    userPlan: 'basic' | 'professional' | 'enterprise'
     onLayoutChange?: (layoutId: string) => void
 }
 

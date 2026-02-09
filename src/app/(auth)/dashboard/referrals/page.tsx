@@ -2,7 +2,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Edit, Trash2, Copy, ExternalLink } from 'lucide-react'
+import { Plus, Edit, Trash2, Copy, ExternalLink, Hash } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     getReferidos,
@@ -12,12 +12,15 @@ import {
 } from '@/admin/services/referidoService'
 import { buildReferralLink } from '@/admin/utils/tenantUrl'
 import ReferidoModal from '@/admin/components/ReferidoModal'
+import ReferidoAssignmentsModal from '@/admin/components/ReferidoAssignmentsModal'
+import { Button, Badge } from '@/admin/components/ui'
 
 export default function ReferidosPage() {
     const [referidos, setReferidos] = useState<Referido[]>([])
     const [loading, setLoading] = useState(true)
     const [modalOpen, setModalOpen] = useState(false)
     const [editingReferido, setEditingReferido] = useState<Referido | null>(null)
+    const [assignmentsReferido, setAssignmentsReferido] = useState<Referido | null>(null)
 
     useEffect(() => {
         loadReferidos()
@@ -112,79 +115,78 @@ export default function ReferidosPage() {
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Gestión de Referidos</h2>
-                    <p className="text-gray-600">Administra tus códigos de referidos y ve su rendimiento</p>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Gestión de Referidos</h2>
+                    <p className="text-gray-600 dark:text-gray-400">Administra tus códigos de referidos y ve su rendimiento</p>
                 </div>
-                <button
+                <Button
                     onClick={handleCreate}
-                    className="flex items-center px-4 py-2 bg-sky-700 text-white rounded-lg hover:bg-[#600000] transition-colors"
+                    icon={<Plus className="h-4 w-4" />}
                 >
-                    <Plus className="h-4 w-4 mr-2" />
                     Nuevo Referido
-                </button>
+                </Button>
             </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-white rounded-lg shadow p-6">
-                    <div className="text-2xl font-bold text-gray-900">{referidos.length}</div>
-                    <div className="text-sm text-gray-600">Total Referidos</div>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{referidos.length}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Total Referidos</div>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div className="text-2xl font-bold text-green-600">
                         ${referidos.reduce((sum, r) => sum + (r.total_sales || 0), 0).toFixed(2)}
                     </div>
-                    <div className="text-sm text-gray-600">Ventas Totales</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Ventas Totales</div>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div className="text-2xl font-bold text-blue-600">
                         {referidos.reduce((sum, r) => sum + (r.total_participants || 0), 0)}
                     </div>
-                    <div className="text-sm text-gray-600">Total Participantes</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Total Participantes</div>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div className="text-2xl font-bold text-purple-600">
                         ${referidos.reduce((sum, r) => sum + (r.total_commission || 0), 0).toFixed(2)}
                     </div>
-                    <div className="text-sm text-gray-600">Comisión Total</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Comisión Total</div>
                 </div>
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Referido
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Código
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Participantes
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Ventas
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Comisión
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Estado
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Acciones
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             {referidos.map((referido) => (
-                                <tr key={referido.id} className="hover:bg-gray-50">
+                                <tr key={referido.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div>
-                                            <div className="text-sm font-medium text-gray-900">
+                                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                                 {referido.name}
                                             </div>
                                             {referido.email && (
@@ -196,50 +198,53 @@ export default function ReferidosPage() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center space-x-2">
-                                            <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                                            <span className="text-sm font-mono bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-1 rounded">
                                                 {referido.referral_code}
                                             </span>
                                             <button
                                                 onClick={() => copyReferralLink(referido.referral_code)}
-                                                className="text-gray-400 hover:text-gray-600"
+                                                className="text-gray-400 hover:text-gray-600 dark:text-gray-400"
                                                 title="Copiar enlace"
                                             >
                                                 <Copy className="h-4 w-4" />
                                             </button>
                                             <button
                                                 onClick={() => openReferralLink(referido.referral_code)}
-                                                className="text-gray-400 hover:text-gray-600"
+                                                className="text-gray-400 hover:text-gray-600 dark:text-gray-400"
                                                 title="Abrir enlace"
                                             >
                                                 <ExternalLink className="h-4 w-4" />
                                             </button>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                         {referido.total_participants || 0}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                         ${(referido.total_sales || 0).toFixed(2)}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                         ${(referido.total_commission || 0).toFixed(2)}
                                         <div className="text-xs text-gray-500">
                                             ({(referido.commission_rate * 100).toFixed(1)}%)
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <button
-                                            onClick={() => handleToggleActive(referido)}
-                                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${referido.is_active
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-red-100 text-red-800'
-                                                }`}
-                                        >
-                                            {referido.is_active ? 'Activo' : 'Inactivo'}
+                                        <button onClick={() => handleToggleActive(referido)}>
+                                            <Badge variant={referido.is_active ? 'success' : 'danger'}>
+                                                {referido.is_active ? 'Activo' : 'Inactivo'}
+                                            </Badge>
                                         </button>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div className="flex items-center space-x-2">
+                                            <button
+                                                onClick={() => setAssignmentsReferido(referido)}
+                                                className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                                title="Ver numeros asignados"
+                                            >
+                                                <Hash className="h-4 w-4" />
+                                            </button>
                                             <button
                                                 onClick={() => handleEdit(referido)}
                                                 className="text-blue-600 hover:text-blue-900"
@@ -267,7 +272,7 @@ export default function ReferidosPage() {
                         <div className="text-gray-500">No hay referidos registrados</div>
                         <button
                             onClick={handleCreate}
-                            className="mt-4 text-sky-700 hover:text-[#600000] font-medium"
+                            className="mt-4 text-indigo-600 hover:text-[#600000] font-medium"
                         >
                             Crear tu primer referido
                         </button>
@@ -275,7 +280,7 @@ export default function ReferidosPage() {
                 )}
             </div>
 
-            {/* Modal */}
+            {/* Modal crear/editar */}
             <ReferidoModal
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
@@ -285,6 +290,15 @@ export default function ReferidosPage() {
                     loadReferidos()
                 }}
             />
+
+            {/* Modal asignaciones */}
+            {assignmentsReferido && (
+                <ReferidoAssignmentsModal
+                    isOpen={!!assignmentsReferido}
+                    onClose={() => setAssignmentsReferido(null)}
+                    referido={assignmentsReferido}
+                />
+            )}
         </div>
     )
 }

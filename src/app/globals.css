@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f1f5f5;
   --foreground: #171717;
@@ -22,4 +24,12 @@ body {
 .paypal-buttons-disabled {
   opacity: 1 !important;
   pointer-events: auto !important;
+}
+
+.leaflet-container {
+  background: #f1f5f9 !important;
+}
+
+.dark .leaflet-container {
+  background: #1e293b !important;
 }

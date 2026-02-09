@@ -50,7 +50,7 @@ export const ParticipantDetails: React.FC<ParticipantDetailsProps> = ({
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b">
                     <div className="flex items-center space-x-4">
-                        <div className="h-12 w-12 rounded-full bg-sky-700 flex items-center justify-center">
+                        <div className="h-12 w-12 rounded-full bg-indigo-700 dark:bg-indigo-600 flex items-center justify-center">
                             <User className="h-6 w-6 text-white" />
                         </div>
                         <div>
@@ -80,7 +80,7 @@ export const ParticipantDetails: React.FC<ParticipantDetailsProps> = ({
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as any)}
                                     className={`flex items-center space-x-2 py-4 border-b-2 transition-colors ${activeTab === tab.id
-                                        ? 'border-sky-700 text-sky-700'
+                                        ? 'border-indigo-700 text-indigo-700'
                                         : 'border-transparent text-gray-500 hover:text-gray-700'
                                         }`}
                                 >
@@ -163,7 +163,7 @@ export const ParticipantDetails: React.FC<ParticipantDetailsProps> = ({
                             </h3>
                             {loading ? (
                                 <div className="text-center py-8">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-700 mx-auto"></div>
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-700 mx-auto"></div>
                                     <p className="mt-2 text-gray-600">Cargando números...</p>
                                 </div>
                             ) : numbers.length > 0 ? (
@@ -236,7 +236,7 @@ export const ParticipantDetails: React.FC<ParticipantDetailsProps> = ({
                             </h3>
                             {loading ? (
                                 <div className="text-center py-8">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-700 mx-auto"></div>
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-700 mx-auto"></div>
                                     <p className="mt-2 text-gray-600">Cargando facturas...</p>
                                 </div>
                             ) : invoices.length > 0 ? (

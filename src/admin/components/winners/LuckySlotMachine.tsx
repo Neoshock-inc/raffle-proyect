@@ -45,7 +45,6 @@ export function LuckySlotMachine({
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
         const weekAgo = new Date(today)
         weekAgo.setDate(weekAgo.getDate() - 7)
-        console.log(entries[0])
         return entries.filter(entry => {
             // Solo entradas que no sean ganadoras
             if (entry.is_winner) return false
@@ -208,7 +207,7 @@ export function LuckySlotMachine({
 
             {/* Modal */}
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+                <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
                     {/* Header */}
                     <div className="bg-gradient-to-r from-yellow-600 to-yellow-500 text-white px-6 py-4">
                         <div className="flex items-center justify-between">
@@ -229,10 +228,10 @@ export function LuckySlotMachine({
                     </div>
 
                     {/* Date Range Selector */}
-                    <div className="bg-gray-50 border-b px-6 py-4">
+                    <div className="bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700 px-6 py-4">
                         <div className="flex items-center gap-4">
-                            <Calendar className="h-5 w-5 text-gray-600" />
-                            <span className="text-sm font-medium text-gray-700">Rango de fechas:</span>
+                            <Calendar className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Rango de fechas:</span>
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => setDateRange('today')}
@@ -240,8 +239,8 @@ export function LuckySlotMachine({
                                     className={`
                                         px-4 py-2 rounded-lg text-sm font-medium transition-all
                                         ${dateRange === 'today'
-                                            ? 'bg-blue-600 text-white shadow-md'
-                                            : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                                            ? 'bg-indigo-600 text-white shadow-md'
+                                            : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
                                         }
                                         disabled:opacity-50
                                     `}
@@ -254,8 +253,8 @@ export function LuckySlotMachine({
                                     className={`
                                         px-4 py-2 rounded-lg text-sm font-medium transition-all
                                         ${dateRange === 'week'
-                                            ? 'bg-blue-600 text-white shadow-md'
-                                            : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                                            ? 'bg-indigo-600 text-white shadow-md'
+                                            : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
                                         }
                                         disabled:opacity-50
                                     `}
@@ -268,8 +267,8 @@ export function LuckySlotMachine({
                                     className={`
                                         px-4 py-2 rounded-lg text-sm font-medium transition-all
                                         ${dateRange === 'all'
-                                            ? 'bg-blue-600 text-white shadow-md'
-                                            : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                                            ? 'bg-indigo-600 text-white shadow-md'
+                                            : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
                                         }
                                         disabled:opacity-50
                                     `}
@@ -278,7 +277,7 @@ export function LuckySlotMachine({
                                 </button>
                             </div>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2 ml-9">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 ml-9">
                             {getDateRangeDescription()}
                         </p>
                     </div>
@@ -288,13 +287,13 @@ export function LuckySlotMachine({
                         {availableEntries.length === 0 ? (
                             <div className="text-center py-8">
                                 <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                                     No hay números disponibles
                                 </h3>
-                                <p className="text-gray-600 mb-4">
+                                <p className="text-gray-600 dark:text-gray-400 mb-4">
                                     No hay participantes para el rango de fechas seleccionado: <span className="font-semibold">{getDateRangeLabel()}</span>
                                 </p>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
                                     {getDateRangeDescription()}
                                 </p>
                             </div>
@@ -303,14 +302,14 @@ export function LuckySlotMachine({
                                 {/* Info */}
                                 <div className="mb-6">
                                     <div className="flex items-center justify-center gap-2 mb-2">
-                                        <h4 className="text-lg font-semibold text-gray-900">
+                                        <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                                             Números Disponibles: {availableEntries.length}
                                         </h4>
-                                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
+                                        <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-2 py-1 rounded-full text-sm font-medium">
                                             {getDateRangeLabel()}
                                         </span>
                                     </div>
-                                    <p className="text-gray-600">
+                                    <p className="text-gray-600 dark:text-gray-400">
                                         {getDateRangeDescription()} - Haz clic en "Jugar" para seleccionar un ganador
                                     </p>
                                 </div>
@@ -344,7 +343,7 @@ export function LuckySlotMachine({
                                                     text-lg font-semibold px-4 py-2 rounded-full inline-block
                                                     ${isSpinning
                                                         ? 'bg-yellow-400 text-yellow-900 animate-pulse'
-                                                        : 'bg-gray-200 text-gray-700'
+                                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                                                     }
                                                 `}>
                                                     {isSpinning ? '🎰 GIRANDO...' : '🎯 LISTO PARA JUGAR'}
@@ -392,42 +391,42 @@ export function LuckySlotMachine({
 
                                 {/* Result */}
                                 {showResult && selectedWinner && (
-                                    <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 border-4 border-yellow-400 rounded-xl p-6 shadow-xl">
+                                    <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 border-4 border-yellow-400 rounded-xl p-6 shadow-xl">
                                         <div className="flex items-center justify-center mb-4 animate-bounce">
                                             <Trophy className="h-12 w-12 text-yellow-600 mr-3" />
-                                            <h3 className="text-3xl font-bold text-yellow-800">🎉 ¡GANADOR! 🎉</h3>
+                                            <h3 className="text-3xl font-bold text-yellow-800 dark:text-yellow-300">🎉 ¡GANADOR! 🎉</h3>
                                         </div>
 
                                         <div className="text-center mb-6">
                                             <div className="text-6xl font-bold text-red-600 mb-4 animate-pulse">
                                                 {selectedWinner.number}
                                             </div>
-                                            <div className="text-2xl font-bold text-gray-900 mb-2">
+                                            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                                                 {selectedWinner.participant_name}
                                             </div>
-                                            <div className="text-lg text-gray-700 mb-3">
+                                            <div className="text-lg text-gray-700 dark:text-gray-300 mb-3">
                                                 📧 {selectedWinner.participant_email}
                                             </div>
 
                                             {/* Date info */}
                                             {(selectedWinner.created_at || selectedWinner.purchase_date) && (
-                                                <div className="text-sm text-blue-600 mb-3">
+                                                <div className="text-sm text-blue-600 dark:text-blue-400 mb-3">
                                                     📅 Fecha de compra: {new Date(selectedWinner.created_at || selectedWinner.purchase_date).toLocaleDateString('es-ES')}
                                                 </div>
                                             )}
 
                                             {selectedWinner.full_name && selectedWinner.full_name !== selectedWinner.participant_name && (
-                                                <div className="text-sm text-gray-600 mb-2">
+                                                <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                                                     📄 Nombre en factura: {selectedWinner.full_name}
                                                 </div>
                                             )}
                                             {selectedWinner.phone && (
-                                                <div className="text-sm text-gray-600 mb-2">
+                                                <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                                                     📱 Teléfono: {selectedWinner.phone}
                                                 </div>
                                             )}
                                             {selectedWinner.city && (
-                                                <div className="text-sm text-gray-600">
+                                                <div className="text-sm text-gray-600 dark:text-gray-400">
                                                     📍 {selectedWinner.city}{selectedWinner.province && `, ${selectedWinner.province}`}
                                                 </div>
                                             )}

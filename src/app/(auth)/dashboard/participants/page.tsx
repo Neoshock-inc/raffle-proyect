@@ -1,7 +1,8 @@
 // src/app/participants/page.tsx - MIGRACIÓN MULTI-TENANT
 'use client'
 import React, { useState, useCallback } from 'react'
-import { Users, Plus, RefreshCw, AlertCircle, Edit, Trash2, Eye } from 'lucide-react'
+import { Users, Plus, RefreshCw, AlertCircle } from 'lucide-react'
+import { Button, Input } from '@/admin/components/ui'
 import { ConfirmDialog } from '@/admin/components/ConfirmDialog'
 import { Pagination } from '@/admin/components/participants/Pagination'
 import { ParticipantDetails } from '@/admin/components/participants/ParticipantDetails'
@@ -87,85 +88,84 @@ export default function ParticipantesPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="bg-sky-700 text-white p-2 rounded-full">
+                    <div className="bg-indigo-700 text-white p-2 rounded-full">
                         <Users className="h-5 w-5" />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900">Participantes</h2>
-                        <p className="text-gray-600">Gestión de participantes y estadísticas</p>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Participantes</h2>
+                        <p className="text-gray-600 dark:text-gray-400">Gestión de participantes y estadísticas</p>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <button
+                    <Button
+                        variant="secondary"
                         onClick={refreshData}
                         disabled={loading}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50"
+                        icon={<RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />}
                     >
-                        <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                         Actualizar
-                    </button>
+                    </Button>
 
-                    <button
+                    <Button
                         onClick={handleCreateNew}
-                        className="flex items-center gap-2 px-4 py-2 bg-sky-700 text-white rounded-md hover:bg-[#900000]"
+                        icon={<Plus className="h-4 w-4" />}
                     >
-                        <Plus className="h-4 w-4" />
                         Nuevo Participante
-                    </button>
+                    </Button>
                 </div>
             </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div className="flex items-center">
                         <div className="p-2 bg-blue-100 rounded-lg">
                             <Users className="h-6 w-6 text-blue-600" />
                         </div>
                         <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Total Participantes</p>
-                            <p className="text-2xl font-semibold text-gray-900">{filteredParticipants.length}</p>
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Participantes</p>
+                            <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{filteredParticipants.length}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div className="flex items-center">
                         <div className="p-2 bg-green-100 rounded-lg">
                             <Users className="h-6 w-6 text-green-600" />
                         </div>
                         <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Con Compras</p>
-                            <p className="text-2xl font-semibold text-gray-900">
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Con Compras</p>
+                            <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                                 {filteredParticipants.filter(p => p.total_numbers > 0).length}
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div className="flex items-center">
                         <div className="p-2 bg-yellow-100 rounded-lg">
                             <Users className="h-6 w-6 text-yellow-600" />
                         </div>
                         <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Con Facturas Pendientes</p>
-                            <p className="text-2xl font-semibold text-gray-900">
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Con Facturas Pendientes</p>
+                            <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                                 {filteredParticipants.filter(p => p.pending_invoices > 0).length}
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div className="flex items-center">
                         <div className="p-2 bg-purple-100 rounded-lg">
                             <Users className="h-6 w-6 text-purple-600" />
                         </div>
                         <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Ingresos Totales</p>
-                            <p className="text-2xl font-semibold text-gray-900">
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Ingresos Totales</p>
+                            <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                                 ${filteredParticipants.reduce((sum, p) => sum + p.total_amount_spent, 0).toFixed(2)}
                             </p>
                         </div>
@@ -182,15 +182,12 @@ export default function ParticipantesPage() {
             )}
 
             {/* Search */}
-            <div className="flex items-center space-x-4">
-                <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Buscar por nombre o email..."
-                    className="flex-1 max-w-md px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700 transition"
-                />
-            </div>
+            <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por nombre o email..."
+                className="max-w-md"
+            />
 
             {/* Table */}
             <ParticipantTable

@@ -25,13 +25,13 @@ export function PlanUpgradeModal({
 
     return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-10 mx-auto p-5 border w-11/12 max-w-6xl shadow-lg rounded-md bg-white">
-                <div className="flex justify-between items-center pb-4 border-b">
+            <div className="relative top-10 mx-auto p-5 border w-11/12 max-w-6xl shadow-lg rounded-md bg-white dark:bg-gray-900">
+                <div className="flex justify-between items-center pb-4 border-b border-gray-200 dark:border-gray-700">
                     <div>
-                        <h3 className="text-lg font-medium text-gray-900">
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                             Cambiar Plan de Suscripción
                         </h3>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                             Selecciona el plan que mejor se adapte a tus necesidades
                         </p>
                     </div>
@@ -54,14 +54,14 @@ export function PlanUpgradeModal({
                                 <div
                                     key={plan.id}
                                     className={`relative rounded-lg border-2 p-6 ${isCurrentPlan
-                                            ? 'border-blue-500 ring-2 ring-blue-200'
-                                            : plan.id === 'pro' // popular plan
-                                                ? 'border-orange-300 ring-2 ring-orange-100'
-                                                : 'border-gray-200 hover:border-gray-300'
+                                            ? 'border-indigo-500 ring-2 ring-indigo-200 dark:border-indigo-400 dark:ring-indigo-900/50'
+                                            : plan.id === 'professional' // popular plan
+                                                ? 'border-orange-300 ring-2 ring-orange-100 dark:border-orange-600 dark:ring-orange-900/50'
+                                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                                         } ${!isCurrentPlan ? 'cursor-pointer' : ''} transition-all`}
                                     onClick={() => !isCurrentPlan && !changingPlan && onChangePlan(plan.id)}
                                 >
-                                    {plan.id === 'pro' && (
+                                    {plan.id === 'professional' && (
                                         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                                             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                                                 <Star className="h-3 w-3 mr-1" />
@@ -72,7 +72,7 @@ export function PlanUpgradeModal({
 
                                     {isCurrentPlan && (
                                         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
                                                 <Check className="h-3 w-3 mr-1" />
                                                 Plan Actual
                                             </span>
@@ -83,12 +83,12 @@ export function PlanUpgradeModal({
                                         <div className={`mx-auto w-12 h-12 rounded-full bg-${plan.color}-100 flex items-center justify-center mb-4`}>
                                             <Icon className={`h-6 w-6 text-${plan.color}-600`} />
                                         </div>
-                                        <h4 className="text-lg font-medium text-gray-900">{plan.name}</h4>
+                                        <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">{plan.name}</h4>
                                         <div className="mt-2 mb-4">
-                                            <span className="text-3xl font-bold text-gray-900">{plan.price}</span>
-                                            <span className="text-gray-500">/mes</span>
+                                            <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">{plan.price}</span>
+                                            <span className="text-gray-500 dark:text-gray-400">/mes</span>
                                         </div>
-                                        <p className="text-sm text-gray-600 mb-4">{plan.description}</p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{plan.description}</p>
                                     </div>
 
                                     <ul className="space-y-3 mb-6">
@@ -97,9 +97,9 @@ export function PlanUpgradeModal({
                                                 {included ? (
                                                     <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 mr-3 flex-shrink-0" />
                                                 ) : (
-                                                    <X className="h-4 w-4 text-gray-300 mt-0.5 mr-3 flex-shrink-0" />
+                                                    <X className="h-4 w-4 text-gray-300 dark:text-gray-600 mt-0.5 mr-3 flex-shrink-0" />
                                                 )}
-                                                <span className={`text-sm ${included ? 'text-gray-700' : 'text-gray-400'}`}>
+                                                <span className={`text-sm ${included ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-600'}`}>
                                                     {feature}
                                                 </span>
                                             </li>
@@ -107,7 +107,7 @@ export function PlanUpgradeModal({
                                     </ul>
 
                                     <div className="text-center mb-4">
-                                        <span className="text-sm text-gray-500">{plan.tenantCount}</span>
+                                        <span className="text-sm text-gray-500 dark:text-gray-400">{plan.tenantCount}</span>
                                     </div>
 
                                     <div className="mt-auto">
@@ -151,25 +151,25 @@ export function PlanUpgradeModal({
                     </div>
 
                     {/* Plan Comparison Info */}
-                    <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+                    <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <div className="text-center">
-                            <h4 className="text-sm font-medium text-gray-900 mb-2">
+                            <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
                                 ¿Necesitas ayuda para elegir?
                             </h4>
-                            <p className="text-sm text-gray-600 mb-4">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                                 Todos los planes incluyen actualizaciones automáticas y soporte técnico.
                                 Puedes cambiar o cancelar en cualquier momento.
                             </p>
                             <div className="flex justify-center space-x-4 text-sm">
-                                <div className="flex items-center text-gray-500">
+                                <div className="flex items-center text-gray-500 dark:text-gray-400">
                                     <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
                                     Sin compromisos a largo plazo
                                 </div>
-                                <div className="flex items-center text-gray-500">
+                                <div className="flex items-center text-gray-500 dark:text-gray-400">
                                     <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
                                     Migración de datos incluida
                                 </div>
-                                <div className="flex items-center text-gray-500">
+                                <div className="flex items-center text-gray-500 dark:text-gray-400">
                                     <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
                                     Soporte durante la transición
                                 </div>
@@ -178,10 +178,10 @@ export function PlanUpgradeModal({
                     </div>
                 </div>
 
-                <div className="mt-8 flex justify-end space-x-3 border-t pt-4">
+                <div className="mt-8 flex justify-end space-x-3 border-t border-gray-200 dark:border-gray-700 pt-4">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                     >
                         Cerrar
                     </button>
@@ -189,7 +189,7 @@ export function PlanUpgradeModal({
                         onClick={() => {
                             console.log('Contact support for plan consultation')
                         }}
-                        className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-blue-700 bg-blue-100 hover:bg-blue-200"
+                        className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/30 hover:bg-indigo-200 dark:hover:bg-indigo-900/50"
                     >
                         Contactar Soporte
                     </button>

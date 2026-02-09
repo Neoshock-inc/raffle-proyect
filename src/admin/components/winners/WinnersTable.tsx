@@ -1,6 +1,7 @@
 import React from 'react'
 import { Eye, UserMinus, Trophy, Calendar, Phone, MapPin, DollarSign } from 'lucide-react'
 import { WinnerWithDetails } from '../../services/winnersService'
+import { Badge } from '../ui/Badge'
 
 interface WinnersTableProps {
     winners: WinnerWithDetails[]
@@ -43,9 +44,10 @@ export function WinnersTable({
 
     if (loading) {
         return (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
                 <div className="p-6">
                     <div className="animate-pulse">
+
                         <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
                         <div className="space-y-3">
                             {[...Array(5)].map((_, i) => (
@@ -63,46 +65,46 @@ export function WinnersTable({
             <div className="bg-white rounded-lg shadow p-6">
                 <div className="text-center py-8">
                     <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No hay ganadores</h3>
-                    <p className="text-gray-600">Aún no se han registrado ganadores en el sistema.</p>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No hay ganadores</h3>
+                    <p className="text-gray-600 dark:text-gray-400">Aún no se han registrado ganadores en el sistema.</p>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             {/* Vista de escritorio */}
             <div className="hidden lg:block overflow-x-auto">
-                <table className="w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">
                                 Número
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Participante
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Rifa
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">
                                 Fecha Sorteo
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Contacto
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-28">
                                 Estado
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">
                                 Acciones
                             </th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         {winners.map((winner) => (
-                            <tr key={winner.id} className="hover:bg-gray-50">
+                            <tr key={winner.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                 <td className="px-4 py-4 whitespace-nowrap">
                                     <div className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-bold text-sm text-center">
                                         {winner.number}
@@ -110,10 +112,10 @@ export function WinnersTable({
                                 </td>
                                 <td className="px-4 py-4">
                                     <div className="max-w-xs">
-                                        <div className="text-sm font-medium text-gray-900 truncate">
+                                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                                             {winner.participant_name}
                                         </div>
-                                        <div className="text-sm text-gray-500 truncate">
+                                        <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
                                             {winner.participant_email}
                                         </div>
                                         {winner.full_name && winner.full_name !== winner.participant_name && (
@@ -125,7 +127,7 @@ export function WinnersTable({
                                 </td>
                                 <td className="px-4 py-4">
                                     <div className="max-w-xs">
-                                        <div className="text-sm font-medium text-gray-900 truncate">
+                                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                                             {winner.raffle_title}
                                         </div>
                                         <div className="text-sm text-gray-500">
@@ -134,13 +136,13 @@ export function WinnersTable({
                                     </div>
                                 </td>
                                 <td className="px-4 py-4 whitespace-nowrap">
-                                    <div className="flex items-center text-sm text-gray-900">
+                                    <div className="flex items-center text-sm text-gray-900 dark:text-gray-100">
                                         <Calendar className="h-3 w-3 text-gray-400 mr-1" />
                                         <span className="text-xs">{formatDate(winner.raffle_draw_date)}</span>
                                     </div>
                                 </td>
                                 <td className="px-4 py-4">
-                                    <div className="text-sm text-gray-900 max-w-xs">
+                                    <div className="text-sm text-gray-900 dark:text-gray-100 max-w-xs">
                                         {winner.phone && (
                                             <div className="flex items-center mb-1 truncate">
                                                 <Phone className="h-3 w-3 text-gray-400 mr-1" />
@@ -164,20 +166,14 @@ export function WinnersTable({
                                 </td>
                                 <td className="px-4 py-4">
                                     <div className="space-y-1">
-                                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${winner.payment_status === 'paid'
-                                            ? 'bg-green-100 text-green-800'
-                                            : 'bg-yellow-100 text-yellow-800'
-                                            }`}>
+                                        <Badge variant={winner.payment_status === 'paid' ? 'success' : 'warning'}>
                                             {winner.payment_status === 'paid' ? 'Pagado' : 'Pendiente'}
-                                        </span>
+                                        </Badge>
                                         {winner.invoice_details && (
                                             <div>
-                                                <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${winner.invoice_details.status === 'completed'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-red-100 text-red-800'
-                                                    }`}>
+                                                <Badge variant={winner.invoice_details.status === 'completed' ? 'success' : 'danger'}>
                                                     F: {winner.invoice_details.status === 'completed' ? 'Ok' : 'Pend'}
-                                                </span>
+                                                </Badge>
                                             </div>
                                         )}
                                     </div>
@@ -209,7 +205,7 @@ export function WinnersTable({
 
             {/* Vista móvil/tablet */}
             <div className="lg:hidden">
-                <div className="divide-y divide-gray-200">
+                <div className="divide-y divide-gray-200 dark:divide-gray-700">
                     {winners.map((winner) => (
                         <div key={winner.id} className="p-4 hover:bg-gray-50">
                             {/* Header con número y acciones */}
@@ -239,7 +235,7 @@ export function WinnersTable({
                             {/* Información principal */}
                             <div className="space-y-2 mb-3">
                                 <div>
-                                    <div className="font-medium text-gray-900">{winner.participant_name}</div>
+                                    <div className="font-medium text-gray-900 dark:text-gray-100">{winner.participant_name}</div>
                                     <div className="text-sm text-gray-500">{winner.participant_email}</div>
                                     {winner.full_name && winner.full_name !== winner.participant_name && (
                                         <div className="text-xs text-gray-400">Factura: {winner.full_name}</div>
@@ -247,7 +243,7 @@ export function WinnersTable({
                                 </div>
 
                                 <div className="text-sm">
-                                    <div className="font-medium text-gray-700">{winner.raffle_title}</div>
+                                    <div className="font-medium text-gray-700 dark:text-gray-300">{winner.raffle_title}</div>
                                     <div className="text-gray-500 text-xs">
                                         Sorteo: {formatDate(winner.raffle_draw_date)} • Comprado: {formatDate(winner.purchased_at)}
                                     </div>
@@ -282,19 +278,13 @@ export function WinnersTable({
 
                             {/* Estados */}
                             <div className="flex flex-wrap gap-2">
-                                <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${winner.payment_status === 'PAID'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-yellow-100 text-yellow-800'
-                                    }`}>
+                                <Badge variant={winner.payment_status === 'PAID' ? 'success' : 'warning'}>
                                     Pago: {winner.payment_status === 'PAID' ? 'Pagado' : 'Pendiente'}
-                                </span>
+                                </Badge>
                                 {winner.invoice_details && (
-                                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${winner.invoice_details.status === 'PAID'
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-red-100 text-red-800'
-                                        }`}>
+                                    <Badge variant={winner.invoice_details.status === 'PAID' ? 'success' : 'danger'}>
                                         Factura: {winner.invoice_details.status === 'PAID' ? 'Pagada' : 'Pendiente'}
-                                    </span>
+                                    </Badge>
                                 )}
                             </div>
                         </div>

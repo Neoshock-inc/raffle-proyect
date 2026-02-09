@@ -1,51 +1,67 @@
 'use client';
 
-import { PieChart, Pie, Cell } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 interface Props {
-  transferPercentage: number;
-  stripePercentage: number;
+    transferPercentage: number;
+    stripePercentage: number;
 }
 
-const COLORS = ['#8B0000', '#CCCCCC'];
+const COLORS = ['#6366f1', '#f97316'];
 
 export default function PaymentMethodGaugeMini({
-  transferPercentage,
-  stripePercentage,
+    transferPercentage,
+    stripePercentage,
 }: Props) {
-  const data = [
-    { name: 'Transferencia', value: transferPercentage },
-    { name: 'Pago en Línea', value: stripePercentage },
-  ];
+    const data = [
+        { name: 'Transferencia', value: transferPercentage },
+        { name: 'Pago en Línea', value: stripePercentage },
+    ];
 
-  return (
-    <div className="flex items-center space-x-4">
-      {/* Gráfico */}
-      <PieChart width={100} height={60}>
-        <Pie
-          data={data}
-          innerRadius={20}
-          outerRadius={30}
+    const dominant = transferPercentage >= stripePercentage
+        ? { label: 'Transferencia', pct: transferPercentage }
+        : { label: 'Pago en Línea', pct: stripePercentage };
 
-          dataKey="value"
-          stroke="none"
-        >
-          {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-      </PieChart>
-      {/* Leyenda */}
-      <div className="space-y-1 text-sm text-gray-700">
-        <div className="flex items-center space-x-2">
-          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[0] }} />
-          <span className='text-xs font-normal'>Transferencia ({transferPercentage.toFixed(1)}%)</span>
+    return (
+        <div className="flex flex-col items-center">
+            <div className="relative w-full" style={{ height: 180 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Pie
+                            data={data}
+                            innerRadius="65%"
+                            outerRadius="90%"
+                            dataKey="value"
+                            stroke="none"
+                            startAngle={90}
+                            endAngle={-270}
+                        >
+                            {data.map((_entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index]} />
+                            ))}
+                        </Pie>
+                    </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-3xl font-bold text-gray-900 dark:text-gray-50">
+                        {dominant.pct.toFixed(0)}%
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{dominant.label}</span>
+                </div>
+            </div>
+            <div className="flex items-center gap-5 mt-2">
+                {data.map((entry, index) => (
+                    <div key={entry.name} className="flex items-center gap-1.5">
+                        <span
+                            className="inline-block w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: COLORS[index] }}
+                        />
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                            {entry.name} ({entry.value.toFixed(1)}%)
+                        </span>
+                    </div>
+                ))}
+            </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[1] }} />
-          <span className='text-xs font-normal'>Pago en Línea ({stripePercentage.toFixed(1)}%)</span>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }

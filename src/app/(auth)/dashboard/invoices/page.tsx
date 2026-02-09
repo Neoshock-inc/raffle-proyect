@@ -2,10 +2,10 @@
 
 import { useState, useCallback } from 'react'
 import { FileText } from 'lucide-react'
-import classNames from 'classnames'
 import { useInvoices } from '@/admin/hooks/useInvoices'
 import { InvoiceFormModal } from './InvoiceFormModal'
 import { Invoice } from '@/types/invoices'
+import { Button, Input, Badge } from '@/admin/components/ui'
 
 const ITEMS_PER_PAGE = 10
 
@@ -49,56 +49,64 @@ export default function FacturasPage() {
             setEditingInvoice(null)
         } catch (error) {
             console.error('Error saving invoice:', error)
-            // Aquí podrías mostrar un toast de error
         }
     }, [editingInvoice, create, update])
+
+    const statusVariantMap: Record<string, 'success' | 'warning' | 'danger'> = {
+        completed: 'success',
+        pending: 'warning',
+        failed: 'danger',
+    }
+
+    const statusLabelMap: Record<string, string> = {
+        completed: 'Pagado',
+        pending: 'Pendiente',
+        failed: 'Fallido',
+    }
 
     return (
         <div className="space-y-6">
             {/* Header con ícono */}
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                    <div className="bg-sky-700 text-white p-2 rounded-full">
+                    <div className="bg-indigo-700 text-white p-2 rounded-full">
                         <FileText className="h-5 w-5" />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900">Facturas</h2>
-                        <p className="text-gray-600">Listado de facturas generadas por los usuarios</p>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Facturas</h2>
+                        <p className="text-gray-600 dark:text-gray-400">Listado de facturas generadas por los usuarios</p>
                     </div>
                 </div>
-                <button
-                    onClick={handleNewInvoice}
-                    className="px-4 py-2 bg-sky-700 text-white rounded hover:bg-[#990000] transition"
-                >
+                <Button onClick={handleNewInvoice}>
                     Nueva factura
-                </button>
+                </Button>
             </div>
 
             {/* Buscador */}
-            <input
+            <Input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar por número, nombre o teléfono"
-                className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700 transition"
+                className="w-full md:w-1/3"
             />
 
             {/* Tabla */}
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Número de orden</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Teléfono</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cantidad</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Número de orden</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Nombre</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Teléfono</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cantidad</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Estado</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             {loading ? (
                                 [...Array(5)].map((_, i) => (
                                     <tr key={i} className="animate-pulse">
@@ -111,28 +119,21 @@ export default function FacturasPage() {
                                 ))
                             ) : paginatedInvoices.length > 0 ? (
                                 paginatedInvoices.map((inv) => (
-                                    <tr key={inv.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{inv.order_number}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{inv.full_name}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{inv.phone}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{inv.amount}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${inv.total_price?.toFixed(2)}</td>
+                                    <tr key={inv.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{inv.order_number}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{inv.full_name}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{inv.phone}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{inv.amount}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">${inv.total_price?.toFixed(2)}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span className={classNames(
-                                                'inline-flex px-2 py-1 text-xs font-semibold rounded-full',
-                                                inv.status === 'completed'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : inv.status === 'pending'
-                                                        ? 'bg-yellow-100 text-yellow-800'
-                                                        : 'bg-red-100 text-red-800'
-                                            )}>
-                                                {inv.status === 'completed' ? 'Pagado' : inv.status === 'pending' ? 'Pendiente' : 'Fallido'}
-                                            </span>
+                                            <Badge variant={statusVariantMap[inv.status] || 'neutral'}>
+                                                {statusLabelMap[inv.status] || inv.status}
+                                            </Badge>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                                             <button
                                                 onClick={() => handleEditInvoice(inv)}
-                                                className="text-sky-700 hover:underline text-sm"
+                                                className="text-indigo-600 hover:underline text-sm"
                                             >
                                                 Editar
                                             </button>
@@ -154,21 +155,23 @@ export default function FacturasPage() {
             {/* Paginación */}
             {filteredInvoices.length > ITEMS_PER_PAGE && (
                 <div className="flex justify-end items-center space-x-2 mt-2">
-                    <button
+                    <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={() => setPage(Math.max(pagination.page - 1, 1))}
                         disabled={pagination.page === 1}
-                        className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                     >
                         Anterior
-                    </button>
+                    </Button>
                     <span className="px-2">Página {pagination.page} de {pagination.totalPages}</span>
-                    <button
+                    <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={() => setPage(Math.min(pagination.page + 1, pagination.totalPages))}
                         disabled={pagination.page >= pagination.totalPages}
-                        className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                     >
                         Siguiente
-                    </button>
+                    </Button>
                 </div>
             )}
 

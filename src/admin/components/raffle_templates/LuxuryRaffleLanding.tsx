@@ -206,7 +206,15 @@ const PremiumTestimonialCard: React.FC<{ testimonial: Testimonial }> = ({ testim
 };
 
 // Componente principal
-const LuxuryRaffleLanding: React.FC = () => {
+interface LuxuryProps {
+    previewMode?: boolean;
+    device?: 'desktop' | 'tablet' | 'mobile';
+    [key: string]: unknown;
+}
+
+const LuxuryRaffleLanding: React.FC<LuxuryProps> = ({ previewMode = false, device = 'desktop' }) => {
+    const isMobile = device === 'mobile';
+    const isTablet = device === 'tablet';
     const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number }>({
         days: 0, hours: 0, minutes: 0, seconds: 0
     });
@@ -333,7 +341,7 @@ const LuxuryRaffleLanding: React.FC = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-white">
             {/* Header Premium */}
-            <header className="bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b-2 border-amber-200/50 shadow-lg">
+            <header className={`bg-white/90 backdrop-blur-md ${previewMode ? 'relative' : 'sticky top-0'} z-10 border-b-2 border-amber-200/50 shadow-lg`}>
                 <div className="container mx-auto px-6 py-5">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
@@ -347,7 +355,7 @@ const LuxuryRaffleLanding: React.FC = () => {
                                 <p className="text-xs text-amber-700 font-medium uppercase tracking-widest">Premium Luxury Raffles</p>
                             </div>
                         </div>
-                        <nav className="hidden md:flex space-x-8">
+                        <nav className={`${isMobile ? 'hidden' : 'hidden md:flex'} space-x-8`}>
                             <a href="#productos" className="text-gray-700 hover:text-amber-600 font-semibold transition-colors text-lg">
                                 Colección
                             </a>
@@ -376,7 +384,7 @@ const LuxuryRaffleLanding: React.FC = () => {
                             </span>
                         </div>
 
-                        <h2 className="text-6xl md:text-7xl font-bold mb-8 leading-tight">
+                        <h2 className={`${isMobile ? 'text-4xl' : isTablet ? 'text-5xl' : 'text-6xl md:text-7xl'} font-bold mb-8 leading-tight`}>
                             <span className="bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-700 bg-clip-text text-transparent">
                                 Vive el Lujo
                             </span>
@@ -440,7 +448,7 @@ const LuxuryRaffleLanding: React.FC = () => {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'} gap-10`}>
                         {luxuryProducts.map((product) => (
                             <LuxuryProductCard key={product.id} product={product} />
                         ))}
@@ -461,7 +469,7 @@ const LuxuryRaffleLanding: React.FC = () => {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'} gap-8 max-w-6xl mx-auto`}>
                         {vipOffers.map((offer) => (
                             <VIPOfferCard key={offer.id} offer={offer} />
                         ))}
@@ -482,7 +490,7 @@ const LuxuryRaffleLanding: React.FC = () => {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'} gap-10`}>
                         {premiumTestimonials.map((testimonial) => (
                             <PremiumTestimonialCard key={testimonial.id} testimonial={testimonial} />
                         ))}
@@ -490,7 +498,7 @@ const LuxuryRaffleLanding: React.FC = () => {
 
                     <div className="text-center mt-16">
                         <div className="bg-white/80 backdrop-blur-md rounded-3xl p-10 max-w-4xl mx-auto border border-amber-200/50 shadow-xl">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                            <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'} gap-8 text-center`}>
                                 <div className="flex flex-col items-center">
                                     <Trophy className="w-12 h-12 text-amber-600 mb-4" />
                                     <div className="text-3xl font-bold text-gray-900 mb-2">€15M+</div>
@@ -535,7 +543,7 @@ const LuxuryRaffleLanding: React.FC = () => {
             {/* Footer Premium */}
             <footer className="bg-gradient-to-br from-gray-900 to-black text-white py-20 px-6">
                 <div className="container mx-auto">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-4'} gap-12`}>
                         <div>
                             <div className="flex items-center space-x-4 mb-8">
                                 <div className="w-14 h-14 bg-gradient-to-br from-amber-500 via-yellow-500 to-amber-600 rounded-2xl flex items-center justify-center">

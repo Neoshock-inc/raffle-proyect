@@ -5,6 +5,7 @@ import { useState, useCallback } from 'react'
 import { Sparkles, Plus, Trash2, RefreshCw, AlertCircle, User, Trophy } from 'lucide-react'
 import { ITEMS_PER_PAGE, useBlessedNumbers } from '@/admin/hooks/useBlessedNumbers'
 import { ConfirmDialog } from '@/admin/components/ConfirmDialog'
+import { Modal, Input, Select, Checkbox, Button, Badge } from '@/admin/components/ui'
 
 export default function BlessedNumbersPage() {
     const [search, setSearch] = useState('')
@@ -119,77 +120,64 @@ export default function BlessedNumbersPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="bg-sky-700 text-white p-2 rounded-full">
+                    <div className="bg-indigo-700 text-white p-2 rounded-full">
                         <Sparkles className="h-5 w-5" />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900">Números Bendecidos</h2>
-                        <p className="text-gray-600">Control de premios asignados y ganadores</p>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Números Bendecidos</h2>
+                        <p className="text-gray-600 dark:text-gray-400">Control de premios asignados y ganadores</p>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <button
+                    <Button
+                        variant="secondary"
                         onClick={refreshData}
                         disabled={loading}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50"
+                        icon={<RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />}
                     >
-                        <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                         Actualizar
-                    </button>
+                    </Button>
 
-                    <button
+                    <Button
                         onClick={() => setCreateFormOpen(true)}
                         disabled={!selectedRaffle || creating}
-                        className="flex items-center gap-2 px-4 py-2 bg-sky-700 text-white rounded-md hover:bg-[#900000] disabled:opacity-50"
+                        icon={<Plus className="h-4 w-4" />}
                     >
-                        <Plus className="h-4 w-4" />
                         Crear Números
-                    </button>
+                    </Button>
                 </div>
             </div>
 
             {/* Selector de Rifas y Búsqueda */}
             <div className="flex flex-col md:flex-row gap-4">
-                {/* Selector de Rifa */}
                 <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Seleccionar Rifa
-                    </label>
-                    <div className="flex gap-2">
-                        <select
-                            title='Seleccionar Rifa'
-                            value={selectedRaffleId}
-                            onChange={(e) => changeRaffle(e.target.value)}
-                            className="flex-1 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700"
-                            disabled={loading || raffles.length === 0}
-                        >
-                            {raffles.length === 0 ? (
-                                <option value="">No hay rifas disponibles</option>
-                            ) : (
-                                raffles.map((raffle) => (
-                                    <option key={raffle.id} value={raffle.id}>
-                                        {raffle.title} - {new Date(raffle.draw_date).toLocaleDateString()}
-                                        {raffle.is_active && ' (Activa)'}
-                                    </option>
-                                ))
-                            )}
-                        </select>
-                        <Trophy className="h-5 w-5 text-sky-700 self-center" />
-                    </div>
+                    <Select
+                        label="Seleccionar Rifa"
+                        value={selectedRaffleId}
+                        onChange={(e) => changeRaffle(e.target.value)}
+                        disabled={loading || raffles.length === 0}
+                    >
+                        {raffles.length === 0 ? (
+                            <option value="">No hay rifas disponibles</option>
+                        ) : (
+                            raffles.map((raffle) => (
+                                <option key={raffle.id} value={raffle.id}>
+                                    {raffle.title} - {new Date(raffle.draw_date).toLocaleDateString()}
+                                    {raffle.is_active && ' (Activa)'}
+                                </option>
+                            ))
+                        )}
+                    </Select>
                 </div>
 
-                {/* Búsqueda */}
                 <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Buscar
-                    </label>
-                    <input
+                    <Input
+                        label="Buscar"
                         type="text"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Buscar por número, nombre o email"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700"
                     />
                 </div>
             </div>
@@ -210,21 +198,19 @@ export default function BlessedNumbersPage() {
                                 {selectedRaffle.title}
                             </p>
                             <div className="mt-2 space-y-1">
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
                                     <span className="font-medium">Fecha de sorteo:</span> {new Date(selectedRaffle.draw_date).toLocaleDateString()}
                                 </p>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
                                     <span className="font-medium">Total de números:</span> {selectedRaffle.total_numbers.toLocaleString()}
                                 </p>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
                                     <span className="font-medium">Números bendecidos:</span> {filteredBlessed.length}
                                 </p>
                             </div>
                         </div>
                         {selectedRaffle.is_active && (
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                ACTIVA
-                            </span>
+                            <Badge variant="success">ACTIVA</Badge>
                         )}
                     </div>
                 </div>
@@ -247,20 +233,20 @@ export default function BlessedNumbersPage() {
 
             {/* Table */}
             {selectedRaffleId && (
-                <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead className="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Número</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Participante</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo de Premio</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reclamado</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Número</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Participante</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tipo de Premio</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Reclamado</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 {loading ? (
                                     [...Array(5)].map((_, i) => (
                                         <tr key={i} className="animate-pulse">
@@ -273,27 +259,24 @@ export default function BlessedNumbersPage() {
                                     ))
                                 ) : paginatedBlessed.length > 0 ? (
                                     paginatedBlessed.map((item) => (
-                                        <tr key={item.id} className="hover:bg-gray-50">
+                                        <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-medium text-gray-900">{item.number}</div>
+                                                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.number}</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-900">
+                                                <div className="text-sm text-gray-900 dark:text-gray-100">
                                                     {item.name || (
                                                         <span className="text-gray-400 italic">Sin asignar</span>
                                                     )}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-900">{item.email || '-'}</div>
+                                                <div className="text-sm text-gray-900 dark:text-gray-100">{item.email || '-'}</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.is_minor_prize
-                                                    ? 'bg-yellow-100 text-yellow-800'
-                                                    : 'bg-green-100 text-green-800'
-                                                    }`}>
+                                                <Badge variant={item.is_minor_prize ? 'warning' : 'success'}>
                                                     {item.is_minor_prize ? 'Premio Menor' : 'Premio Mayor'}
-                                                </span>
+                                                </Badge>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <input
@@ -301,7 +284,7 @@ export default function BlessedNumbersPage() {
                                                     type="checkbox"
                                                     checked={item.is_claimed}
                                                     onChange={() => handleToggleClaimed(item.id)}
-                                                    className="h-4 w-4 text-sky-700 border-gray-300 rounded focus:ring-sky-700"
+                                                    className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                                                 />
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -341,148 +324,120 @@ export default function BlessedNumbersPage() {
             {/* Pagination */}
             {selectedRaffleId && filteredBlessed.length > ITEMS_PER_PAGE && (
                 <div className="flex justify-end items-center space-x-2 mt-2">
-                    <button
+                    <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={() => setPage(Math.max(pagination.page - 1, 1))}
                         disabled={pagination.page === 1}
-                        className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-50"
                     >
                         Anterior
-                    </button>
+                    </Button>
                     <span className="px-2">
                         Página {pagination.page} de {pagination.totalPages}
                     </span>
-                    <button
+                    <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={() => setPage(Math.min(pagination.page + 1, pagination.totalPages))}
                         disabled={pagination.page >= pagination.totalPages}
-                        className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-50"
                     >
                         Siguiente
-                    </button>
+                    </Button>
                 </div>
             )}
 
             {/* Create Form Modal */}
-            {createFormOpen && selectedRaffle && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                        <h3 className="text-lg font-semibold mb-4">Crear Números Bendecidos</h3>
+            <Modal
+                isOpen={createFormOpen && !!selectedRaffle}
+                onClose={() => setCreateFormOpen(false)}
+                title="Crear Números Bendecidos"
+                size="sm"
+                footer={
+                    <>
+                        <Button variant="secondary" onClick={() => setCreateFormOpen(false)}>
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={handleCreateNew}
+                            disabled={creating || !createFormData.quantity || createFormData.quantity < 1}
+                            loading={creating}
+                        >
+                            {creating ? 'Creando...' : `Crear ${createFormData.quantity} números`}
+                        </Button>
+                    </>
+                }
+            >
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-blue-800 font-medium">Rifa: {selectedRaffle?.title}</p>
+                    <p className="text-xs text-blue-700">Se crearán números para esta rifa</p>
+                </div>
 
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                            <p className="text-sm text-blue-800 font-medium">Rifa: {selectedRaffle.title}</p>
-                            <p className="text-xs text-blue-700">Se crearán números para esta rifa</p>
-                        </div>
+                <div className="space-y-4">
+                    <Input
+                        label="Cantidad de números a crear"
+                        type="number"
+                        min={1}
+                        max={100}
+                        placeholder="Ingrese la cantidad"
+                        value={createFormData.quantity}
+                        onChange={(e) => setCreateFormData(prev => ({
+                            ...prev,
+                            quantity: parseInt(e.target.value) || 1
+                        }))}
+                    />
 
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Cantidad de números a crear
-                                </label>
-                                <input
-                                    title="Cantidad de números a crear"
-                                    placeholder="Ingrese la cantidad"
-                                    type="number"
-                                    min="1"
-                                    max="100"
-                                    value={createFormData.quantity}
-                                    onChange={(e) => setCreateFormData(prev => ({
-                                        ...prev,
-                                        quantity: parseInt(e.target.value) || 1
-                                    }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-sky-700 focus:border-sky-700"
-                                />
-                            </div>
+                    <Checkbox
+                        label="¿Son premios menores?"
+                        checked={createFormData.is_minor_prize}
+                        onChange={(e) => setCreateFormData(prev => ({
+                            ...prev,
+                            is_minor_prize: e.target.checked
+                        }))}
+                    />
 
-                            <div className="flex items-center">
-                                <input
-                                    type="checkbox"
-                                    id="is_minor_prize"
-                                    checked={createFormData.is_minor_prize}
-                                    onChange={(e) => setCreateFormData(prev => ({
-                                        ...prev,
-                                        is_minor_prize: e.target.checked
-                                    }))}
-                                    className="h-4 w-4 text-sky-700 border-gray-300 rounded focus:ring-sky-700"
-                                />
-                                <label htmlFor="is_minor_prize" className="ml-2 text-sm text-gray-700">
-                                    ¿Son premios menores?
-                                </label>
-                            </div>
-
-                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                                <p className="text-sm text-gray-700">
-                                    Se crearán {createFormData.quantity} números aleatorios como{' '}
-                                    <strong>{createFormData.is_minor_prize ? 'premios menores' : 'premios mayores'}</strong>.
-                                    Los participantes se asignarán después.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-2 mt-6">
-                            <button
-                                onClick={() => setCreateFormOpen(false)}
-                                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleCreateNew}
-                                disabled={creating || !createFormData.quantity || createFormData.quantity < 1}
-                                className="px-4 py-2 bg-sky-700 text-white rounded-md hover:bg-[#900000] disabled:opacity-50"
-                            >
-                                {creating ? 'Creando...' : `Crear ${createFormData.quantity} números`}
-                            </button>
-                        </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                        <p className="text-sm text-gray-700">
+                            Se crearán {createFormData.quantity} números aleatorios como{' '}
+                            <strong>{createFormData.is_minor_prize ? 'premios menores' : 'premios mayores'}</strong>.
+                            Los participantes se asignarán después.
+                        </p>
                     </div>
                 </div>
-            )}
+            </Modal>
 
             {/* Assign Participant Modal */}
-            {assignFormOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                        <h3 className="text-lg font-semibold mb-4">Asignar Participante</h3>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Seleccionar participante
-                                </label>
-                                <select
-                                    title="Seleccionar participante"
-                                    value={assignFormData.participantId}
-                                    onChange={(e) => setAssignFormData(prev => ({
-                                        ...prev,
-                                        participantId: e.target.value
-                                    }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-sky-700 focus:border-sky-700"
-                                >
-                                    <option value="">Sin asignar</option>
-                                    {participants.map((participant) => (
-                                        <option key={participant.id} value={participant.id}>
-                                            {participant.name} ({participant.email})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-2 mt-6">
-                            <button
-                                onClick={() => setAssignFormOpen(false)}
-                                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleAssignSubmit}
-                                className="px-4 py-2 bg-sky-700 text-white rounded-md hover:bg-[#900000]"
-                            >
-                                Asignar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <Modal
+                isOpen={assignFormOpen}
+                onClose={() => setAssignFormOpen(false)}
+                title="Asignar Participante"
+                size="sm"
+                footer={
+                    <>
+                        <Button variant="secondary" onClick={() => setAssignFormOpen(false)}>
+                            Cancelar
+                        </Button>
+                        <Button onClick={handleAssignSubmit}>
+                            Asignar
+                        </Button>
+                    </>
+                }
+            >
+                <Select
+                    label="Seleccionar participante"
+                    value={assignFormData.participantId}
+                    onChange={(e) => setAssignFormData(prev => ({
+                        ...prev,
+                        participantId: e.target.value
+                    }))}
+                >
+                    <option value="">Sin asignar</option>
+                    {participants.map((participant) => (
+                        <option key={participant.id} value={participant.id}>
+                            {participant.name} ({participant.email})
+                        </option>
+                    ))}
+                </Select>
+            </Modal>
 
             {/* Confirm Dialog */}
             <ConfirmDialog

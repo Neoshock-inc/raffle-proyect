@@ -64,13 +64,13 @@ export default function DragAndDropImage({ label, value, onChange, onUpload, raf
 
     return (
         <div className="mb-6 max-w-xs">
-            <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
             <div
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={handleClick}
-                className={`cursor-pointer border-2 border-dashed rounded p-6 text-center transition ${isDragging ? 'border-sky-700 bg-gray-50' : 'border-gray-300 bg-white'
+                className={`cursor-pointer border-2 border-dashed rounded p-6 text-center transition ${isDragging ? 'border-indigo-600 bg-gray-50 dark:bg-gray-800' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900'
                     }`}
             >
                 {value ? (
@@ -78,15 +78,15 @@ export default function DragAndDropImage({ label, value, onChange, onUpload, raf
                         <img
                             src={value}
                             alt={`Preview ${label.toLowerCase()}`}
-                            className="mx-auto max-h-40 object-contain rounded border border-gray-300 mb-2"
+                            className="mx-auto max-h-40 object-contain rounded border border-gray-300 dark:border-gray-600 mb-2"
                             onError={(e) => {
                                 e.currentTarget.src = 'https://via.placeholder.com/150?text=Imagen+no+disponible'
                             }}
                         />
-                        <p className="text-gray-400 text-xs">Haz clic o arrastra otra imagen para cambiar</p>
+                        <p className="text-gray-400 dark:text-gray-500 text-xs">Haz clic o arrastra otra imagen para cambiar</p>
                     </>
                 ) : (
-                    <p className="text-gray-500">
+                    <p className="text-gray-500 dark:text-gray-400">
                         Arrastra una imagen aquí o haz clic para seleccionar un archivo
                     </p>
                 )}

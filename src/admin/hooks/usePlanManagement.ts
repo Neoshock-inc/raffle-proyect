@@ -28,14 +28,14 @@ export const usePlanManagement = ({ tenantId, currentPlan, onPlanChange }: UsePl
 
   // Verificar si es un upgrade o downgrade
   const isUpgrade = useCallback((planId: string) => {
-    const planHierarchy: PlanId[] = ['basic', 'pro', 'enterprise']
+    const planHierarchy: PlanId[] = ['basic', 'professional', 'enterprise']
     const currentIndex = planHierarchy.indexOf(currentPlan)
     const newIndex = planHierarchy.indexOf(planId as PlanId)
     return newIndex > currentIndex
   }, [currentPlan])
 
   const isDowngrade = useCallback((planId: string) => {
-    const planHierarchy: PlanId[] = ['basic', 'pro', 'enterprise']
+    const planHierarchy: PlanId[] = ['basic', 'professional', 'enterprise']
     const currentIndex = planHierarchy.indexOf(currentPlan)
     const newIndex = planHierarchy.indexOf(planId as PlanId)
     return newIndex < currentIndex
@@ -77,7 +77,7 @@ export const usePlanManagement = ({ tenantId, currentPlan, onPlanChange }: UsePl
 
   // Obtener próximo plan recomendado
   const getRecommendedUpgrade = useCallback(() => {
-    const planHierarchy: PlanId[] = ['basic', 'pro', 'enterprise']
+    const planHierarchy: PlanId[] = ['basic', 'professional', 'enterprise']
     const currentIndex = planHierarchy.indexOf(currentPlan)
     if (currentIndex < planHierarchy.length - 1) {
       return PLANS[planHierarchy[currentIndex + 1]]
@@ -134,6 +134,6 @@ export const usePlanManagement = ({ tenantId, currentPlan, onPlanChange }: UsePl
     canUpgrade: currentPlan !== 'enterprise',
     canDowngrade: currentPlan !== 'basic',
     isFreePlan: currentPlan === 'basic',
-    isPremiumPlan: ['pro', 'enterprise'].includes(currentPlan)
+    isPremiumPlan: ['professional', 'enterprise'].includes(currentPlan)
   }
 }

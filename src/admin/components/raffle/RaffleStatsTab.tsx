@@ -189,7 +189,7 @@ export default function RaffleStatsTab({ raffle }: Props) {
                     </div>
                     <button
                         onClick={() => window.location.reload()}
-                        className="px-4 py-2 bg-sky-600 text-white rounded-md hover:bg-sky-700"
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
                     >
                         Reintentar
                     </button>
@@ -243,12 +243,12 @@ export default function RaffleStatsTab({ raffle }: Props) {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <BarChart3 className="h-5 w-5 text-gray-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Estadísticas de la Rifa</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Estadísticas de la Rifa</h3>
                 </div>
                 <select
                     value={timeFilter}
                     onChange={(e) => setTimeFilter(e.target.value as '7d' | '30d' | 'all')}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-sky-500 focus:border-sky-500"
+                    className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                 >
                     <option value="7d">Últimos 7 días</option>
                     <option value="30d">Últimos 30 días</option>
@@ -258,58 +258,58 @@ export default function RaffleStatsTab({ raffle }: Props) {
 
             {/* Métricas principales */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                <div className="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Tickets Vendidos</p>
-                            <p className="text-2xl font-bold text-gray-900">{stats.totalEntries.toLocaleString()}</p>
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Tickets Vendidos</p>
+                            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.totalEntries.toLocaleString()}</p>
                         </div>
                         <div className="p-2 bg-blue-100 rounded-full">
                             <Ticket className="h-5 w-5 text-blue-600" />
                         </div>
                     </div>
                     <div className="mt-2 flex items-center text-sm">
-                        <span className="text-gray-500">
+                        <span className="text-gray-500 dark:text-gray-400">
                             {stats.totalEntries === 0 ? 'Aún no hay ventas' : 'Vendidos de forma real'}
                         </span>
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                <div className="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Participantes</p>
-                            <p className="text-2xl font-bold text-gray-900">{stats.totalParticipants.toLocaleString()}</p>
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Participantes</p>
+                            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.totalParticipants.toLocaleString()}</p>
                         </div>
                         <div className="p-2 bg-green-100 rounded-full">
                             <Users className="h-5 w-5 text-green-600" />
                         </div>
                     </div>
                     <div className="mt-2 flex items-center text-sm">
-                        <span className="text-gray-500">participantes únicos</span>
+                        <span className="text-gray-500 dark:text-gray-400">participantes únicos</span>
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                <div className="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Ingresos</p>
-                            <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalRevenue)}</p>
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Ingresos</p>
+                            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(stats.totalRevenue)}</p>
                         </div>
                         <div className="p-2 bg-yellow-100 rounded-full">
                             <DollarSign className="h-5 w-5 text-yellow-600" />
                         </div>
                     </div>
                     <div className="mt-2 flex items-center text-sm">
-                        <span className="text-gray-500">ingresos reales</span>
+                        <span className="text-gray-500 dark:text-gray-400">ingresos reales</span>
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                <div className="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Progreso</p>
-                            <p className="text-2xl font-bold text-gray-900">{formatPercentage(stats.progressPercentage)}</p>
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Progreso</p>
+                            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatPercentage(stats.progressPercentage)}</p>
                         </div>
                         <div className="p-2 bg-purple-100 rounded-full">
                             <TrendingUp className="h-5 w-5 text-purple-600" />
@@ -328,65 +328,65 @@ export default function RaffleStatsTab({ raffle }: Props) {
 
             {/* Información de tiempo */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                     <div className="flex items-center gap-2 mb-2">
                         <Calendar className="h-4 w-4 text-gray-600" />
-                        <span className="text-sm font-medium text-gray-600">Días Restantes</span>
+                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Días Restantes</span>
                     </div>
-                    <p className="text-xl font-bold text-gray-900">{stats.daysRemaining} días</p>
-                    <p className="text-xs text-gray-500">Hasta el sorteo</p>
+                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{stats.daysRemaining} días</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Hasta el sorteo</p>
                 </div>
 
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                     <div className="flex items-center gap-2 mb-2">
                         <TrendingUp className="h-4 w-4 text-gray-600" />
-                        <span className="text-sm font-medium text-gray-600">Promedio Diario</span>
+                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Promedio Diario</span>
                     </div>
-                    <p className="text-xl font-bold text-gray-900">{stats.entriesPerDay}</p>
-                    <p className="text-xs text-gray-500">Tickets por día</p>
+                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{stats.entriesPerDay}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Tickets por día</p>
                 </div>
 
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                     <div className="flex items-center gap-2 mb-2">
                         <Users className="h-4 w-4 text-gray-600" />
-                        <span className="text-sm font-medium text-gray-600">Promedio por Usuario</span>
+                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Promedio por Usuario</span>
                     </div>
-                    <p className="text-xl font-bold text-gray-900">{stats.averageTicketsPerUser.toFixed(1)}</p>
-                    <p className="text-xs text-gray-500">Tickets por usuario</p>
+                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{stats.averageTicketsPerUser.toFixed(1)}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Tickets por usuario</p>
                 </div>
             </div>
 
             {/* Paquetes reales */}
             {stats.realPackages.length > 0 && (
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                    <div className="p-6 border-b border-gray-200">
+                <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                         <div className="flex items-center gap-2">
                             <Package className="h-5 w-5 text-gray-600" />
-                            <h4 className="text-md font-semibold text-gray-900">Rendimiento de Paquetes</h4>
+                            <h4 className="text-md font-semibold text-gray-900 dark:text-gray-100">Rendimiento de Paquetes</h4>
                         </div>
                     </div>
                     <div className="p-6">
                         <div className="space-y-4">
                             {stats.realPackages.map((pkg, index) => (
-                                <div key={pkg.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                <div key={pkg.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                                     <div className="flex items-center gap-4">
-                                        <div className="flex items-center justify-center w-8 h-8 bg-sky-100 text-sky-600 rounded-full text-sm font-semibold">
+                                        <div className="flex items-center justify-center w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full text-sm font-semibold">
                                             {index + 1}
                                         </div>
                                         <div>
-                                            <h5 className="font-medium text-gray-900">{pkg.name}</h5>
-                                            <p className="text-sm text-gray-600">
+                                            <h5 className="font-medium text-gray-900 dark:text-gray-100">{pkg.name}</h5>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">
                                                 {pkg.ticket_count} ticket{pkg.ticket_count > 1 ? 's' : ''} - {formatCurrency(pkg.price)}
                                             </p>
-                                            <p className="text-xs text-gray-500">
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
                                                 {pkg.purchases} compras ({formatPercentage(pkg.percentage)} de participantes)
                                             </p>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-semibold text-gray-900">{formatCurrency(pkg.revenue)}</p>
-                                        <p className="text-sm text-gray-600">Ingresos</p>
-                                        <p className="text-xs text-gray-500">
+                                        <p className="font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(pkg.revenue)}</p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">Ingresos</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
                                             {pkg.purchases * pkg.ticket_count} tickets vendidos
                                         </p>
                                     </div>
@@ -399,21 +399,21 @@ export default function RaffleStatsTab({ raffle }: Props) {
 
             {/* Entradas recientes */}
             {stats.recentEntries.length > 0 && (
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                    <div className="p-6 border-b border-gray-200">
-                        <h4 className="text-md font-semibold text-gray-900">Últimas Compras</h4>
+                <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <h4 className="text-md font-semibold text-gray-900 dark:text-gray-100">Últimas Compras</h4>
                     </div>
                     <div className="p-6">
                         <div className="space-y-3">
                             {stats.recentEntries.slice(0, 5).map((entry) => (
-                                <div key={entry.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div key={entry.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                                     <div className="flex items-center gap-3">
-                                        <div className="bg-sky-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                                        <div className="bg-indigo-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
                                             #{entry.number}
                                         </div>
-                                        <span className="font-medium text-gray-900">{entry.participant_name}</span>
+                                        <span className="font-medium text-gray-900 dark:text-gray-100">{entry.participant_name}</span>
                                     </div>
-                                    <span className="text-sm text-gray-500">
+                                    <span className="text-sm text-gray-500 dark:text-gray-400">
                                         {new Date(entry.purchased_at).toLocaleDateString()}
                                     </span>
                                 </div>
@@ -425,42 +425,42 @@ export default function RaffleStatsTab({ raffle }: Props) {
 
             {/* Proyecciones y recomendaciones */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                    <div className="p-6 border-b border-gray-200">
-                        <h4 className="text-md font-semibold text-gray-900">Proyecciones</h4>
+                <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <h4 className="text-md font-semibold text-gray-900 dark:text-gray-100">Proyecciones</h4>
                     </div>
                     <div className="p-6 space-y-4">
                         <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Tickets Estimados al Final</span>
-                            <span className="font-semibold text-gray-900">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Tickets Estimados al Final</span>
+                            <span className="font-semibold text-gray-900 dark:text-gray-100">
                                 {Math.round(projectedFinalEntries).toLocaleString()}
                             </span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Ingresos Proyectados</span>
-                            <span className="font-semibold text-gray-900">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Ingresos Proyectados</span>
+                            <span className="font-semibold text-gray-900 dark:text-gray-100">
                                 {formatCurrency(projectedRevenue)}
                             </span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Progreso Esperado</span>
-                            <span className="font-semibold text-gray-900">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Progreso Esperado</span>
+                            <span className="font-semibold text-gray-900 dark:text-gray-100">
                                 {formatPercentage(projectedProgress)}
                             </span>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                    <div className="p-6 border-b border-gray-200">
+                <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                         <div className="flex items-center gap-2">
                             <AlertTriangle className="h-5 w-5 text-gray-600" />
-                            <h4 className="text-md font-semibold text-gray-900">Estado y Recomendaciones</h4>
+                            <h4 className="text-md font-semibold text-gray-900 dark:text-gray-100">Estado y Recomendaciones</h4>
                         </div>
                     </div>
                     <div className="p-6">
                         <div className="flex items-center gap-3 mb-4">
-                            <span className="text-sm text-gray-600">Estado actual:</span>
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Estado actual:</span>
                             <span className={`font-semibold ${statusInfo.color}`}>
                                 {statusInfo.label}
                             </span>
@@ -469,8 +469,8 @@ export default function RaffleStatsTab({ raffle }: Props) {
                             </span>
                         </div>
 
-                        <div className="space-y-2 text-sm text-gray-700">
-                            <h5 className="font-medium text-gray-900">Recomendaciones:</h5>
+                        <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                            <h5 className="font-medium text-gray-900 dark:text-gray-100">Recomendaciones:</h5>
                             {stats.totalEntries === 0 && (
                                 <p className="flex items-start gap-2">
                                     <span className="text-blue-500">•</span>

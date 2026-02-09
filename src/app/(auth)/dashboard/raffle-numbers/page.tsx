@@ -2,14 +2,14 @@
 
 import { useState } from 'react'
 import { Plus, Ticket } from 'lucide-react'
-import { useRaffleEntries } from '@/admin/hooks/useRaffleEntries' // CAMBIO: Usar el hook con tenant context
+import { useRaffleEntries } from '@/admin/hooks/useRaffleEntries'
 import RaffleEntryModal from '@/admin/components/RaffleEntryModal'
+import { Button, Input, Badge } from '@/admin/components/ui'
 
 export default function EntradasRifaPage() {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [search, setSearch] = useState('')
 
-    // CAMBIO: Usar el hook que maneja el tenant context
     const {
         paginatedEntries,
         pagination,
@@ -21,7 +21,7 @@ export default function EntradasRifaPage() {
 
     const handleModalSuccess = async () => {
         setIsModalOpen(false)
-        await refetch() // Refrescar usando el hook
+        await refetch()
     }
 
     return (
@@ -29,44 +29,43 @@ export default function EntradasRifaPage() {
             {/* Header con ícono */}
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                    <div className="bg-sky-700 text-white p-2 rounded-full">
+                    <div className="bg-indigo-700 text-white p-2 rounded-full">
                         <Ticket className="h-5 w-5" />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900">Entradas de Rifa</h2>
-                        <p className="text-gray-600">Lista de entradas registradas en las rifas</p>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Entradas de Rifa</h2>
+                        <p className="text-gray-600 dark:text-gray-400">Lista de entradas registradas en las rifas</p>
                     </div>
                 </div>
-                <button
+                <Button
                     onClick={() => setIsModalOpen(true)}
-                    className="flex items-center px-4 py-2 bg-sky-700 text-white rounded-lg hover:bg-[#600000] transition-colors"
+                    icon={<Plus className="h-4 w-4" />}
                 >
-                    <Plus className="h-4 w-4 mr-2" />
                     Nueva Entrada
-                </button>
+                </Button>
             </div>
 
             {/* Buscador */}
-            <input
+            <Input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar por número o fecha"
-                className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-700 focus:border-sky-700 transition"
+                className="w-full md:w-1/3"
             />
 
             {/* Tabla */}
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ganador</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comprado el</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Número</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ganador</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Comprado el</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             {loading ? (
                                 [...Array(5)].map((_, i) => (
                                     <tr key={i} className="animate-pulse">
@@ -77,16 +76,14 @@ export default function EntradasRifaPage() {
                                 ))
                             ) : paginatedEntries.length > 0 ? (
                                 paginatedEntries.map((entry) => (
-                                    <tr key={entry.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{entry.number}</td>
+                                    <tr key={entry.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{entry.number}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                            {entry.is_winner ? (
-                                                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Sí</span>
-                                            ) : (
-                                                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">No</span>
-                                            )}
+                                            <Badge variant={entry.is_winner ? 'success' : 'neutral'}>
+                                                {entry.is_winner ? 'Sí' : 'No'}
+                                            </Badge>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                             {new Date(entry.purchased_at).toLocaleString()}
                                         </td>
                                     </tr>
@@ -106,23 +103,25 @@ export default function EntradasRifaPage() {
             {/* Paginación */}
             {pagination.totalPages > 1 && (
                 <div className="flex justify-end items-center space-x-2 mt-2">
-                    <button
+                    <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={() => setPage(Math.max(pagination.page - 1, 1))}
                         disabled={pagination.page === 1}
-                        className="px-3 py-1 text-sm border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Anterior
-                    </button>
+                    </Button>
                     <span className="text-sm">
                         Página {pagination.page} de {pagination.totalPages}
                     </span>
-                    <button
+                    <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={() => setPage(Math.min(pagination.page + 1, pagination.totalPages))}
                         disabled={pagination.page >= pagination.totalPages}
-                        className="px-3 py-1 text-sm border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Siguiente
-                    </button>
+                    </Button>
                 </div>
             )}
 
@@ -131,7 +130,7 @@ export default function EntradasRifaPage() {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSuccess={handleModalSuccess}
-                createEntryFromOrder={createEntryFromOrder} // Pasar la función del hook
+                createEntryFromOrder={createEntryFromOrder}
             />
         </div>
     )
