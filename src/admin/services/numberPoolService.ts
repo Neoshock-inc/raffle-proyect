@@ -1,9 +1,10 @@
 import { supabase } from '../lib/supabaseTenantClient'
-import type { NumberPool, RaffleNumberAssignment, RaffleNumberStatus } from '@/types/database'
+import type { NumberPool, NumberPoolNumber, RaffleNumberAssignment, RaffleNumberStatus } from '@/types/database'
 
 export interface CreatePoolData {
     name: string
     total_numbers: number
+    pool_type?: 'range' | 'custom'
 }
 
 export interface CreateAssignmentData {
@@ -42,7 +43,9 @@ class NumberPoolService {
         const { data, error } = await supabase
             .from('number_pools')
             .insert({
-                ...poolData,
+                name: poolData.name,
+                total_numbers: poolData.total_numbers,
+                pool_type: poolData.pool_type || 'range',
                 tenant_id: tenantId,
                 status: 'active',
             })
@@ -167,6 +170,64 @@ class NumberPoolService {
 
         if (error) throw new Error(error.message)
         return data || []
+    }
+
+    // --- Custom Pool Numbers ---
+
+    async getCustomNumbers(poolId: string): Promise<number[]> {
+        const { data, error } = await supabase
+            .from('number_pool_numbers')
+            .select('number')
+            .eq('pool_id', poolId)
+            .order('number', { ascending: true })
+
+        if (error) throw new Error(error.message)
+        return (data || []).map((row: { number: number }) => row.number)
+    }
+
+    async uploadCustomNumbers(poolId: string, numbers: number[]): Promise<{ inserted: number }> {
+        const BATCH_SIZE = 1000
+        let totalInserted = 0
+
+        for (let i = 0; i < numbers.length; i += BATCH_SIZE) {
+            const batch = numbers.slice(i, i + BATCH_SIZE).map(n => ({
+                pool_id: poolId,
+                number: n,
+            }))
+
+            const { error } = await supabase
+                .from('number_pool_numbers')
+                .insert(batch)
+
+            if (error) throw new Error(error.message)
+            totalInserted += batch.length
+        }
+
+        // Update pool total_numbers
+        const { error: updateError } = await supabase
+            .from('number_pools')
+            .update({ total_numbers: numbers.length, updated_at: new Date().toISOString() })
+            .eq('id', poolId)
+
+        if (updateError) throw new Error(updateError.message)
+
+        return { inserted: totalInserted }
+    }
+
+    async clearCustomNumbers(poolId: string): Promise<void> {
+        const { error } = await supabase
+            .from('number_pool_numbers')
+            .delete()
+            .eq('pool_id', poolId)
+
+        if (error) throw new Error(error.message)
+
+        const { error: updateError } = await supabase
+            .from('number_pools')
+            .update({ total_numbers: 0, updated_at: new Date().toISOString() })
+            .eq('id', poolId)
+
+        if (updateError) throw new Error(updateError.message)
     }
 
     // --- RPCs ---

@@ -9,9 +9,9 @@ interface ProductsGridProps {
   tenantConfig: TenantConfig;
 }
 
-export const ProductsGrid: React.FC<ProductsGridProps> = ({ 
-  products, 
-  tenantConfig 
+export const ProductsGrid: React.FC<ProductsGridProps> = ({
+  products,
+  tenantConfig
 }) => {
   return (
     <section id="rifas" className="py-20 bg-white">
@@ -20,11 +20,11 @@ export const ProductsGrid: React.FC<ProductsGridProps> = ({
           🎁 RIFAS ACTIVAS 🎁
         </h2>
         <p className="text-xl text-gray-600 text-center mb-12">¡Elige tu premio favorito y participa ya!</p>
-        
+
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {products.map((product) => (
-            <div 
-              key={product.id} 
+            <div
+              key={product.id}
               className="bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-lg border-2 border-gray-100 p-6 hover:shadow-2xl transition-all duration-300 group hover:transform hover:scale-105"
             >
               <div className="flex items-center justify-between mb-4">
@@ -47,7 +47,7 @@ export const ProductsGrid: React.FC<ProductsGridProps> = ({
                   <span>Total: {product.totalTickets}</span>
                 </div> */}
                 <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
-                  <div 
+                  <div
                     className="bg-gradient-to-r from-green-400 to-emerald-500 h-full rounded-full transition-all duration-1000 relative"
                     style={{ width: `${product.progress}%` }}
                   >

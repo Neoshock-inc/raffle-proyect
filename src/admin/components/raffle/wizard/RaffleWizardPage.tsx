@@ -6,6 +6,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Save } from 'lucide-react'
 import { useRaffleWizard } from '@/admin/hooks/useRaffleWizard'
 import type { WizardFormData } from '@/admin/hooks/useRaffleWizard'
 import { useRaffles, useRaffle } from '@/admin/hooks/useRaffles'
+import { numberPoolService } from '@/admin/services/numberPoolService'
 import { Button } from '@/admin/components/ui/Button'
 import RaffleWizardStepper from './RaffleWizardStepper'
 import StepBasicInfo from './StepBasicInfo'
@@ -59,8 +60,22 @@ export default function RaffleWizardPage({ mode, raffleId }: RaffleWizardPagePro
                 MARKETING_BOOST_PERCENTAGE: raffle.MARKETING_BOOST_PERCENTAGE || 0,
                 pool_id: raffle.pool_id || undefined,
                 raffle_type: raffle.raffle_type || 'daily_am',
+                is_leftover_raffle: false,
             }
-            reset(editData)
+
+            // Detect existing custom pool
+            if (raffle.pool_id) {
+                numberPoolService.getPoolById(raffle.pool_id).then(pool => {
+                    if (pool.pool_type === 'custom') {
+                        editData.is_leftover_raffle = true
+                    }
+                    reset(editData)
+                }).catch(() => {
+                    reset(editData)
+                })
+            } else {
+                reset(editData)
+            }
         }
     }, [mode, raffle, reset])
 
@@ -68,6 +83,18 @@ export default function RaffleWizardPage({ mode, raffleId }: RaffleWizardPagePro
         setSubmitting(true)
         try {
             const data = getSubmitData()
+
+            // Auto-create custom pool for leftover raffles
+            if (formData.is_leftover_raffle && !data.pool_id) {
+                const pool = await numberPoolService.createPool({
+                    name: `Pool: ${data.title}`,
+                    total_numbers: 0,
+                    pool_type: 'custom',
+                })
+                data.pool_id = pool.id
+                data.total_numbers = 0
+            }
+
             if (mode === 'edit' && raffleId) {
                 await updateRaffle({ ...data, id: raffleId })
             } else {

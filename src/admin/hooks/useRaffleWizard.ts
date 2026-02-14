@@ -3,6 +3,7 @@ import type { CreateRaffleData, RaffleStatus } from '@/admin/types/raffle'
 
 export interface WizardFormData extends CreateRaffleData {
     raffle_type?: 'daily_am' | 'daily_pm' | 'weekly' | 'biweekly'
+    is_leftover_raffle?: boolean
 }
 
 interface WizardState {
@@ -40,6 +41,7 @@ const defaultFormData: WizardFormData = {
     status: 'draft' as RaffleStatus,
     MARKETING_BOOST_PERCENTAGE: 0,
     raffle_type: 'daily_am',
+    is_leftover_raffle: false,
 }
 
 function reducer(state: WizardState, action: WizardAction): WizardState {
@@ -82,11 +84,13 @@ function getStepErrors(step: number, data: WizardFormData): Record<string, strin
     if (step === 0) {
         if (!data.title?.trim()) errors.title = 'El título es obligatorio'
         if (!data.price || data.price <= 0) errors.price = 'El precio debe ser mayor a 0'
-        if (!data.total_numbers || data.total_numbers < 1) errors.total_numbers = 'Debe tener al menos 1 número'
         if (!data.draw_date) errors.draw_date = 'La fecha del sorteo es obligatoria'
     }
 
     if (step === 1) {
+        if (!data.is_leftover_raffle && !data.pool_id && (!data.total_numbers || data.total_numbers < 1)) {
+            errors.total_numbers = 'Debe tener al menos 1 número'
+        }
         if (data.min_tickets_to_activate !== undefined && data.min_tickets_to_activate < 1) {
             errors.min_tickets_to_activate = 'Debe ser al menos 1'
         }
@@ -149,8 +153,10 @@ export function useRaffleWizard(initialData?: WizardFormData) {
     }, [])
 
     const getSubmitData = useCallback((): CreateRaffleData => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { is_leftover_raffle, ...rest } = state.formData
         return {
-            ...state.formData,
+            ...rest,
             draw_date: state.formData.draw_date ? new Date(state.formData.draw_date).toISOString() : '',
         }
     }, [state.formData])

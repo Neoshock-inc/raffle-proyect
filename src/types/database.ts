@@ -120,9 +120,17 @@ export interface NumberPool {
   tenant_id: string;
   name: string;
   total_numbers: number;
+  pool_type: 'range' | 'custom';
   status: 'active' | 'completed' | 'archived';
   created_at: string;
   updated_at: string;
+}
+
+export interface NumberPoolNumber {
+  id: string;
+  pool_id: string;
+  number: number;
+  created_at: string;
 }
 
 export interface RaffleNumberAssignment {

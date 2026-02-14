@@ -11,6 +11,7 @@ import { OffroadTemplate } from '@/components/templates/OffroadTemplate';
 import { getBaseUrl } from '@/admin/utils/tenant';
 
 import { MetaPixel } from '@/components/components/analytics/MetaPixel';
+import { TenantFullConfig } from '@/types/database';
 
 // Mapeo de templates con nombres más descriptivos
 const templates = {
@@ -42,24 +43,26 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     // Obtener configuración completa
     const tenantFullConfig = await TenantService.getTenantFullConfig(tenant.id);
 
-    // Obtener rifa activa para información adicional
+    // Obtener rifas para información adicional
     const raffles = await RaffleService.getRafflesByTenant(tenant.id);
-    const mainRaffle = raffles?.[0];
 
     // Construir metadatos
     const companyName = tenantFullConfig?.config?.company_name || tenant.name;
-    const description = tenantFullConfig?.config?.company_description ||
+    const baseDescription = tenantFullConfig?.config?.company_description ||
       tenant.description ||
       'Sorteos transparentes y confiables';
 
     const faviconUrl = tenantFullConfig?.config?.favicon_url || '/favicon.ico';
     const logoUrl = tenantFullConfig?.config?.logo_url;
 
-    // Título dinámico basado en la rifa activa
-    let title = companyName;
-    if (mainRaffle) {
-      title = `${mainRaffle.title} - ${companyName}`;
-    }
+    // Título genérico para la página del tenant
+    const title = `${companyName} - Rifas y Sorteos`;
+
+    // Descripción genérica
+    const description = `${baseDescription}. Explora todas nuestras rifas activas.`;
+
+    // Palabras clave que incluyen los nombres de todas las rifas
+    const raffleKeywords = raffles.map(r => r.title);
 
     return {
       title,
@@ -96,7 +99,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         'sorteos',
         'premios',
         companyName,
-        ...(mainRaffle ? [mainRaffle.title] : [])
+        ...raffleKeywords
       ].join(', '),
       authors: [{ name: companyName }],
       robots: {
@@ -131,6 +134,7 @@ export default async function TenantPage({ params }: PageProps) {
 
     // 3. Obtener TODAS las rifas activas del tenant
     const raffles = await RaffleService.getRafflesByTenant(tenant.id);
+    console.log(`Se encontraron ${raffles.length} rifas activas para el tenant ${tenantSlug}.`);
 
     // Extraer metaPixel del tenant
     const metaPixelId = tenant.metadata?.metaPixel?.enabled
@@ -157,60 +161,59 @@ export default async function TenantPage({ params }: PageProps) {
       );
     }
 
-    // 4. Tomar la rifa principal (primera)
-    const mainRaffle = raffles[0];
+    // 4. Procesar cada rifa activa en paralelo
+    const renderedRaffles = await Promise.all(raffles.map(async (currentRaffle) => {
+      // 5. Obtener datos adicionales para la rifa actual
+      const [media, soldTickets, blessedNumbers, packages] = await Promise.all([
+        RaffleService.getRaffleMedia(currentRaffle.id),
+        RaffleService.getSoldTicketsCount(currentRaffle.id),
+        RaffleService.getBlessedNumbers(currentRaffle.id),
+        TicketPackageService.getTicketPackages(currentRaffle.id)
+      ]);
 
-    // 5. Obtener datos adicionales para la rifa principal
-    const [media, soldTickets, blessedNumbers] = await Promise.all([
-      RaffleService.getRaffleMedia(mainRaffle.id),
-      RaffleService.getSoldTicketsCount(mainRaffle.id),
-      RaffleService.getBlessedNumbers(mainRaffle.id)
-    ]);
+      const calculatedPackages =
+        packages.length > 0
+          ? TicketPackageService.calculatePackages(packages, currentRaffle.price)
+          : TicketPackageService.createFallbackPackages();
 
-    // 6. Obtener paquetes de tickets
-    const packages = await TicketPackageService.getTicketPackages(mainRaffle.id);
+      // 6. Construir datos completos de la rifa actual
+      const raffleData = await RaffleService.buildRaffleData(
+        currentRaffle,
+        soldTickets,
+        media,
+        blessedNumbers,
+        raffles
+      );
 
-    const calculatedPackages =
-      packages.length > 0
-        ? TicketPackageService.calculatePackages(packages, mainRaffle.price)
-        : TicketPackageService.createFallbackPackages();
+      // 7. Construir configuración del tenant
+      const tenantConfig = TenantService.buildTenantConfig(
+        tenantFullConfig!,
+        currentRaffle
+      );
 
-    console.log('Calculated Packages:', calculatedPackages);
+      // Actualizar características basadas en datos de la rifa actual
+      tenantConfig.features.blessedNumbers = blessedNumbers.length > 0;
 
-    // 7. Construir datos completos de la rifa
-    const raffleData = await RaffleService.buildRaffleData(
-      mainRaffle,
-      soldTickets,
-      media,
-      blessedNumbers,
-      raffles
-    );
+      // 8. Seleccionar template
+      const Template = templates[tenant.layout as keyof typeof templates] || DefaultTemplate;
 
-    // 8. Construir configuración del tenant para los templates
-    const tenantConfig = TenantService.buildTenantConfig(
-      tenantFullConfig!,
-      mainRaffle
-    );
-
-    // Actualizar características basadas en datos disponibles
-    tenantConfig.features.blessedNumbers = blessedNumbers.length > 0;
-
-    console.log('Tenant Config:', tenantConfig);
-
-    // 9. Seleccionar template basado en el layout del tenant
-    const Template = templates[tenant.layout as keyof typeof templates] || DefaultTemplate;
-
-    console.log(`Using template: ${tenant.layout} for tenant: ${tenant.slug}`);
-
-    // 10. Renderizar template con Meta Pixel y props tipados
-    return (
-      <>
-        {metaPixelId && <MetaPixel pixelId={metaPixelId} />}
+      return (
         <Template
+          key={currentRaffle.id} // Clave única para el renderizado de listas en React
           raffleData={raffleData}
           ticketOptions={calculatedPackages}
           tenantConfig={tenantConfig}
         />
+      );
+    }));
+
+    // 9. Renderizar todos los templates con Meta Pixel
+    return (
+      <>
+        {metaPixelId && <MetaPixel pixelId={metaPixelId} />}
+        <div className="flex flex-col gap-8"> {/* Contenedor para separar las rifas */}
+          {renderedRaffles}
+        </div>
       </>
     );
 

@@ -132,7 +132,7 @@ export function emailFooter(companyName: string, primaryColor: string, fromEmail
  * Resuelve los valores de branding con fallbacks
  */
 export function resolveBranding(tenantInfo: TenantInfo | null, emailConfig: TenantEmailConfig | null) {
-    const DEFAULT_LOGO = 'https://wpffdsoqmlfplhlefcwf.supabase.co/storage/v1/object/public/main/main_logo.jpeg'
+    const DEFAULT_LOGO = 'https://wpffdsoqmlfplhlefcwf.supabase.co/storage/v1/object/public/main/Gemini_Generated_Image_il2tslil2tslil2t.png'
 
     return {
         companyName: tenantInfo?.company_name || emailConfig?.from_name || 'Sistema de Rifas',

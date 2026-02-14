@@ -132,7 +132,7 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
     if (allFeatures.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-gray-950 text-center px-4">
-                <Image src="/images/main_logo.jpeg" alt="Logo" width={80} height={80} />
+                <Image src="/images/main_logo.png" alt="Logo" width={80} height={80} />
                 <h1 className="text-2xl font-semibold mt-4 text-gray-800">Sin acceso</h1>
                 <p className="text-gray-600 mt-2 max-w-sm">
                     {isAdmin && !currentTenant
@@ -160,7 +160,7 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Image
-                            src="/images/main_logo.jpeg"
+                            src="/images/main_logo.png"
                             alt="MyFortunaCloud Logo"
                             width={sidebarOpen ? 40 : 32}
                             height={sidebarOpen ? 40 : 32}

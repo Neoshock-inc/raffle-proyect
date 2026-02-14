@@ -226,7 +226,7 @@ export default function VerifyUserContent() {
                         </p>
                         <div className="flex items-center justify-center space-x-2">
                             <img
-                                src="https://wpffdsoqmlfplhlefcwf.supabase.co/storage/v1/object/public/main/main_logo.jpeg"
+                                src="https://wpffdsoqmlfplhlefcwf.supabase.co/storage/v1/object/public/main/main_logo.png"
                                 alt="My Fortuna Cloud"
                                 className="h-5 w-auto"
                             />

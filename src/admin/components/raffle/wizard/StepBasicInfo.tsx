@@ -60,16 +60,6 @@ export default function StepBasicInfo({ formData, errors, setField }: StepBasicI
                 />
 
                 <Input
-                    label="Total de números"
-                    required
-                    type="number"
-                    placeholder='Ejemplo: "100"'
-                    value={formData.total_numbers || ''}
-                    onChange={(e) => setField('total_numbers', Number(e.target.value))}
-                    error={errors.total_numbers}
-                />
-
-                <Input
                     label="Fecha del sorteo"
                     required
                     type="date"

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { numberPoolService } from '../services/numberPoolService'
 import type { CreatePoolData, CreateAssignmentData } from '../services/numberPoolService'
-import type { NumberPool, RaffleNumberAssignment, RaffleNumberStatus } from '@/types/database'
+import type { NumberPool, NumberPoolNumber, RaffleNumberAssignment, RaffleNumberStatus } from '@/types/database'
 import { toast } from 'sonner'
 import { useTenantContext } from '../contexts/TenantContext'
 
@@ -153,5 +153,47 @@ export function useRaffleNumbers(raffleId: string | null) {
         setGridRange,
         refetch: fetchStatus,
         fetchSoldInRange,
+    }
+}
+
+export function useCustomPoolNumbers(poolId: string | null) {
+    const [numbers, setNumbers] = useState<number[]>([])
+    const [loading, setLoading] = useState(false)
+
+    const fetchNumbers = useCallback(async () => {
+        if (!poolId) return
+        setLoading(true)
+        try {
+            const data = await numberPoolService.getCustomNumbers(poolId)
+            setNumbers(data)
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Error al cargar números del pool')
+        } finally {
+            setLoading(false)
+        }
+    }, [poolId])
+
+    useEffect(() => {
+        fetchNumbers()
+    }, [fetchNumbers])
+
+    const uploadNumbers = async (nums: number[]) => {
+        if (!poolId) return
+        await numberPoolService.uploadCustomNumbers(poolId, nums)
+        setNumbers(nums.sort((a, b) => a - b))
+    }
+
+    const clearNumbers = async () => {
+        if (!poolId) return
+        await numberPoolService.clearCustomNumbers(poolId)
+        setNumbers([])
+    }
+
+    return {
+        numbers,
+        loading,
+        refetch: fetchNumbers,
+        uploadNumbers,
+        clearNumbers,
     }
 }

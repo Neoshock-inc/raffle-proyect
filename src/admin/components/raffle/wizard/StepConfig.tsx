@@ -1,5 +1,6 @@
 'use client'
 
+import { Info } from 'lucide-react'
 import { Input, Checkbox, Select } from '@/admin/components/ui'
 import type { WizardFormData } from '@/admin/hooks/useRaffleWizard'
 import { useNumberPools } from '@/admin/hooks/useNumberPools'
@@ -28,6 +29,16 @@ export default function StepConfig({ formData, errors, setField }: StepConfigPro
         })),
     ]
 
+    const handleLeftoverToggle = (checked: boolean) => {
+        setField('is_leftover_raffle', checked)
+        if (checked) {
+            setField('raffle_type', undefined)
+            setField('pool_id', undefined)
+        } else {
+            setField('raffle_type', 'daily_am')
+        }
+    }
+
     return (
         <div className="space-y-6">
             <div>
@@ -35,20 +46,71 @@ export default function StepConfig({ formData, errors, setField }: StepConfigPro
                 <p className="text-sm text-gray-500 dark:text-gray-400">Configura las reglas y limites de tu rifa</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Select
-                    label="Tipo de rifa"
-                    options={raffleTypeOptions}
-                    value={formData.raffle_type || 'daily_am'}
-                    onChange={(e) => setField('raffle_type', e.target.value)}
+            {/* Leftover raffle toggle */}
+            <div className="border border-amber-200 dark:border-amber-800 rounded-xl p-4 bg-amber-50/50 dark:bg-amber-900/10">
+                <Checkbox
+                    label="Rifa de números sobrantes"
+                    checked={formData.is_leftover_raffle ?? false}
+                    onChange={(e) => handleLeftoverToggle(e.target.checked)}
                 />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-6">
+                    Usa números sobrantes de una rifa física. Podrás cargar un Excel/CSV con los números disponibles.
+                </p>
+                {formData.is_leftover_raffle && (
+                    <div className="flex items-start gap-2 mt-3 ml-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                        <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+                        <p className="text-xs text-blue-700 dark:text-blue-400">
+                            Se creará un pool personalizado automáticamente. Podrás cargar el Excel en la pestaña Números del detalle de la rifa.
+                        </p>
+                    </div>
+                )}
+            </div>
 
-                <Select
-                    label="Pool de numeros"
-                    options={poolOptions}
-                    value={formData.pool_id || ''}
-                    onChange={(e) => setField('pool_id', e.target.value || undefined)}
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {!formData.is_leftover_raffle && (
+                    <>
+                        <Select
+                            label="Tipo de rifa"
+                            options={raffleTypeOptions}
+                            value={formData.raffle_type || 'daily_am'}
+                            onChange={(e) => setField('raffle_type', e.target.value)}
+                        />
+
+                        <Select
+                            label="Pool de numeros"
+                            options={poolOptions}
+                            value={formData.pool_id || ''}
+                            onChange={(e) => setField('pool_id', e.target.value || undefined)}
+                        />
+                    </>
+                )}
+
+                {/* Total de números: se oculta si es sobrantes o tiene pool vinculado */}
+                {formData.is_leftover_raffle ? (
+                    <div className="flex flex-col justify-center">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Total de números</span>
+                        <span className="text-sm text-amber-600 dark:text-amber-400">
+                            Se calculará al cargar el Excel
+                        </span>
+                    </div>
+                ) : formData.pool_id ? (
+                    <div className="flex flex-col justify-center">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Total de números</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                            Definido por el pool seleccionado
+                        </span>
+                    </div>
+                ) : (
+                    <Input
+                        label="Total de números"
+                        required
+                        type="number"
+                        placeholder='Ejemplo: "100"'
+                        value={formData.total_numbers || ''}
+                        onChange={(e) => setField('total_numbers', Number(e.target.value))}
+                        error={errors.total_numbers}
+                    />
+                )}
 
                 <Input
                     label="Tickets minimos para activar"

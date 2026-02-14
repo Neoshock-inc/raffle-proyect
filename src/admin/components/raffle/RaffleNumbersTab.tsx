@@ -1,16 +1,18 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { Hash, User, ChevronLeft, ChevronRight, AlertCircle, Layers, Plus, Trash2 } from 'lucide-react'
+import { Hash, User, ChevronLeft, ChevronRight, AlertCircle, Layers, Plus, Trash2, FileSpreadsheet } from 'lucide-react'
 import type { Raffle } from '@/admin/types/raffle'
-import type { RaffleNumberStatus } from '@/types/database'
-import { useRaffleNumbers, useRaffleAssignments } from '@/admin/hooks/useNumberPools'
+import type { NumberPool, RaffleNumberStatus } from '@/types/database'
+import { useRaffleNumbers, useRaffleAssignments, useCustomPoolNumbers } from '@/admin/hooks/useNumberPools'
+import { numberPoolService } from '@/admin/services/numberPoolService'
 import { getReferidos, type Referido } from '@/admin/services/referidoService'
 import { Button, Input, Select } from '@/admin/components/ui'
 import { ConfirmDialog } from '@/admin/components/ui/ConfirmDialog'
 import { Badge } from '@/admin/components/ui/Badge'
 import { cn } from '@/admin/components/ui/cn'
 import DashboardMetricCard from '@/admin/components/DashboardMetricCard'
+import ExcelUploadSection from './ExcelUploadSection'
 import { toast } from 'sonner'
 
 interface RaffleNumbersTabProps {
@@ -31,6 +33,22 @@ function findAssignment(num: number, statuses: RaffleNumberStatus[]): RaffleNumb
 }
 
 export default function RaffleNumbersTab({ raffle }: RaffleNumbersTabProps) {
+    const [pool, setPool] = useState<NumberPool | null>(null)
+    const [poolLoading, setPoolLoading] = useState(false)
+
+    const isCustomPool = pool?.pool_type === 'custom'
+
+    // Fetch pool info to determine type
+    useEffect(() => {
+        if (raffle.pool_id) {
+            setPoolLoading(true)
+            numberPoolService.getPoolById(raffle.pool_id)
+                .then(setPool)
+                .catch(() => setPool(null))
+                .finally(() => setPoolLoading(false))
+        }
+    }, [raffle.pool_id])
+
     const {
         numberStatus,
         soldNumbers,
@@ -49,6 +67,14 @@ export default function RaffleNumbersTab({ raffle }: RaffleNumbersTabProps) {
         deleteAssignment,
     } = useRaffleAssignments(raffle.id)
 
+    const {
+        numbers: customNumbers,
+        loading: customLoading,
+        refetch: refetchCustom,
+        uploadNumbers,
+        clearNumbers,
+    } = useCustomPoolNumbers(isCustomPool ? raffle.pool_id || null : null)
+
     const [referrals, setReferrals] = useState<Referido[]>([])
     const [loadingReferrals, setLoadingReferrals] = useState(false)
 
@@ -63,26 +89,40 @@ export default function RaffleNumbersTab({ raffle }: RaffleNumbersTabProps) {
     const [page, setPage] = useState(1)
 
     useEffect(() => {
-        setLoadingReferrals(true)
-        getReferidos()
-            .then(setReferrals)
-            .catch(() => toast.error('Error al cargar referidos'))
-            .finally(() => setLoadingReferrals(false))
-    }, [])
+        if (!isCustomPool) {
+            setLoadingReferrals(true)
+            getReferidos()
+                .then(setReferrals)
+                .catch(() => toast.error('Error al cargar referidos'))
+                .finally(() => setLoadingReferrals(false))
+        }
+    }, [isCustomPool])
 
-    const totalNumbers = raffle.total_numbers
-    const totalPages = Math.ceil(totalNumbers / GRID_PAGE_SIZE)
-    const availableCount = totalNumbers - totalAssigned
+    const totalNumbers = isCustomPool ? customNumbers.length : raffle.total_numbers
+    const totalPages = Math.ceil(totalNumbers / GRID_PAGE_SIZE) || 1
+    const availableCount = totalNumbers - (isCustomPool ? totalSold : totalAssigned)
 
+    // For custom pools, paginate over the customNumbers array
+    const currentPageNumbers = useMemo(() => {
+        if (isCustomPool) {
+            const start = (page - 1) * GRID_PAGE_SIZE
+            return customNumbers.slice(start, start + GRID_PAGE_SIZE)
+        }
+        return []
+    }, [isCustomPool, customNumbers, page])
+
+    // For range pools
     const currentStart = (page - 1) * GRID_PAGE_SIZE + 1
     const currentEnd = Math.min(page * GRID_PAGE_SIZE, totalNumbers)
 
     const handlePageChange = useCallback((newPage: number) => {
         setPage(newPage)
-        const start = (newPage - 1) * GRID_PAGE_SIZE + 1
-        const end = Math.min(newPage * GRID_PAGE_SIZE, totalNumbers)
-        fetchSoldInRange(start, end)
-    }, [totalNumbers, fetchSoldInRange])
+        if (!isCustomPool) {
+            const start = (newPage - 1) * GRID_PAGE_SIZE + 1
+            const end = Math.min(newPage * GRID_PAGE_SIZE, totalNumbers)
+            fetchSoldInRange(start, end)
+        }
+    }, [totalNumbers, fetchSoldInRange, isCustomPool])
 
     const soldSet = useMemo(() => new Set(soldNumbers), [soldNumbers])
 
@@ -134,6 +174,25 @@ export default function RaffleNumbersTab({ raffle }: RaffleNumbersTabProps) {
         }
     }
 
+    const handleCustomUpload = async (numbers: number[]) => {
+        await uploadNumbers(numbers)
+        // Refresh pool data after upload
+        if (raffle.pool_id) {
+            const updated = await numberPoolService.getPoolById(raffle.pool_id)
+            setPool(updated)
+        }
+        refetchStatus()
+    }
+
+    const handleCustomClear = async () => {
+        await clearNumbers()
+        if (raffle.pool_id) {
+            const updated = await numberPoolService.getPoolById(raffle.pool_id)
+            setPool(updated)
+        }
+        refetchStatus()
+    }
+
     const referralOptions = [
         { value: '', label: loadingReferrals ? 'Cargando...' : 'Seleccionar referido' },
         ...referrals
@@ -141,7 +200,7 @@ export default function RaffleNumbersTab({ raffle }: RaffleNumbersTabProps) {
             .map(r => ({ value: r.id, label: `${r.name} (${r.referral_code})` })),
     ]
 
-    if (noPool) {
+    if (noPool && !poolLoading) {
         return (
             <div className="p-6">
                 <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -157,7 +216,7 @@ export default function RaffleNumbersTab({ raffle }: RaffleNumbersTabProps) {
         )
     }
 
-    if (loading && numberStatus.length === 0) {
+    if ((loading || poolLoading) && numberStatus.length === 0 && customNumbers.length === 0) {
         return (
             <div className="p-6">
                 <div className="flex items-center justify-center py-16">
@@ -167,6 +226,131 @@ export default function RaffleNumbersTab({ raffle }: RaffleNumbersTabProps) {
         )
     }
 
+    // === CUSTOM POOL VIEW ===
+    if (isCustomPool) {
+        const hasNumbers = customNumbers.length > 0
+        const maxNum = hasNumbers ? Math.max(...customNumbers) : 0
+
+        return (
+            <div className="p-6 space-y-6">
+                {/* Badge */}
+                <div className="flex items-center gap-2">
+                    <Badge variant="warning">
+                        <FileSpreadsheet className="h-3 w-3 mr-1" />
+                        Rifa de Sobrantes
+                    </Badge>
+                </div>
+
+                {/* Metrics */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <DashboardMetricCard
+                        icon={<Hash className="h-5 w-5" />}
+                        title="Números cargados"
+                        value={totalNumbers.toLocaleString()}
+                    />
+                    <DashboardMetricCard
+                        icon={<Hash className="h-5 w-5" />}
+                        title="Disponibles"
+                        value={Math.max(0, totalNumbers - totalSold).toLocaleString()}
+                        iconBgColor="bg-blue-50 dark:bg-blue-900/30"
+                        iconColor="text-blue-500"
+                    />
+                    <DashboardMetricCard
+                        icon={<User className="h-5 w-5" />}
+                        title="Vendidos"
+                        value={totalSold.toLocaleString()}
+                        iconBgColor="bg-green-50 dark:bg-green-900/30"
+                        iconColor="text-green-500"
+                    />
+                    <DashboardMetricCard
+                        icon={<Hash className="h-5 w-5" />}
+                        title="Rango"
+                        value={hasNumbers ? `${customNumbers[0]} - ${maxNum}` : '—'}
+                        iconBgColor="bg-purple-50 dark:bg-purple-900/30"
+                        iconColor="text-purple-500"
+                    />
+                </div>
+
+                {/* Upload section */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm shadow-gray-200/50 dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-700 p-5">
+                    <ExcelUploadSection
+                        poolId={raffle.pool_id!}
+                        existingCount={customNumbers.length}
+                        soldCount={totalSold}
+                        onUpload={handleCustomUpload}
+                        onClear={handleCustomClear}
+                    />
+                </div>
+
+                {/* Custom number grid */}
+                {hasNumbers && (
+                    <div>
+                        <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Números {((page - 1) * GRID_PAGE_SIZE) + 1} - {Math.min(page * GRID_PAGE_SIZE, totalNumbers)} de {totalNumbers}
+                            </h4>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => handlePageChange(Math.max(1, page - 1))}
+                                    disabled={page === 1}
+                                    icon={<ChevronLeft className="h-4 w-4" />}
+                                >
+                                    Anterior
+                                </Button>
+                                <span className="text-sm text-gray-600 dark:text-gray-400">{page} / {totalPages}</span>
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
+                                    disabled={page >= totalPages}
+                                    icon={<ChevronRight className="h-4 w-4" />}
+                                >
+                                    Siguiente
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4 mb-3 text-xs">
+                            <span className="flex items-center gap-1.5">
+                                <span className="w-3 h-3 rounded bg-gray-200 dark:bg-gray-700 inline-block" /> Disponible
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                                <span className="w-3 h-3 rounded bg-green-300 dark:bg-green-800 inline-block" /> Vendido
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-10 sm:grid-cols-15 md:grid-cols-20 lg:grid-cols-25 gap-1">
+                            {currentPageNumbers.map(num => {
+                                const isSold = soldSet.has(num)
+
+                                const bgClass = isSold
+                                    ? 'bg-green-200 dark:bg-green-900/60 text-green-800 dark:text-green-300'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                                const title = isSold ? 'Vendido' : 'Disponible'
+
+                                return (
+                                    <div
+                                        key={num}
+                                        className={cn(
+                                            'aspect-square flex items-center justify-center rounded text-[10px] font-mono leading-none',
+                                            bgClass
+                                        )}
+                                        title={title}
+                                    >
+                                        {padNumber(num, maxNum)}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                )}
+            </div>
+        )
+    }
+
+    // === RANGE POOL VIEW (original) ===
     return (
         <div className="p-6 space-y-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
