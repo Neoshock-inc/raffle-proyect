@@ -6,6 +6,8 @@ import { Raffle } from '../../types/raffle'
 import { raffleService } from '../../services/rafflesService'
 import { ticketPackagesService } from '../../services/ticketPackagesService'
 import { TicketPackage, calculateFinalPrice, calculateTotalTickets } from '../../types/ticketPackage'
+import { useTenantContext } from '../../contexts/TenantContext'
+import { formatTenantCurrency } from '../../utils/currency'
 
 interface Props {
     raffle: Raffle
@@ -38,6 +40,7 @@ interface RaffleStats {
 }
 
 export default function RaffleStatsTab({ raffle }: Props) {
+    const { tenantCountry } = useTenantContext()
     const [stats, setStats] = useState<RaffleStats | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -206,12 +209,7 @@ export default function RaffleStatsTab({ raffle }: Props) {
         )
     }
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('es-ES', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount)
-    }
+    const formatCurrency = (amount: number) => formatTenantCurrency(amount, tenantCountry)
 
     const formatPercentage = (value: number) => {
         return `${value.toFixed(1)}%`

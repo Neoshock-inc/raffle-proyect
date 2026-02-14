@@ -11,8 +11,11 @@ import { ManualWinnerForm } from '@/admin/components/winners/ManualWinnerForm'
 import { useWinners } from '@/admin/hooks/useWinners'
 import { WinnerWithDetails } from '@/admin/services/winnersService'
 import { getRaffleEntries } from '@/admin/services/winnersService'
+import { useTenantContext } from '@/admin/contexts/TenantContext'
+import { formatTenantCurrency } from '@/admin/utils/currency'
 
 export default function WinnersPage() {
+    const { tenantCountry } = useTenantContext()
     const [search, setSearch] = useState('')
     const [raffleFilter, setRaffleFilter] = useState('')
     const [selectedWinner, setSelectedWinner] = useState<WinnerWithDetails | null>(null)
@@ -214,7 +217,7 @@ export default function WinnersPage() {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Valor Total Premios</p>
                             <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                                ${filteredWinners.reduce((sum, w) => sum + (w.invoice_details?.total_price || 0), 0).toFixed(2)}
+                                {formatTenantCurrency(filteredWinners.reduce((sum, w) => sum + (w.invoice_details?.total_price || 0), 0), tenantCountry)}
                             </p>
                         </div>
                     </div>

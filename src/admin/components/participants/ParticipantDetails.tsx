@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { X, User, Mail, Calendar, DollarSign, FileText, Award, Clock, CheckCircle } from 'lucide-react'
 import { ParticipantWithStats, getParticipantNumbers, getParticipantInvoices } from '../../services/participantsService'
+import { useTenantContext } from '../../contexts/TenantContext'
+import { formatTenantCurrency } from '../../utils/currency'
 
 interface ParticipantDetailsProps {
     isOpen: boolean
@@ -13,6 +15,7 @@ export const ParticipantDetails: React.FC<ParticipantDetailsProps> = ({
     onClose,
     participant
 }) => {
+    const { tenantCountry } = useTenantContext()
     const [numbers, setNumbers] = useState<any[]>([])
     const [invoices, setInvoices] = useState<any[]>([])
     const [loading, setLoading] = useState(false)
@@ -130,7 +133,7 @@ export const ParticipantDetails: React.FC<ParticipantDetailsProps> = ({
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-sm font-medium text-purple-600">Total Gastado</p>
-                                        <p className="text-2xl font-bold text-purple-900">${participant.total_amount_spent.toFixed(2)}</p>
+                                        <p className="text-2xl font-bold text-purple-900">{formatTenantCurrency(participant.total_amount_spent, tenantCountry)}</p>
                                     </div>
                                     <DollarSign className="h-8 w-8 text-purple-500" />
                                 </div>
@@ -289,7 +292,7 @@ export const ParticipantDetails: React.FC<ParticipantDetailsProps> = ({
                                                         {invoice.amount}
                                                     </td>
                                                     <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                        ${parseFloat(invoice.total_price).toFixed(2)}
+                                                        {formatTenantCurrency(parseFloat(invoice.total_price), tenantCountry)}
                                                     </td>
                                                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                                                         {new Date(invoice.created_at).toLocaleDateString()}

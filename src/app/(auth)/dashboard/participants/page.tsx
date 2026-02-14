@@ -10,8 +10,11 @@ import { ParticipantForm } from '@/admin/components/participants/ParticipantForm
 import { ParticipantTable } from '@/admin/components/participants/ParticipantTable'
 import { useParticipants } from '@/admin/hooks/useParticipants'
 import { ParticipantWithStats } from '@/admin/services/participantsService'
+import { useTenantContext } from '@/admin/contexts/TenantContext'
+import { formatTenantCurrency } from '@/admin/utils/currency'
 
 export default function ParticipantesPage() {
+    const { tenantCountry } = useTenantContext()
     const [search, setSearch] = useState('')
     const [selectedParticipant, setSelectedParticipant] = useState<ParticipantWithStats | null>(null)
     const [formOpen, setFormOpen] = useState(false)
@@ -166,7 +169,7 @@ export default function ParticipantesPage() {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Ingresos Totales</p>
                             <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                                ${filteredParticipants.reduce((sum, p) => sum + p.total_amount_spent, 0).toFixed(2)}
+                                {formatTenantCurrency(filteredParticipants.reduce((sum, p) => sum + p.total_amount_spent, 0), tenantCountry)}
                             </p>
                         </div>
                     </div>

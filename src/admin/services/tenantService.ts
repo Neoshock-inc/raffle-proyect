@@ -1,6 +1,8 @@
 // src/app/services/tenantService.ts - ACTUALIZADO
 import { supabase, supabaseService } from '../lib/supabaseTenantClient'
 import { Tenant, UserRole } from '../types/tenant'
+import { resolveCountryCode } from '@/constants/countries'
+import type { CountryCode } from '@/constants/countries'
 
 export interface TenantWithMetrics extends Tenant {
   primary_domain?: string;
@@ -565,6 +567,29 @@ export const tenantService = {
       }
     }
   },
+  // ====== PAÍS DEL TENANT ======
+
+  async getTenantCountry(tenantId: string): Promise<CountryCode> {
+    const { createClient } = await import('@supabase/supabase-js')
+    const directClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    try {
+      const { data, error } = await directClient
+        .from('tenant_contact_info')
+        .select('country')
+        .eq('tenant_id', tenantId)
+        .single()
+
+      if (error || !data) return 'EC'
+      return resolveCountryCode(data.country)
+    } catch {
+      return 'EC'
+    }
+  },
+
   // ====== CONFIGURACIONES DE PAGO ======
 
   async getPaymentConfigs(tenantId: string) {

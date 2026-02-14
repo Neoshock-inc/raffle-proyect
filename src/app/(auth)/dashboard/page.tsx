@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { getDashboardMetrics, getAllDashboardData } from '@/admin/services/metricsService';
 import { useTenantContext } from '@/admin/contexts/TenantContext';
+import { formatTenantCurrency } from '@/admin/utils/currency';
 import { DollarSign, Hash, Trophy, PieChart, TrendingUp, Calendar, MapPin, RefreshCw } from 'lucide-react';
 import { Button } from '@/admin/components/ui';
 import DashboardMetricCard from '@/admin/components/DashboardMetricCard';
@@ -11,7 +12,7 @@ import SalesLineChart from '@/admin/components/SalesLineChart';
 import RecentEntriesColumnChart from '@/admin/components/RecentEntriesColumnChart';
 import dynamic from 'next/dynamic';
 
-const EcuadorMapChart = dynamic(
+const SalesMapChart = dynamic(
     () => import('@/admin/components/SalesByProvinceMap'),
     { ssr: false, loading: () => (
         <div className="text-gray-400 text-center h-[400px] flex items-center justify-center">
@@ -44,7 +45,7 @@ const SUMMARY_COLORS = {
 } as const;
 
 export default function DashboardPage() {
-    const { isAdmin, currentTenant, loading: tenantLoading } = useTenantContext();
+    const { isAdmin, currentTenant, tenantCountry, loading: tenantLoading } = useTenantContext();
 
     const [metrics, setMetrics] = useState<{
         totalSales: number
@@ -186,7 +187,7 @@ export default function DashboardPage() {
                     <DashboardMetricCard
                         icon={<DollarSign className="w-5 h-5" />}
                         title="Total Ventas"
-                        value={`$${metrics.totalSales.toFixed(2)}`}
+                        value={formatTenantCurrency(metrics.totalSales, tenantCountry)}
                         subtitle={currentTenant ? `Solo ${currentTenant.name}` : 'Todos los tenants'}
                         iconBgColor="bg-emerald-50 dark:bg-emerald-900/30"
                         iconColor="text-emerald-500"
@@ -325,7 +326,7 @@ export default function DashboardPage() {
                     </div>
                     {graphsData && !dataLoading ? (
                         <div className="h-[400px]">
-                            <EcuadorMapChart salesList={graphsData.salesByProvince} />
+                            <SalesMapChart salesList={graphsData.salesByProvince} countryCode={tenantCountry} />
                         </div>
                     ) : (
                         <div className="text-gray-400 text-center h-[400px] flex items-center justify-center">
@@ -417,11 +418,11 @@ export default function DashboardPage() {
                         </div>
                         <div className={`p-4 ${SUMMARY_COLORS.emerald.bg} rounded-xl`}>
                             <p className="text-sm text-gray-600 dark:text-gray-400">Transferencias</p>
-                            <p className={`text-xl font-bold ${SUMMARY_COLORS.emerald.text}`}>${metrics.transferSales.toFixed(2)}</p>
+                            <p className={`text-xl font-bold ${SUMMARY_COLORS.emerald.text}`}>{formatTenantCurrency(metrics.transferSales, tenantCountry)}</p>
                         </div>
                         <div className={`p-4 ${SUMMARY_COLORS.violet.bg} rounded-xl`}>
                             <p className="text-sm text-gray-600 dark:text-gray-400">Stripe</p>
-                            <p className={`text-xl font-bold ${SUMMARY_COLORS.violet.text}`}>${metrics.stripeSales.toFixed(2)}</p>
+                            <p className={`text-xl font-bold ${SUMMARY_COLORS.violet.text}`}>{formatTenantCurrency(metrics.stripeSales, tenantCountry)}</p>
                         </div>
                         <div className={`p-4 ${SUMMARY_COLORS.amber.bg} rounded-xl`}>
                             <p className="text-sm text-gray-600 dark:text-gray-400">Entradas Totales</p>

@@ -14,8 +14,11 @@ import { buildReferralLink } from '@/admin/utils/tenantUrl'
 import ReferidoModal from '@/admin/components/ReferidoModal'
 import ReferidoAssignmentsModal from '@/admin/components/ReferidoAssignmentsModal'
 import { Button, Badge } from '@/admin/components/ui'
+import { useTenantContext } from '@/admin/contexts/TenantContext'
+import { formatTenantCurrency } from '@/admin/utils/currency'
 
 export default function ReferidosPage() {
+    const { tenantCountry } = useTenantContext()
     const [referidos, setReferidos] = useState<Referido[]>([])
     const [loading, setLoading] = useState(true)
     const [modalOpen, setModalOpen] = useState(false)
@@ -134,7 +137,7 @@ export default function ReferidosPage() {
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div className="text-2xl font-bold text-green-600">
-                        ${referidos.reduce((sum, r) => sum + (r.total_sales || 0), 0).toFixed(2)}
+                        {formatTenantCurrency(referidos.reduce((sum, r) => sum + (r.total_sales || 0), 0), tenantCountry)}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">Ventas Totales</div>
                 </div>
@@ -146,7 +149,7 @@ export default function ReferidosPage() {
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div className="text-2xl font-bold text-purple-600">
-                        ${referidos.reduce((sum, r) => sum + (r.total_commission || 0), 0).toFixed(2)}
+                        {formatTenantCurrency(referidos.reduce((sum, r) => sum + (r.total_commission || 0), 0), tenantCountry)}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">Comisión Total</div>
                 </div>
@@ -221,10 +224,10 @@ export default function ReferidosPage() {
                                         {referido.total_participants || 0}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                        ${(referido.total_sales || 0).toFixed(2)}
+                                        {formatTenantCurrency(referido.total_sales || 0, tenantCountry)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                        ${(referido.total_commission || 0).toFixed(2)}
+                                        {formatTenantCurrency(referido.total_commission || 0, tenantCountry)}
                                         <div className="text-xs text-gray-500">
                                             ({(referido.commission_rate * 100).toFixed(1)}%)
                                         </div>

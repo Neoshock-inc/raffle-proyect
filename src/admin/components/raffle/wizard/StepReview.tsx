@@ -3,6 +3,8 @@
 import { Edit } from 'lucide-react'
 import type { WizardFormData } from '@/admin/hooks/useRaffleWizard'
 import { Badge } from '@/admin/components/ui/Badge'
+import { useTenantContext } from '@/admin/contexts/TenantContext'
+import { formatTenantCurrency } from '@/admin/utils/currency'
 
 const statusVariantMap: Record<string, 'success' | 'warning' | 'info' | 'neutral' | 'danger'> = {
     active: 'success',
@@ -61,6 +63,8 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 export default function StepReview({ formData, onEditSection }: StepReviewProps) {
+    const { tenantCountry } = useTenantContext()
+
     return (
         <div className="space-y-6">
             <div>
@@ -79,7 +83,7 @@ export default function StepReview({ formData, onEditSection }: StepReviewProps)
                             <Field label="Descripción" value={formData.description} />
                         </div>
                     )}
-                    <Field label="Precio" value={`$${formData.price?.toFixed(2)}`} />
+                    <Field label="Precio" value={formatTenantCurrency(formData.price ?? 0, tenantCountry)} />
                     <Field
                         label="Total de números"
                         value={formData.is_leftover_raffle ? 'Se definirá al cargar Excel' : formData.total_numbers?.toLocaleString()}

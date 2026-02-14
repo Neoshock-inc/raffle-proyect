@@ -2,6 +2,8 @@ import React from 'react'
 import { Eye, UserMinus, Trophy, Calendar, Phone, MapPin, DollarSign } from 'lucide-react'
 import { WinnerWithDetails } from '../../services/winnersService'
 import { Badge } from '../ui/Badge'
+import { useTenantContext } from '../../contexts/TenantContext'
+import { formatTenantCurrency } from '../../utils/currency'
 
 interface WinnersTableProps {
     winners: WinnerWithDetails[]
@@ -27,6 +29,8 @@ export function WinnersTable({
     onRemoveWinner,
     updating
 }: WinnersTableProps) {
+    const { tenantCountry } = useTenantContext()
+
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('es-ES', {
             day: '2-digit',
@@ -35,12 +39,7 @@ export function WinnersTable({
         })
     }
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('es-ES', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount)
-    }
+    const formatCurrency = (amount: number) => formatTenantCurrency(amount, tenantCountry)
 
     if (loading) {
         return (

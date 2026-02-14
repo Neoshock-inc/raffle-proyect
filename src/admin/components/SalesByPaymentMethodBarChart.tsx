@@ -3,17 +3,19 @@
 import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
+import { useTenantContext } from '@/admin/contexts/TenantContext';
+import { formatTenantCurrency } from '@/admin/utils/currency';
 
 const COLORS = ['#6366f1', '#f97316', '#8b5cf6', '#06b6d4', '#10b981', '#f43f5e'];
 
-function CustomTooltip({ active, payload }: any) {
+function CustomTooltip({ active, payload, formatCurrency }: any) {
     if (!active || !payload?.length) return null;
     const { payment_method, total } = payload[0].payload;
     return (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 px-4 py-3">
             <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">{payment_method}</p>
             <p className="text-sm text-indigo-600 dark:text-indigo-400">
-                Total: <span className="font-semibold">${Number(total).toFixed(2)}</span>
+                Total: <span className="font-semibold">{formatCurrency(Number(total))}</span>
             </p>
         </div>
     );
@@ -22,6 +24,9 @@ function CustomTooltip({ active, payload }: any) {
 export default function SalesByPaymentMethodBarChart({ data }: {
     data: { payment_method: string, total: number }[]
 }) {
+    const { tenantCountry } = useTenantContext();
+    const formatCurrency = (amount: number) => formatTenantCurrency(amount, tenantCountry);
+
     const processedData = data.map(d => ({
         payment_method: d.payment_method,
         total: Number(d.total),
@@ -44,7 +49,7 @@ export default function SalesByPaymentMethodBarChart({ data }: {
                     tick={{ fill: '#9ca3af', fontSize: 12 }}
                     width={100}
                 />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(99, 102, 241, 0.08)' }} />
+                <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} />} cursor={{ fill: 'rgba(99, 102, 241, 0.08)' }} />
                 <Bar dataKey="total" radius={[0, 8, 8, 0]} barSize={20}>
                     {processedData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

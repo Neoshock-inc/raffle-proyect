@@ -6,10 +6,13 @@ import { useInvoices } from '@/admin/hooks/useInvoices'
 import { InvoiceFormModal } from './InvoiceFormModal'
 import { Invoice } from '@/types/invoices'
 import { Button, Input, Badge } from '@/admin/components/ui'
+import { useTenantContext } from '@/admin/contexts/TenantContext'
+import { formatTenantCurrency } from '@/admin/utils/currency'
 
 const ITEMS_PER_PAGE = 10
 
 export default function FacturasPage() {
+    const { tenantCountry } = useTenantContext()
     const [showModal, setShowModal] = useState(false)
     const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null)
     const [search, setSearch] = useState('')
@@ -124,7 +127,7 @@ export default function FacturasPage() {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{inv.full_name}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{inv.phone}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{inv.amount}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">${inv.total_price?.toFixed(2)}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{formatTenantCurrency(inv.total_price ?? 0, tenantCountry)}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             <Badge variant={statusVariantMap[inv.status] || 'neutral'}>
                                                 {statusLabelMap[inv.status] || inv.status}

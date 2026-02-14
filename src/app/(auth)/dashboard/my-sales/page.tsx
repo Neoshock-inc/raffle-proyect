@@ -13,10 +13,13 @@ import { authService } from '@/admin/services/authService'
 import { toast } from 'sonner'
 import { getReferralCode } from '@/admin/services/referralAuthService'
 import { buildReferralLink } from '@/admin/utils/tenantUrl'
+import { useTenantContext } from '@/admin/contexts/TenantContext'
+import { formatTenantCurrency } from '@/admin/utils/currency'
 
 const COLORS = ['#10B981', '#F59E0B']
 
 export default function MisVentasPage() {
+    const { tenantCountry } = useTenantContext()
     const [stats, setStats] = useState<any>(null)
     const [participants, setParticipants] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
@@ -147,13 +150,13 @@ export default function MisVentasPage() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <Card
                     title="Ventas Totales"
-                    value={`$${stats.totalSales.toFixed(2)}`}
+                    value={formatTenantCurrency(stats.totalSales, tenantCountry)}
                     bgColor="bg-green-500"
                     textColor="text-green-600"
                 />
                 <Card
                     title="Mi Comisión"
-                    value={`$${stats.totalCommission.toFixed(2)}`}
+                    value={formatTenantCurrency(stats.totalCommission, tenantCountry)}
                     bgColor="bg-blue-500"
                     textColor="text-indigo-600"
                 />
@@ -200,7 +203,7 @@ export default function MisVentasPage() {
                                         {p.amount}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                        ${parseFloat(p.total_price).toFixed(2)}
+                                        {formatTenantCurrency(parseFloat(p.total_price), tenantCountry)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <Badge variant={p.status === 'completed' || p.status === 'paid' ? 'success' : 'warning'}>
@@ -260,13 +263,13 @@ export default function MisVentasPage() {
                                     cx="50%"
                                     cy="50%"
                                     outerRadius={80}
-                                    label={({ name, value }) => `${name}: $${value.toFixed(2)}`}
+                                    label={({ name, value }) => `${name}: ${formatTenantCurrency(value, tenantCountry)}`}
                                 >
                                     {pieData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
-                                <RechartsTooltip formatter={(value) => `$${Number(value).toFixed(2)}`} />
+                                <RechartsTooltip formatter={(value) => formatTenantCurrency(Number(value), tenantCountry)} />
                             </PieChart>
                         </ResponsiveContainer>
                     </ChartContainer>

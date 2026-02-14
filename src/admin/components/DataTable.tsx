@@ -5,6 +5,8 @@ import { cn } from './ui/cn';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Badge } from './ui/Badge';
+import { useTenantContext } from '../contexts/TenantContext';
+import { formatTenantCurrency } from '../utils/currency';
 
 function formatDate(dateString: string): string {
     const date = new Date(dateString);
@@ -19,9 +21,7 @@ function formatDate(dateString: string): string {
     return new Intl.DateTimeFormat('es-ES', options).format(date);
 }
 
-function formatCurrency(value: number): string {
-    return `$${value.toFixed(2)}`;
-}
+// formatCurrency is now handled inside the component via formatTenantCurrency
 
 export interface Column<T = any> {
     key: string;
@@ -160,6 +160,7 @@ export default function DataTable<T = any>({
     maxHeight,
     getRowKey,
 }: DataTableProps<T>) {
+    const { tenantCountry } = useTenantContext();
     const [query, setQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -212,7 +213,7 @@ export default function DataTable<T = any>({
 
         // isCurrency
         if (col.isCurrency && typeof value === 'number') {
-            return formatCurrency(value);
+            return formatTenantCurrency(value, tenantCountry);
         }
 
         return value;

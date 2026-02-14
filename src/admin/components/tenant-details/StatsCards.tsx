@@ -1,12 +1,16 @@
 // 📁 components/tenant-details/StatsCards.tsx
 import { Users, Gift, Target, DollarSign } from 'lucide-react'
 import { TenantDetails } from '../../types/tenant'
+import { useTenantContext } from '../../contexts/TenantContext'
+import { formatTenantCurrency } from '../../utils/currency'
 
 interface StatsCardsProps {
   tenant: TenantDetails
 }
 
 export function StatsCards({ tenant }: StatsCardsProps) {
+  const { tenantCountry } = useTenantContext()
+
   const stats = [
     {
       title: 'Usuarios Totales',
@@ -28,7 +32,7 @@ export function StatsCards({ tenant }: StatsCardsProps) {
     },
     {
       title: 'Ingresos Est.',
-      value: `$${(tenant.entry_count * 10).toLocaleString()}`,
+      value: formatTenantCurrency(tenant.entry_count * 10, tenantCountry),
       icon: DollarSign,
       color: 'yellow'
     }

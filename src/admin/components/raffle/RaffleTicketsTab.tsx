@@ -6,6 +6,8 @@ import { toast } from 'sonner'
 import { Raffle, UpdateRaffleData } from '../../types/raffle'
 import { useTicketPackages } from '../../hooks/useTicketPackages'
 import { Modal, Input, Select, Checkbox, Button, FormField } from '../ui'
+import { useTenantContext } from '../../contexts/TenantContext'
+import { formatTenantCurrency } from '../../utils/currency'
 import type {
     TicketPackage,
     CreateTicketPackageData,
@@ -63,6 +65,7 @@ function TicketPackageModal({
     initialData,
     rafflePrice
 }: TicketPackageModalProps) {
+    const { tenantCountry } = useTenantContext()
     const [formData, setFormData] = useState({
         name: '',
         amount: 1,
@@ -290,7 +293,7 @@ function TicketPackageModal({
 
                         <h3 className="font-semibold text-gray-900 dark:text-gray-100">{formData.name || 'Nombre del paquete'}</h3>
                         <div className="text-2xl font-bold mt-2" style={{ color: formData.primary_color }}>
-                            ${calculateFinalPrice().toFixed(2)}
+                            {formatTenantCurrency(calculateFinalPrice(), tenantCountry)}
                         </div>
                         <div className="bg-gray-50 dark:bg-gray-800 rounded p-2 mt-3">
                             <div className="text-sm text-gray-600 dark:text-gray-400">Obtienes</div>
@@ -306,6 +309,7 @@ function TicketPackageModal({
 }
 
 export default function RaffleTicketsTab({ raffle, onRaffleUpdate }: Props) {
+    const { tenantCountry } = useTenantContext()
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingPackage, setEditingPackage] = useState<TicketPackage | undefined>()
 
@@ -483,11 +487,11 @@ export default function RaffleTicketsTab({ raffle, onRaffleUpdate }: Props) {
 
                                 <div className="text-center">
                                     <div className="text-3xl font-bold" style={{ color: pkg.primary_color }}>
-                                        ${calculateFinalPriceLocal(pkg).toFixed(2)}
+                                        {formatTenantCurrency(calculateFinalPriceLocal(pkg), tenantCountry)}
                                     </div>
                                     {pkg.promotion_type !== 'none' && calculateFinalPriceLocal(pkg) !== pkg.base_price && (
                                         <div className="text-sm text-gray-500 line-through">
-                                            ${pkg.base_price.toFixed(2)}
+                                            {formatTenantCurrency(pkg.base_price, tenantCountry)}
                                         </div>
                                     )}
                                 </div>

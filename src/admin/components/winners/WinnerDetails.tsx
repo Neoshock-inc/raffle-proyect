@@ -1,6 +1,8 @@
 import React from 'react'
 import { X, User, Mail, Phone, MapPin, Calendar, Trophy, CreditCard } from 'lucide-react'
 import { WinnerWithDetails } from '../../services/winnersService'
+import { useTenantContext } from '../../contexts/TenantContext'
+import { formatTenantCurrency } from '../../utils/currency'
 
 interface WinnerDetailsProps {
     isOpen: boolean
@@ -9,6 +11,8 @@ interface WinnerDetailsProps {
 }
 
 export function WinnerDetails({ isOpen, onClose, winner }: WinnerDetailsProps) {
+    const { tenantCountry } = useTenantContext()
+
     if (!isOpen || !winner) return null
 
     const formatDate = (dateString: string) => {
@@ -21,12 +25,7 @@ export function WinnerDetails({ isOpen, onClose, winner }: WinnerDetailsProps) {
         })
     }
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('es-ES', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount)
-    }
+    const formatCurrency = (amount: number) => formatTenantCurrency(amount, tenantCountry)
 
     return (
         <>

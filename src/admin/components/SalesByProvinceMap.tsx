@@ -5,6 +5,9 @@ import { MapContainer, GeoJSON, CircleMarker, Popup } from 'react-leaflet';
 import { FeatureCollection } from 'geojson';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { COUNTRY_CONFIGS, DEFAULT_COUNTRY } from '@/constants/countries';
+import type { CountryCode } from '@/constants/countries';
+import { formatTenantCurrency } from '@/admin/utils/currency';
 
 interface SalesDataItem {
     ciudad?: string;
@@ -12,98 +15,41 @@ interface SalesDataItem {
     lng?: number;
     provincia?: string;
     ventas?: number;
-    // Fallback para datos que vienen con estructura diferente
     province?: string;
     facturas?: number;
 }
 
-interface EcuadorMapChartProps {
+interface SalesMapChartProps {
     salesList?: SalesDataItem[];
+    countryCode?: CountryCode;
 }
 
-// Coordenadas por defecto para provincias (fallback)
-const DEFAULT_COORDINATES: Record<string, { lat: number; lng: number; ciudad: string }> = {
-    'Guayas': { lat: -2.2, lng: -79.9, ciudad: 'Guayaquil' },
-    'Pichincha': { lat: -0.2, lng: -78.5, ciudad: 'Quito' },
-    'Manabí': { lat: -1.0, lng: -80.7, ciudad: 'Portoviejo' },
-    'Azuay': { lat: -2.9, lng: -79.0, ciudad: 'Cuenca' },
-    'Los Ríos': { lat: -1.8, lng: -79.5, ciudad: 'Babahoyo' },
-    'El Oro': { lat: -3.6, lng: -79.9, ciudad: 'Machala' },
-    'Esmeraldas': { lat: 0.9, lng: -79.7, ciudad: 'Esmeraldas' },
-    'Santo Domingo': { lat: -0.2, lng: -79.2, ciudad: 'Santo Domingo' },
-    'Loja': { lat: -4.0, lng: -79.2, ciudad: 'Loja' },
-    'Imbabura': { lat: 0.4, lng: -78.1, ciudad: 'Ibarra' },
-    'Tungurahua': { lat: -1.2, lng: -78.6, ciudad: 'Ambato' },
-    'Chimborazo': { lat: -1.7, lng: -78.6, ciudad: 'Riobamba' },
-    'Cotopaxi': { lat: -0.9, lng: -78.6, ciudad: 'Latacunga' },
-    'Carchi': { lat: 0.8, lng: -77.8, ciudad: 'Tulcán' },
-    'Bolívar': { lat: -1.6, lng: -79.0, ciudad: 'Guaranda' },
-    'Cañar': { lat: -2.6, lng: -78.9, ciudad: 'Azogues' },
-    'Sucumbíos': { lat: 0.1, lng: -76.9, ciudad: 'Nueva Loja' },
-    'Orellana': { lat: -0.5, lng: -76.9, ciudad: 'Francisco de Orellana' },
-    'Napo': { lat: -1.0, lng: -77.8, ciudad: 'Tena' },
-    'Pastaza': { lat: -1.5, lng: -78.0, ciudad: 'Puyo' },
-    'Morona Santiago': { lat: -2.3, lng: -78.1, ciudad: 'Macas' },
-    'Zamora Chinchipe': { lat: -4.1, lng: -78.9, ciudad: 'Zamora' },
-    'Galápagos': { lat: -0.4, lng: -90.3, ciudad: 'Puerto Ayora' },
-    'Santa Elena': { lat: -2.2, lng: -80.9, ciudad: 'Santa Elena' }
-};
-
-// Mapeo para nombres alternativos en el GeoJSON
-const PROVINCE_NAME_MAPPING: Record<string, string> = {
-    'AZUAY': 'Azuay',
-    'BOLIVAR': 'Bolívar',
-    'CAÑAR': 'Cañar',
-    'CARCHI': 'Carchi',
-    'CHIMBORAZO': 'Chimborazo',
-    'COTOPAXI': 'Cotopaxi',
-    'EL ORO': 'El Oro',
-    'ESMERALDAS': 'Esmeraldas',
-    'GALAPAGOS': 'Galápagos',
-    'GUAYAS': 'Guayas',
-    'IMBABURA': 'Imbabura',
-    'LOJA': 'Loja',
-    'LOS RIOS': 'Los Ríos',
-    'MANABI': 'Manabí',
-    'MORONA SANTIAGO': 'Morona Santiago',
-    'NAPO': 'Napo',
-    'ORELLANA': 'Orellana',
-    'PASTAZA': 'Pastaza',
-    'PICHINCHA': 'Pichincha',
-    'SANTA ELENA': 'Santa Elena',
-    'SANTO DOMINGO DE LOS TSACHILAS': 'Santo Domingo',
-    'SUCUMBIOS': 'Sucumbíos',
-    'TUNGURAHUA': 'Tungurahua',
-    'ZAMORA CHINCHIPE': 'Zamora Chinchipe',
-    // Fallbacks adicionales
-    'SANTO DOMINGO': 'Santo Domingo',
-    'LOS RÍOS': 'Los Ríos',
-    'MANABÍ': 'Manabí',
-    'SUCUMBÍOS': 'Sucumbíos'
-};
-
-export default function EcuadorMapChart({ salesList }: EcuadorMapChartProps) {
+export default function SalesMapChart({ salesList, countryCode = DEFAULT_COUNTRY }: SalesMapChartProps) {
+    const config = COUNTRY_CONFIGS[countryCode];
     const [geoData, setGeoData] = useState<FeatureCollection | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const mapRef = useRef<L.Map | null>(null);
 
-    // Coordenadas límite para Ecuador continental (sin Galápagos)
-    const ecuadorContinentalBounds = L.latLngBounds(
-        L.latLng(-5.015, -81.1), // Esquina sudoeste
-        L.latLng(1.45, -75.2)    // Esquina noreste
-    );
+    // Build region coordinate lookup from config
+    const regionCoordinates = useMemo(() => {
+        const coords: Record<string, { lat: number; lng: number; ciudad: string }> = {};
+        for (const region of config.regions) {
+            coords[region.name] = { lat: region.lat, lng: region.lng, ciudad: region.capital };
+        }
+        return coords;
+    }, [config]);
 
-    // Normalizar y procesar datos de ventas
+    const nameMapping = config.geojsonNameMapping;
+    const excludeFromMap = config.excludeFromMap || [];
+
+    // Normalize and process sales data
     const processedSalesData = useMemo(() => {
         if (!salesList || !Array.isArray(salesList)) return [];
 
         return salesList.map(item => {
-            // Determinar el nombre de la provincia
             const provinceName = item.provincia || item.province || '';
-
-            // Obtener coordenadas (usar las del item o fallback)
-            const coords = DEFAULT_COORDINATES[provinceName] || { lat: 0, lng: 0, ciudad: provinceName };
+            const coords = regionCoordinates[provinceName] || { lat: 0, lng: 0, ciudad: provinceName };
 
             return {
                 provincia: provinceName,
@@ -121,9 +67,9 @@ export default function EcuadorMapChart({ salesList }: EcuadorMapChartProps) {
             item.lat !== 0 &&
             item.lng !== 0
         );
-    }, [salesList]);
+    }, [salesList, regionCoordinates]);
 
-    // Crear mapa de ventas por provincia para el styling del GeoJSON
+    // Sales by province map for GeoJSON styling
     const salesByProvince = useMemo(() => {
         const map: Record<string, number> = {};
         processedSalesData.forEach(item => {
@@ -132,97 +78,75 @@ export default function EcuadorMapChart({ salesList }: EcuadorMapChartProps) {
         return map;
     }, [processedSalesData]);
 
-    // Función para normalizar nombres de provincia
-    const normalizeProvinceName = (name: string): string => {
+    // Normalize region names using country config mapping
+    const normalizeRegionName = (name: string): string => {
         if (!name) return '';
-
-        // Primero intentar mapeo directo
         const upperName = name.toUpperCase().trim();
-        if (PROVINCE_NAME_MAPPING[upperName]) {
-            return PROVINCE_NAME_MAPPING[upperName];
+        if (nameMapping[upperName]) return nameMapping[upperName];
+        for (const [key, value] of Object.entries(nameMapping)) {
+            if (upperName.includes(key) || key.includes(upperName)) return value;
         }
-
-        // Buscar coincidencias parciales
-        for (const [key, value] of Object.entries(PROVINCE_NAME_MAPPING)) {
-            if (upperName.includes(key) || key.includes(upperName)) {
-                return value;
-            }
-        }
-
-        // Si no hay mapeo, devolver el nombre tal como está
         return name;
     };
 
-    // Cargar datos GeoJSON
+    // Load GeoJSON data (re-fetch when country changes)
     useEffect(() => {
         setLoading(true);
         setError(null);
+        setGeoData(null);
 
-        fetch('/data/ecuador.geojson')
+        fetch(config.geojsonPath)
             .then((res) => {
                 if (!res.ok) throw new Error('Failed to load GeoJSON');
                 return res.json();
             })
-            .then(data => {
-                setGeoData(data);
-            })
-            .catch(error => {
-                console.error("Error loading GeoJSON:", error);
+            .then(data => setGeoData(data))
+            .catch(err => {
+                console.error("Error loading GeoJSON:", err);
                 setError("Error al cargar el mapa. Por favor verifica los datos.");
             })
             .finally(() => setLoading(false));
-    }, []);
+    }, [config.geojsonPath]);
 
-    // Configurar límites del mapa
+    // Fit map bounds when geoData loads or country changes
     useEffect(() => {
-        if (mapRef.current) {
-            // mapRef.current.setMaxBounds(ecuadorContinentalBounds); // Comentar esta línea
-
-            if (geoData) {
-                const continentalFeatures = geoData.features.filter(
-                    feature => {
-                        const name = feature.properties?.nombre || feature.properties?.name || '';
-                        return name && !['GALÁPAGOS', 'GALAPAGOS', 'ZONAS NO DELIMITADAS'].includes(name.toUpperCase());
-                    }
-                );
-                const continentalLayer = L.geoJSON({
-                    ...geoData,
-                    features: continentalFeatures
-                } as FeatureCollection);
-                mapRef.current.fitBounds(continentalLayer.getBounds());
+        if (mapRef.current && geoData) {
+            const nameProp = config.geojsonNameProperty;
+            const filteredFeatures = geoData.features.filter(feature => {
+                const name = feature.properties?.[nameProp] || feature.properties?.nombre || feature.properties?.name || '';
+                return name && !excludeFromMap.includes(name.toUpperCase());
+            });
+            if (filteredFeatures.length > 0) {
+                const layer = L.geoJSON({ ...geoData, features: filteredFeatures } as FeatureCollection);
+                mapRef.current.fitBounds(layer.getBounds());
             }
-            // else {
-            //     mapRef.current.fitBounds(ecuadorContinentalBounds); // Comentar esta línea también
-            // }
         }
-    }, [geoData]);
+    }, [geoData, config, excludeFromMap]);
 
-    // Obtener el rango de ventas para la escala de colores
+    // Sales range for color scale
     const salesRange = useMemo(() => {
         const sales = Object.values(salesByProvince);
         if (sales.length === 0) return { min: 0, max: 0 };
-        return {
-            min: Math.min(...sales),
-            max: Math.max(...sales)
-        };
+        return { min: Math.min(...sales), max: Math.max(...sales) };
     }, [salesByProvince]);
 
-    // Función para determinar el color de la provincia
+    // Province color style
     const getProvinceStyle = (feature: any) => {
-        const rawProvinceName = feature.properties?.nombre || feature.properties?.name || '';
-        const normalizedProvinceName = normalizeProvinceName(rawProvinceName);
-        const sales = salesByProvince[normalizedProvinceName] || 0;
+        const rawName = feature.properties?.[config.geojsonNameProperty]
+            || feature.properties?.nombre
+            || feature.properties?.name
+            || '';
+        const normalizedName = normalizeRegionName(rawName);
+        const sales = salesByProvince[normalizedName] || 0;
 
-        let fillColor = '#f0f0f0'; // Color por defecto (sin ventas)
-
+        let fillColor = '#f0f0f0';
         if (sales > 0 && salesRange.max > 0) {
             const intensity = sales / salesRange.max;
-
-            if (intensity > 0.8) fillColor = '#006837';      // Verde muy oscuro
-            else if (intensity > 0.6) fillColor = '#31a354';  // Verde oscuro
-            else if (intensity > 0.4) fillColor = '#78c679';  // Verde medio
-            else if (intensity > 0.2) fillColor = '#addd8e';  // Verde claro
-            else fillColor = '#d9f0a3';                       // Verde muy claro
+            if (intensity > 0.8) fillColor = '#006837';
+            else if (intensity > 0.6) fillColor = '#31a354';
+            else if (intensity > 0.4) fillColor = '#78c679';
+            else if (intensity > 0.2) fillColor = '#addd8e';
+            else fillColor = '#d9f0a3';
         }
 
         return {
@@ -233,6 +157,19 @@ export default function EcuadorMapChart({ salesList }: EcuadorMapChartProps) {
             fillOpacity: 0.85
         };
     };
+
+    // Filter features for rendering
+    const filteredGeoData = useMemo(() => {
+        if (!geoData) return null;
+        const nameProp = config.geojsonNameProperty;
+        return {
+            ...geoData,
+            features: geoData.features.filter(feature => {
+                const name = feature.properties?.[nameProp] || feature.properties?.nombre || feature.properties?.name || '';
+                return name && !excludeFromMap.includes(name.toUpperCase());
+            })
+        } as FeatureCollection;
+    }, [geoData, config, excludeFromMap]);
 
     return (
         <div style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}>
@@ -273,37 +210,25 @@ export default function EcuadorMapChart({ salesList }: EcuadorMapChartProps) {
             )}
 
             <MapContainer
-                center={[-1.8312, -78.1834]}
-                zoom={7}
-                minZoom={6}
+                key={countryCode}
+                center={config.mapCenter}
+                zoom={config.mapZoom}
+                minZoom={config.minZoom}
                 zoomControl={false}
-                // maxBounds={ecuadorContinentalBounds}
                 style={{ height: '90%', width: '100%' }}
                 ref={(instance) => {
-                    if (instance) {
-                        mapRef.current = instance;
-                    }
+                    if (instance) mapRef.current = instance;
                 }}
             >
-                {/* Renderizar provincias con colores */}
-                {geoData && (
+                {filteredGeoData && (
                     <GeoJSON
-                        data={{
-                            ...geoData,
-                            features: geoData.features.filter(
-                                feature => {
-                                    const name = feature.properties?.nombre || feature.properties?.name || '';
-                                    return name && !['GALÁPAGOS', 'GALAPAGOS', 'ZONAS NO DELIMITADAS'].includes(name.toUpperCase());
-                                }
-                            )
-                        } as FeatureCollection}
+                        key={`geojson-${countryCode}`}
+                        data={filteredGeoData}
                         style={getProvinceStyle}
                     />
                 )}
 
-                {/* Renderizar marcadores circulares para ventas */}
                 {processedSalesData.map((provincia, index) => (
-                    // En el MapContainer, agregar:
                     <CircleMarker
                         key={`${provincia.provincia}-${index}`}
                         center={[provincia.lat, provincia.lng]}
@@ -314,13 +239,13 @@ export default function EcuadorMapChart({ salesList }: EcuadorMapChartProps) {
                             fillOpacity: 0.7,
                             weight: 2
                         }}
-                        pane="markerPane" // Esto asegura que esté en el pane correcto
+                        pane="markerPane"
                     >
                         <Popup>
                             <div className="text-sm">
                                 <h3 className="font-bold text-base mb-1">{provincia.provincia}</h3>
                                 <p><span className="font-medium">Ciudad:</span> {provincia.ciudad}</p>
-                                <p><span className="font-medium">Ventas:</span> ${provincia.ventas.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</p>
+                                <p><span className="font-medium">Ventas:</span> {formatTenantCurrency(provincia.ventas, countryCode)}</p>
                                 {provincia.facturas > 0 && (
                                     <p><span className="font-medium">Facturas:</span> {provincia.facturas}</p>
                                 )}
@@ -330,7 +255,6 @@ export default function EcuadorMapChart({ salesList }: EcuadorMapChartProps) {
                 ))}
             </MapContainer>
 
-            {/* Leyenda de colores */}
             {salesRange.max > 0 && (
                 <div style={{
                     position: 'absolute',
@@ -342,11 +266,11 @@ export default function EcuadorMapChart({ salesList }: EcuadorMapChartProps) {
                     fontSize: '12px',
                     zIndex: 10
                 }}>
-                    <div className="font-medium mb-2">Ventas por Región</div>
+                    <div className="font-medium mb-2">Ventas por {config.regionLabel}</div>
                     <div className="space-y-1">
                         <div className="flex items-center">
                             <div className="w-4 h-4 mr-2" style={{ backgroundColor: '#006837' }}></div>
-                            <span>Alta (&gt; ${(salesRange.max * 0.8).toLocaleString('es-ES')})</span>
+                            <span>Alta (&gt; {formatTenantCurrency(salesRange.max * 0.8, countryCode)})</span>
                         </div>
                         <div className="flex items-center">
                             <div className="w-4 h-4 mr-2" style={{ backgroundColor: '#78c679' }}></div>

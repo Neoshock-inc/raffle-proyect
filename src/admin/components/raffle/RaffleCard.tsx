@@ -5,6 +5,8 @@ import { Calendar, Eye, Edit, Trash2, Copy } from 'lucide-react'
 import type { Raffle } from '@/admin/types/raffle'
 import { Badge } from '@/admin/components/ui/Badge'
 import { cn } from '@/admin/components/ui/cn'
+import { useTenantContext } from '@/admin/contexts/TenantContext'
+import { formatTenantCurrency } from '@/admin/utils/currency'
 
 const statusVariantMap: Record<string, 'success' | 'warning' | 'info' | 'neutral' | 'danger'> = {
     active: 'success',
@@ -38,6 +40,7 @@ interface RaffleCardProps {
 
 export default function RaffleCard({ raffle, onDelete, onDuplicate }: RaffleCardProps) {
     const router = useRouter()
+    const { tenantCountry } = useTenantContext()
 
     const soldCount = 0 // TODO: get from raffle entries count
     const progressPercent = raffle.total_numbers > 0
@@ -83,7 +86,7 @@ export default function RaffleCard({ raffle, onDelete, onDuplicate }: RaffleCard
                 <div className="space-y-2 mb-4 mt-3">
                     <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-500 dark:text-gray-400">Precio</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">${raffle.price.toFixed(2)}</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{formatTenantCurrency(raffle.price, tenantCountry)}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-500 dark:text-gray-400">Números</span>

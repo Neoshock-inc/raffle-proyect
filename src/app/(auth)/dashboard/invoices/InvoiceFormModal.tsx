@@ -4,6 +4,8 @@ import { InvoiceCreationData, Invoice, PaymentStatus, PaymentMethod } from '@/ty
 import { generateOrderNumber } from '@/services/invoiceService'
 import { useState, useEffect, useMemo } from 'react'
 import { Modal, Input, Select, Button } from '@/admin/components/ui'
+import { useTenantContext } from '@/admin/contexts/TenantContext'
+import { COUNTRY_CONFIGS } from '@/constants/countries'
 
 interface Props {
     isOpen: boolean
@@ -44,6 +46,8 @@ const paymentStatusOptions = [
 ]
 
 export function InvoiceFormModal({ isOpen, onClose, onSave, initialData }: Props) {
+    const { tenantCountry } = useTenantContext()
+    const currencyCode = COUNTRY_CONFIGS[tenantCountry].currency.code
     const [isGeneratingOrderNumber, setIsGeneratingOrderNumber] = useState(false)
     const [generatedOrderNumber, setGeneratedOrderNumber] = useState<string>('')
 
@@ -274,7 +278,7 @@ export function InvoiceFormModal({ isOpen, onClose, onSave, initialData }: Props
                             min={1}
                         />
                         <Input
-                            label="Precio Total (USD)"
+                            label={`Precio Total (${currencyCode})`}
                             required
                             name="totalPrice"
                             type="number"

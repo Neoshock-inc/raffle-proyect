@@ -7,6 +7,8 @@ import { useRaffle } from '@/admin/hooks/useRaffles'
 import type { UpdateRaffleData } from '@/admin/types/raffle'
 import { cn } from '@/admin/components/ui/cn'
 import { Badge } from '@/admin/components/ui/Badge'
+import { useTenantContext } from '@/admin/contexts/TenantContext'
+import { formatTenantCurrency } from '@/admin/utils/currency'
 
 import RaffleGeneralTab from '@/admin/components/raffle/RaffleGeneralTab'
 import RaffleTicketsTab from '@/admin/components/raffle/RaffleTicketsTab'
@@ -22,6 +24,7 @@ type TabType = 'general' | 'tickets' | 'numbers' | 'config' | 'stats'
 
 export default function RaffleDetailPage({ id }: Props) {
     const router = useRouter()
+    const { tenantCountry } = useTenantContext()
     const [activeTab, setActiveTab] = useState<TabType>('general')
 
     const { raffle, loading, error, updateRaffle, updating } = useRaffle(id)
@@ -111,7 +114,7 @@ export default function RaffleDetailPage({ id }: Props) {
                                     {raffle.status}
                                 </Badge>
                                 <span>•</span>
-                                <span>${raffle.price} por ticket</span>
+                                <span>{formatTenantCurrency(raffle.price, tenantCountry)} por ticket</span>
                                 <span>•</span>
                                 <span>{raffle.total_numbers.toLocaleString()} números</span>
                             </div>

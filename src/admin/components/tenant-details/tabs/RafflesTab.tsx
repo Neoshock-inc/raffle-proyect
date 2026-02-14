@@ -2,6 +2,8 @@
 import { BasicRaffle } from '@/admin/types/tenant'
 import { Gift, Plus, Eye, MoreHorizontal } from 'lucide-react'
 import { JSX } from 'react'
+import { useTenantContext } from '@/admin/contexts/TenantContext'
+import { formatTenantCurrency } from '@/admin/utils/currency'
 
 interface RafflesTabProps {
     raffles: BasicRaffle[]
@@ -18,6 +20,8 @@ export function RafflesTab({
     onViewRaffle,
     getRaffleStatusBadge
 }: RafflesTabProps) {
+    const { tenantCountry } = useTenantContext()
+
     if (loading) {
         return (
             <div className="text-center py-8">
@@ -59,7 +63,7 @@ export function RafflesTab({
                                                 {getRaffleStatusBadge(raffle.status)}
                                             </div>
                                             <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 space-x-4">
-                                                <span>${raffle.price}</span>
+                                                <span>{formatTenantCurrency(raffle.price, tenantCountry)}</span>
                                                 <span>{raffle.total_numbers} números</span>
                                                 <span>
                                                     Sorteo: {new Date(raffle.draw_date).toLocaleDateString('es-ES')}

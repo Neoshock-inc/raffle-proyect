@@ -4,12 +4,15 @@ import { tenantService } from '../services/tenantService'
 import { authService } from '../services/authService'
 import { supabase } from '../lib/supabaseTenantClient'
 import { Tenant } from '../types/tenant'
+import { DEFAULT_COUNTRY } from '@/constants/countries'
+import type { CountryCode } from '@/constants/countries'
 
 interface TenantContextData {
     isAdmin: boolean
     currentTenant: Tenant | null
     availableTenants: Tenant[]
     loading: boolean
+    tenantCountry: CountryCode
     setCurrentTenant: (tenant: Tenant | null) => void
 }
 
@@ -20,6 +23,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     const [currentTenant, setCurrentTenantState] = useState<Tenant | null>(null)
     const [availableTenants, setAvailableTenants] = useState<Tenant[]>([])
     const [loading, setLoading] = useState(true)
+    const [tenantCountry, setTenantCountry] = useState<CountryCode>(DEFAULT_COUNTRY)
 
     // Función para cambiar tenant que también actualiza el interceptor
     const setCurrentTenant = (tenant: Tenant | null) => {
@@ -53,6 +57,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
                     setAvailableTenants(tenants)
                     // Por defecto, no seleccionar ningún tenant (vista global)
                     setCurrentTenantState(null)
+                    setTenantCountry(DEFAULT_COUNTRY)
                     // Establecer contexto admin sin tenant
                     supabase.setTenantContext(null, true)
                 } else {
@@ -63,6 +68,11 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
                     setAvailableTenants(userTenant ? [userTenant] : [])
                     // Establecer contexto del tenant del usuario
                     supabase.setTenantContext(userTenant?.id || null, false)
+                    // Cargar país del tenant
+                    if (userTenant?.id) {
+                        const country = await tenantService.getTenantCountry(userTenant.id)
+                        setTenantCountry(country)
+                    }
                 }
                 console.log('✅ Tenant context initialized successfully');
             } catch (error) {
@@ -86,12 +96,23 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
         }
     }, [isAdmin, currentTenant, loading])
 
+    // Actualizar país cuando cambie el tenant seleccionado
+    useEffect(() => {
+        if (loading) return
+        if (currentTenant?.id) {
+            tenantService.getTenantCountry(currentTenant.id).then(setTenantCountry)
+        } else {
+            setTenantCountry(DEFAULT_COUNTRY)
+        }
+    }, [currentTenant?.id, loading])
+
     return (
         <TenantContext.Provider value={{
             isAdmin,
             currentTenant,
             availableTenants,
             loading,
+            tenantCountry,
             setCurrentTenant
         }}>
             {children}

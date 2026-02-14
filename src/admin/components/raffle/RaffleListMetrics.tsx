@@ -1,6 +1,8 @@
 import { Ticket, PlayCircle, DollarSign, TrendingUp } from 'lucide-react'
 import type { Raffle } from '@/admin/types/raffle'
 import DashboardMetricCard from '@/admin/components/DashboardMetricCard'
+import { useTenantContext } from '@/admin/contexts/TenantContext'
+import { formatTenantCurrency } from '@/admin/utils/currency'
 
 interface RaffleListMetricsProps {
     raffles: Raffle[]
@@ -8,6 +10,7 @@ interface RaffleListMetricsProps {
 }
 
 export default function RaffleListMetrics({ raffles, loading }: RaffleListMetricsProps) {
+    const { tenantCountry } = useTenantContext()
     const totalRaffles = raffles.length
     const activeRaffles = raffles.filter(r => r.status === 'active').length
     const estimatedSales = raffles.reduce((sum, r) => sum + (r.price * r.total_numbers), 0)
@@ -46,7 +49,7 @@ export default function RaffleListMetrics({ raffles, loading }: RaffleListMetric
             <DashboardMetricCard
                 icon={<DollarSign className="h-5 w-5" />}
                 title="Ventas Estimadas"
-                value={`$${estimatedSales.toLocaleString()}`}
+                value={formatTenantCurrency(estimatedSales, tenantCountry)}
                 iconBgColor="bg-amber-50 dark:bg-amber-900/30"
                 iconColor="text-amber-500"
             />
