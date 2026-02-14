@@ -153,7 +153,6 @@ export function useRaffleWizard(initialData?: WizardFormData) {
     }, [])
 
     const getSubmitData = useCallback((): CreateRaffleData => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { is_leftover_raffle, ...rest } = state.formData
         return {
             ...rest,
