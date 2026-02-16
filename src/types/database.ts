@@ -249,3 +249,15 @@ export interface RafflePrizeComplete {
   specifications: RafflePrizeSpecification[];
   images: RafflePrizeImage[];
 }
+
+export interface AmbassadorNumberAssignment {
+  id: string;
+  ambassador_id: string;
+  raffle_id: string;
+  tenant_id: string;
+  range_start: number;
+  range_end: number;
+  status: 'assigned' | 'returned';
+  assigned_at: string;
+  returned_at?: string;
+}

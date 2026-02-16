@@ -23,6 +23,7 @@ export interface ReferidoInput {
     referral_code: string
     commission_rate: number
     is_active: boolean
+    ambassador_id?: string
 }
 
 // NUEVA FUNCIÓN: Establecer contexto de tenant
@@ -284,4 +285,46 @@ export async function getReferralParticipantsByUser(userId: string) {
     if (error) throw new Error('Error al obtener participantes')
 
     return data
+}
+
+export async function getReferidosByAmbassador(ambassadorId: string): Promise<Referido[]> {
+    const { data, error } = await supabase
+        .from('referrals')
+        .select(`
+            *,
+            invoices (
+                id,
+                total_price,
+                status,
+                participant_id
+            )
+        `)
+        .eq('ambassador_id', ambassadorId)
+        .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    return (
+        data?.map((referido: any) => {
+            const completedInvoices = referido.invoices?.filter((inv: any) =>
+                inv.status === 'completed' || inv.status === 'paid'
+            ) || []
+
+            const totalSales = completedInvoices.reduce((sum: number, inv: any) =>
+                sum + (parseFloat(inv.total_price) || 0), 0)
+
+            const totalParticipants = completedInvoices.length > 0
+                ? new Set(completedInvoices.map((inv: any) => inv.participant_id)).size
+                : 0
+
+            const totalCommission = totalSales * referido.commission_rate
+
+            return {
+                ...referido,
+                total_participants: totalParticipants,
+                total_sales: totalSales,
+                total_commission: totalCommission,
+            }
+        }) || []
+    )
 }

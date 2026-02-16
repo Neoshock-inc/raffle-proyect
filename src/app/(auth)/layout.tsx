@@ -7,18 +7,20 @@ import Link from 'next/link'
 import { authService } from '@/admin/services/authService'
 import { Menu } from '@headlessui/react'
 import { Toaster } from 'sonner'
-import { LayoutDashboard, Building2, Globe, Bell, SquareMenu, Sun, Moon } from 'lucide-react'
+import { LayoutDashboard, Building2, Globe, Bell, SquareMenu, Sun, Moon, Crown } from 'lucide-react'
 import { useUserFeatures } from '@/admin/hooks/useUserFeatures'
 import { TenantProvider, useTenantContext } from '@/admin/contexts/TenantContext'
 import { iconMap } from '@/admin/utils/iconMap'
 import { Tenant } from '@/admin/types/tenant'
 import { isUserReferred } from '@/admin/services/referralAuthService'
+import { isUserAmbassador } from '@/admin/services/ambassadorAuthService'
 
 // Componente interno que usa el context
 function AuthLayoutContent({ children }: { children: React.ReactNode }) {
     const [userEmail, setUserEmail] = useState<string | null>(null)
     const [userId, setUserId] = useState<string | null>(null)
     const [isReferralUser, setIsReferralUser] = useState<boolean | null>(null)
+    const [isAmbassadorUser, setIsAmbassadorUser] = useState<boolean | null>(null)
     const [sidebarOpen, setSidebarOpen] = useState(true)
     const router = useRouter()
     const pathname = usePathname()
@@ -67,6 +69,15 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
                 setUserEmail(user.email ?? null)
                 setUserId(user.id)
 
+                // Verificar si es embajador (prioridad sobre referido)
+                try {
+                    const isAmbassador = await isUserAmbassador(user.id)
+                    setIsAmbassadorUser(isAmbassador)
+                } catch (error) {
+                    console.error('Error checking ambassador status:', error)
+                    setIsAmbassadorUser(false)
+                }
+
                 // Verificar si es usuario referido
                 try {
                     const isReferred = await isUserReferred(user.id)
@@ -81,11 +92,22 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
     }, [])
 
     useEffect(() => {
-        if (!featuresLoading && !tenantLoading && isReferralUser !== null) {
+        if (!featuresLoading && !tenantLoading && isReferralUser !== null && isAmbassadorUser !== null) {
             const allFeatures = menuGroups.flatMap(group => [group.parent, ...group.children])
 
+            // Si es embajador, redirigir a dashboard de embajador
+            if (isAmbassadorUser && pathname === '/dashboard') {
+                const ambassadorFeature = allFeatures.find(feature =>
+                    feature.route === '/dashboard/ambassador'
+                )
+                if (ambassadorFeature) {
+                    router.replace('/dashboard/ambassador')
+                    return
+                }
+            }
+
             // Si es usuario referido, redirigir a my-sales
-            if (isReferralUser && pathname === '/dashboard') {
+            if (isReferralUser && !isAmbassadorUser && pathname === '/dashboard') {
                 const mySalesFeature = allFeatures.find(feature =>
                     feature.route === '/dashboard/my-sales'
                 )
@@ -100,7 +122,7 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
                 router.push(allFeatures[0].route)
             }
         }
-    }, [menuGroups, featuresLoading, tenantLoading, isReferralUser, pathname])
+    }, [menuGroups, featuresLoading, tenantLoading, isReferralUser, isAmbassadorUser, pathname])
 
     const handleLogout = async () => {
         try {
@@ -116,7 +138,7 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
         setCurrentTenant(tenant) // ESTO DISPARA CAMBIOS EN TODA LA APP
     }
 
-    if (loading || tenantLoading || featuresLoading || isReferralUser === null) {
+    if (loading || tenantLoading || featuresLoading || isReferralUser === null || isAmbassadorUser === null) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-950">
                 <div className="text-center">
@@ -168,7 +190,7 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
                         />
                         {sidebarOpen && (
                             <h1 className="text-lg font-bold text-gray-800 dark:text-gray-200">
-                                {isReferralUser ? 'Panel Referidos' : 'Bienvenido'}
+                                {isAmbassadorUser ? 'Panel Embajador' : isReferralUser ? 'Panel Referidos' : 'Bienvenido'}
                             </h1>
                         )}
                     </div>
@@ -201,8 +223,21 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
                     </div>
                 )}
 
+                {/* Indicador especial para embajadores */}
+                {sidebarOpen && isAmbassadorUser && (
+                    <div className="px-4 py-3 bg-amber-50 border-b border-amber-100 dark:bg-amber-950 dark:border-amber-800">
+                        <div className="flex items-center text-sm">
+                            <Crown className="h-4 w-4 text-amber-600 dark:text-amber-400 mr-2 flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                                <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Estado:</p>
+                                <p className="text-amber-800 dark:text-amber-200 font-semibold">Embajador</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Indicador especial para usuarios referidos */}
-                {sidebarOpen && isReferralUser && (
+                {sidebarOpen && isReferralUser && !isAmbassadorUser && (
                     <div className="px-4 py-3 bg-green-50 border-b border-green-100 dark:bg-green-950 dark:border-green-800">
                         <div className="flex items-center text-sm">
                             <div className="h-4 w-4 bg-green-500 rounded-full mr-2 flex-shrink-0"></div>
@@ -368,7 +403,7 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
                                         <div className="text-right">
                                             <p className="text-sm font-medium">{userEmail}</p>
                                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                {isAdmin ? 'Administrador' : isReferralUser ? 'Referido' : 'Cliente'}
+                                                {isAdmin ? 'Administrador' : isAmbassadorUser ? 'Embajador' : isReferralUser ? 'Referido' : 'Cliente'}
                                             </p>
                                         </div>
                                         <div className="w-10 h-10 bg-indigo-600 dark:bg-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-medium">

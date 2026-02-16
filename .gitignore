@@ -43,4 +43,7 @@ next-env.d.ts
 # .trae files
 .trae/*
 
+# .claude files
+.claude/*
+
 certificates

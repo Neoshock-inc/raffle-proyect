@@ -1,4 +1,4 @@
-import { Users, Trophy, LayoutDashboard, DollarSign, ShoppingBag, Settings, Gift, Hash, UserPlus, Folder, GalleryVerticalEndIcon, Building, PartyPopper } from "lucide-react";
+import { Users, Trophy, LayoutDashboard, DollarSign, ShoppingBag, Settings, Gift, Hash, UserPlus, Folder, GalleryVerticalEndIcon, Building, PartyPopper, Crown, TrendingUp } from "lucide-react";
 
 export const iconMap: Record<string, any> = {
     LayoutDashboard: LayoutDashboard,
@@ -11,7 +11,9 @@ export const iconMap: Record<string, any> = {
     Gift: Gift,
     UserPlus: UserPlus,
     Folder: Folder,
-    Image: GalleryVerticalEndIcon, 
+    Image: GalleryVerticalEndIcon,
     Building: Building,
-    PartyPopper: PartyPopper
+    PartyPopper: PartyPopper,
+    Crown: Crown,
+    TrendingUp: TrendingUp
 }

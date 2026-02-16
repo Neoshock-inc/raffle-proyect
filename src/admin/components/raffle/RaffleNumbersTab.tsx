@@ -1,12 +1,15 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { Hash, User, ChevronLeft, ChevronRight, AlertCircle, Layers, Plus, Trash2, FileSpreadsheet } from 'lucide-react'
+import { Hash, User, ChevronLeft, ChevronRight, AlertCircle, Layers, Plus, Trash2, FileSpreadsheet, Crown } from 'lucide-react'
 import type { Raffle } from '@/admin/types/raffle'
 import type { NumberPool, RaffleNumberStatus } from '@/types/database'
-import { useRaffleNumbers, useRaffleAssignments, useCustomPoolNumbers } from '@/admin/hooks/useNumberPools'
+import type { AmbassadorNumberAssignment } from '@/admin/types/ambassador'
+import { useRaffleNumbers, useRaffleAssignments, useCustomPoolNumbers, useAmbassadorAssignments } from '@/admin/hooks/useNumberPools'
 import { numberPoolService } from '@/admin/services/numberPoolService'
 import { getReferidos, type Referido } from '@/admin/services/referidoService'
+import { getAmbassadors } from '@/admin/services/ambassadorService'
+import type { Ambassador } from '@/admin/types/ambassador'
 import { Button, Input, Select } from '@/admin/components/ui'
 import { ConfirmDialog } from '@/admin/components/ui/ConfirmDialog'
 import { Badge } from '@/admin/components/ui/Badge'
@@ -28,6 +31,13 @@ function padNumber(n: number, total: number): string {
 function findAssignment(num: number, statuses: RaffleNumberStatus[]): RaffleNumberStatus | null {
     for (const s of statuses) {
         if (num >= s.range_start && num <= s.range_end) return s
+    }
+    return null
+}
+
+function findAmbassadorAssignment(num: number, assignments: AmbassadorNumberAssignment[]): AmbassadorNumberAssignment | null {
+    for (const a of assignments) {
+        if (num >= a.range_start && num <= a.range_end) return a
     }
     return null
 }
@@ -75,15 +85,31 @@ export default function RaffleNumbersTab({ raffle }: RaffleNumbersTabProps) {
         clearNumbers,
     } = useCustomPoolNumbers(isCustomPool ? raffle.pool_id || null : null)
 
+    const {
+        assignments: ambassadorAssignments,
+        loading: loadingAmbassadorAssignments,
+        createAssignment: createAmbassadorAssignment,
+        deleteAssignment: deleteAmbassadorAssignment,
+    } = useAmbassadorAssignments(raffle.id)
+
     const [referrals, setReferrals] = useState<Referido[]>([])
     const [loadingReferrals, setLoadingReferrals] = useState(false)
+    const [ambassadors, setAmbassadors] = useState<Ambassador[]>([])
+    const [loadingAmbassadors, setLoadingAmbassadors] = useState(false)
 
     const [newReferralId, setNewReferralId] = useState('')
     const [newRangeStart, setNewRangeStart] = useState('')
     const [newRangeEnd, setNewRangeEnd] = useState('')
     const [assigning, setAssigning] = useState(false)
 
+    // Ambassador assignment form state
+    const [newAmbassadorId, setNewAmbassadorId] = useState('')
+    const [newAmbRangeStart, setNewAmbRangeStart] = useState('')
+    const [newAmbRangeEnd, setNewAmbRangeEnd] = useState('')
+    const [assigningAmb, setAssigningAmb] = useState(false)
+
     const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+    const [deleteTargetType, setDeleteTargetType] = useState<'referral' | 'ambassador'>('referral')
     const [deleting, setDeleting] = useState(false)
 
     const [page, setPage] = useState(1)
@@ -95,12 +121,19 @@ export default function RaffleNumbersTab({ raffle }: RaffleNumbersTabProps) {
                 .then(setReferrals)
                 .catch(() => toast.error('Error al cargar referidos'))
                 .finally(() => setLoadingReferrals(false))
+
+            setLoadingAmbassadors(true)
+            getAmbassadors()
+                .then(setAmbassadors)
+                .catch(() => toast.error('Error al cargar embajadores'))
+                .finally(() => setLoadingAmbassadors(false))
         }
     }, [isCustomPool])
 
     const totalNumbers = isCustomPool ? customNumbers.length : raffle.total_numbers
     const totalPages = Math.ceil(totalNumbers / GRID_PAGE_SIZE) || 1
-    const availableCount = totalNumbers - (isCustomPool ? totalSold : totalAssigned)
+    const totalAmbassadorAssigned = ambassadorAssignments.reduce((sum, a) => sum + (a.range_end - a.range_start + 1), 0)
+    const availableCount = totalNumbers - (isCustomPool ? totalSold : (totalAssigned + totalAmbassadorAssigned))
 
     // For custom pools, paginate over the customNumbers array
     const currentPageNumbers = useMemo(() => {
@@ -162,11 +195,49 @@ export default function RaffleNumbersTab({ raffle }: RaffleNumbersTabProps) {
         }
     }
 
+    const handleAssignAmbassador = async () => {
+        if (!newAmbassadorId || !newAmbRangeStart || !newAmbRangeEnd) {
+            toast.error('Completa todos los campos')
+            return
+        }
+        const start = parseInt(newAmbRangeStart)
+        const end = parseInt(newAmbRangeEnd)
+        if (isNaN(start) || isNaN(end) || start < 1 || end < start) {
+            toast.error('Rango invalido')
+            return
+        }
+        if (end > totalNumbers) {
+            toast.error(`El rango no puede superar ${totalNumbers}`)
+            return
+        }
+        setAssigningAmb(true)
+        try {
+            await createAmbassadorAssignment({
+                ambassador_id: newAmbassadorId,
+                raffle_id: raffle.id,
+                range_start: start,
+                range_end: end,
+            })
+            setNewAmbassadorId('')
+            setNewAmbRangeStart('')
+            setNewAmbRangeEnd('')
+            refetchStatus()
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Error al asignar rango a embajador')
+        } finally {
+            setAssigningAmb(false)
+        }
+    }
+
     const handleDeleteAssignment = async () => {
         if (!deleteTarget) return
         setDeleting(true)
         try {
-            await deleteAssignment(deleteTarget)
+            if (deleteTargetType === 'ambassador') {
+                await deleteAmbassadorAssignment(deleteTarget)
+            } else {
+                await deleteAssignment(deleteTarget)
+            }
             refetchStatus()
         } finally {
             setDeleting(false)
@@ -198,6 +269,13 @@ export default function RaffleNumbersTab({ raffle }: RaffleNumbersTabProps) {
         ...referrals
             .filter(r => r.is_active)
             .map(r => ({ value: r.id, label: `${r.name} (${r.referral_code})` })),
+    ]
+
+    const ambassadorOptions = [
+        { value: '', label: loadingAmbassadors ? 'Cargando...' : 'Seleccionar embajador' },
+        ...ambassadors
+            .filter(a => a.is_active)
+            .map(a => ({ value: a.id, label: `${a.name} (${a.ambassador_code})` })),
     ]
 
     if (noPool && !poolLoading) {
@@ -353,7 +431,7 @@ export default function RaffleNumbersTab({ raffle }: RaffleNumbersTabProps) {
     // === RANGE POOL VIEW (original) ===
     return (
         <div className="p-6 space-y-6">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
                 <DashboardMetricCard
                     icon={<Hash className="h-5 w-5" />}
                     title="Total Numeros"
@@ -368,10 +446,17 @@ export default function RaffleNumbersTab({ raffle }: RaffleNumbersTabProps) {
                 />
                 <DashboardMetricCard
                     icon={<User className="h-5 w-5" />}
-                    title="Asignados"
+                    title="Asig. Referidos"
                     value={totalAssigned.toLocaleString()}
                     iconBgColor="bg-amber-50 dark:bg-amber-900/30"
                     iconColor="text-amber-500"
+                />
+                <DashboardMetricCard
+                    icon={<Crown className="h-5 w-5" />}
+                    title="Asig. Embajadores"
+                    value={totalAmbassadorAssigned.toLocaleString()}
+                    iconBgColor="bg-violet-50 dark:bg-violet-900/30"
+                    iconColor="text-violet-500"
                 />
                 <DashboardMetricCard
                     icon={<Hash className="h-5 w-5" />}
@@ -470,7 +555,7 @@ export default function RaffleNumbersTab({ raffle }: RaffleNumbersTabProps) {
                                         <td className="px-4 py-2.5 text-right">
                                             {assignment && (
                                                 <button
-                                                    onClick={() => setDeleteTarget(assignment.id)}
+                                                    onClick={() => { setDeleteTarget(assignment.id); setDeleteTargetType('referral') }}
                                                     className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition"
                                                     title="Eliminar asignacion"
                                                 >
@@ -490,8 +575,103 @@ export default function RaffleNumbersTab({ raffle }: RaffleNumbersTabProps) {
                 <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
                     <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                     <p className="text-sm text-amber-700 dark:text-amber-400">
-                        No hay asignaciones de numeros para esta rifa. Usa el formulario de arriba para asignar rangos a referidos.
+                        No hay asignaciones de numeros a referidos para esta rifa.
                     </p>
+                </div>
+            )}
+
+            {/* Ambassador assignment form */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm shadow-gray-200/50 dark:shadow-gray-900/50 border border-violet-200 dark:border-violet-800/50 p-5">
+                <div className="flex items-center gap-2 mb-4">
+                    <Crown className="h-4 w-4 text-violet-500" />
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100">Asignar rango a embajador</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <Select
+                        label="Embajador"
+                        options={ambassadorOptions}
+                        value={newAmbassadorId}
+                        onChange={(e) => setNewAmbassadorId(e.target.value)}
+                    />
+                    <Input
+                        label="Desde"
+                        type="number"
+                        placeholder="1"
+                        value={newAmbRangeStart}
+                        onChange={(e) => setNewAmbRangeStart(e.target.value)}
+                    />
+                    <Input
+                        label="Hasta"
+                        type="number"
+                        placeholder={String(totalNumbers)}
+                        value={newAmbRangeEnd}
+                        onChange={(e) => setNewAmbRangeEnd(e.target.value)}
+                    />
+                    <div className="flex items-end">
+                        <Button
+                            onClick={handleAssignAmbassador}
+                            loading={assigningAmb}
+                            disabled={!newAmbassadorId || !newAmbRangeStart || !newAmbRangeEnd}
+                            className="w-full"
+                            icon={<Plus className="h-4 w-4" />}
+                        >
+                            Asignar
+                        </Button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Ambassador assignments table */}
+            {ambassadorAssignments.length > 0 && (
+                <div className="overflow-x-auto border border-violet-200 dark:border-violet-800/50 rounded-xl">
+                    <table className="min-w-full text-sm">
+                        <thead className="bg-violet-50 dark:bg-violet-900/20">
+                            <tr>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Embajador</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Codigo</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Rango</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Estado</th>
+                                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                            {ambassadorAssignments.map((a) => {
+                                const count = a.range_end - a.range_start + 1
+                                return (
+                                    <tr key={a.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                        <td className="px-4 py-2.5 font-medium text-gray-900 dark:text-gray-100">
+                                            <span className="flex items-center gap-1.5">
+                                                <Crown className="h-3.5 w-3.5 text-violet-500" />
+                                                {a.ambassador?.name || 'Embajador eliminado'}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-2.5 font-mono text-xs text-gray-500 dark:text-gray-400">
+                                            {a.ambassador?.ambassador_code || '-'}
+                                        </td>
+                                        <td className="px-4 py-2.5 font-mono text-gray-700 dark:text-gray-300">
+                                            {padNumber(a.range_start, totalNumbers)} - {padNumber(a.range_end, totalNumbers)}
+                                        </td>
+                                        <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{count.toLocaleString()}</td>
+                                        <td className="px-4 py-2.5">
+                                            <Badge variant={a.status === 'assigned' ? 'success' : 'danger'}>
+                                                {a.status === 'assigned' ? 'Asignado' : 'Devuelto'}
+                                            </Badge>
+                                        </td>
+                                        <td className="px-4 py-2.5 text-right">
+                                            <button
+                                                onClick={() => { setDeleteTarget(a.id); setDeleteTargetType('ambassador') }}
+                                                className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition"
+                                                title="Eliminar asignacion"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                )
+                            })}
+                        </tbody>
+                    </table>
                 </div>
             )}
 
@@ -524,12 +704,15 @@ export default function RaffleNumbersTab({ raffle }: RaffleNumbersTabProps) {
                     </div>
                 </div>
 
-                <div className="flex gap-4 mb-3 text-xs">
+                <div className="flex flex-wrap gap-4 mb-3 text-xs">
                     <span className="flex items-center gap-1.5">
                         <span className="w-3 h-3 rounded bg-gray-200 dark:bg-gray-700 inline-block" /> Disponible
                     </span>
                     <span className="flex items-center gap-1.5">
-                        <span className="w-3 h-3 rounded bg-amber-200 dark:bg-amber-800 inline-block" /> Asignado
+                        <span className="w-3 h-3 rounded bg-amber-200 dark:bg-amber-800 inline-block" /> Referido
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                        <span className="w-3 h-3 rounded bg-violet-200 dark:bg-violet-800 inline-block" /> Embajador
                     </span>
                     <span className="flex items-center gap-1.5">
                         <span className="w-3 h-3 rounded bg-green-300 dark:bg-green-800 inline-block" /> Vendido
@@ -539,7 +722,8 @@ export default function RaffleNumbersTab({ raffle }: RaffleNumbersTabProps) {
                 <div className="grid grid-cols-10 sm:grid-cols-15 md:grid-cols-20 lg:grid-cols-25 gap-1">
                     {Array.from({ length: currentEnd - currentStart + 1 }, (_, i) => {
                         const num = currentStart + i
-                        const assignment = findAssignment(num, numberStatus)
+                        const referralAssignment = findAssignment(num, numberStatus)
+                        const ambAssignment = findAmbassadorAssignment(num, ambassadorAssignments)
                         const isSold = soldSet.has(num)
 
                         let bgClass = 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
@@ -547,10 +731,13 @@ export default function RaffleNumbersTab({ raffle }: RaffleNumbersTabProps) {
 
                         if (isSold) {
                             bgClass = 'bg-green-200 dark:bg-green-900/60 text-green-800 dark:text-green-300'
-                            title = `Vendido${assignment ? ` (${assignment.referral_name})` : ''}`
-                        } else if (assignment) {
+                            title = `Vendido${referralAssignment ? ` (${referralAssignment.referral_name})` : ''}`
+                        } else if (referralAssignment) {
                             bgClass = 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300'
-                            title = `Asignado a ${assignment.referral_name}`
+                            title = `Referido: ${referralAssignment.referral_name}`
+                        } else if (ambAssignment) {
+                            bgClass = 'bg-violet-100 dark:bg-violet-900/40 text-violet-800 dark:text-violet-300'
+                            title = `Embajador: ${ambAssignment.ambassador?.name || 'Desconocido'}`
                         }
 
                         return (

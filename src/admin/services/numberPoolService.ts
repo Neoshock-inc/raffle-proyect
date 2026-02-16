@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabaseTenantClient'
-import type { NumberPool, NumberPoolNumber, RaffleNumberAssignment, RaffleNumberStatus } from '@/types/database'
+import type { NumberPool, NumberPoolNumber, RaffleNumberAssignment, RaffleNumberStatus, AmbassadorNumberAssignment } from '@/types/database'
+import type { AmbassadorNumberAssignment as AmbassadorAssignmentFull } from '../types/ambassador'
 
 export interface CreatePoolData {
     name: string
@@ -10,6 +11,13 @@ export interface CreatePoolData {
 export interface CreateAssignmentData {
     raffle_id: string
     referral_id: string
+    range_start: number
+    range_end: number
+}
+
+export interface CreateAmbassadorAssignmentData {
+    ambassador_id: string
+    raffle_id: string
     range_start: number
     range_end: number
 }
@@ -250,6 +258,123 @@ class NumberPoolService {
 
         if (error) throw new Error(error.message)
         return (data || []).map((row: { num: number }) => row.num)
+    }
+
+    // --- Ambassador Assignments ---
+
+    async getAmbassadorAssignments(raffleId: string): Promise<AmbassadorAssignmentFull[]> {
+        const { data, error } = await supabase
+            .from('ambassador_number_assignments')
+            .select(`
+                *,
+                ambassador:ambassadors(id, name, ambassador_code)
+            `)
+            .eq('raffle_id', raffleId)
+            .eq('status', 'assigned')
+            .order('range_start', { ascending: true })
+
+        if (error) throw new Error(error.message)
+        return data || []
+    }
+
+    async createAmbassadorAssignment(data: CreateAmbassadorAssignmentData): Promise<AmbassadorAssignmentFull> {
+        if (data.range_start < 0 || data.range_start > data.range_end) {
+            throw new Error('Rango invalido')
+        }
+
+        // Check overlap against referral assignments
+        const { data: referralOverlaps, error: refOverlapError } = await supabase
+            .from('raffle_number_assignments')
+            .select('id, range_start, range_end')
+            .eq('raffle_id', data.raffle_id)
+            .eq('status', 'assigned')
+            .or(`and(range_start.lte.${data.range_end},range_end.gte.${data.range_start})`)
+
+        if (refOverlapError) throw new Error(refOverlapError.message)
+        if (referralOverlaps && referralOverlaps.length > 0) {
+            throw new Error(`El rango se superpone con asignaciones de referidos (${referralOverlaps[0].range_start}-${referralOverlaps[0].range_end})`)
+        }
+
+        // Check overlap against ambassador assignments
+        const { data: ambOverlaps, error: ambOverlapError } = await supabase
+            .from('ambassador_number_assignments')
+            .select('id, range_start, range_end')
+            .eq('raffle_id', data.raffle_id)
+            .eq('status', 'assigned')
+            .or(`and(range_start.lte.${data.range_end},range_end.gte.${data.range_start})`)
+
+        if (ambOverlapError) throw new Error(ambOverlapError.message)
+        if (ambOverlaps && ambOverlaps.length > 0) {
+            throw new Error(`El rango se superpone con asignaciones de embajadores (${ambOverlaps[0].range_start}-${ambOverlaps[0].range_end})`)
+        }
+
+        const { tenantId } = supabase.getTenantContext()
+
+        const { data: created, error } = await supabase
+            .from('ambassador_number_assignments')
+            .insert({
+                ...data,
+                tenant_id: tenantId,
+            })
+            .select(`
+                *,
+                ambassador:ambassadors(id, name, ambassador_code)
+            `)
+            .single()
+
+        if (error) throw new Error(error.message)
+        return created
+    }
+
+    async deleteAmbassadorAssignment(assignmentId: string): Promise<void> {
+        const { error } = await supabase
+            .from('ambassador_number_assignments')
+            .delete()
+            .eq('id', assignmentId)
+
+        if (error) throw new Error(error.message)
+    }
+
+    async getAssignmentsByAmbassador(ambassadorId: string): Promise<(AmbassadorAssignmentFull)[]> {
+        const { data, error } = await supabase
+            .from('ambassador_number_assignments')
+            .select(`
+                *,
+                raffle:raffles(id, title, raffle_type, status)
+            `)
+            .eq('ambassador_id', ambassadorId)
+            .eq('status', 'assigned')
+            .order('assigned_at', { ascending: false })
+
+        if (error) throw new Error(error.message)
+        return data || []
+    }
+
+    async duplicateAmbassadorAssignments(sourceRaffleId: string, targetRaffleId: string): Promise<AmbassadorAssignmentFull[]> {
+        const sourceAssignments = await this.getAmbassadorAssignments(sourceRaffleId)
+        if (sourceAssignments.length === 0) return []
+
+        const { tenantId } = supabase.getTenantContext()
+
+        const rows = sourceAssignments.map(a => ({
+            raffle_id: targetRaffleId,
+            ambassador_id: a.ambassador_id,
+            range_start: a.range_start,
+            range_end: a.range_end,
+            status: 'assigned',
+            tenant_id: tenantId,
+        }))
+
+        const { data, error } = await supabase
+            .from('ambassador_number_assignments')
+            .insert(rows)
+            .select(`
+                *,
+                ambassador:ambassadors(id, name, ambassador_code)
+            `)
+
+        if (error) throw new Error(error.message)
+        return data || []
     }
 }
 

@@ -15,6 +15,8 @@ import { getReferralCode } from '@/admin/services/referralAuthService'
 import { buildReferralLink } from '@/admin/utils/tenantUrl'
 import { useTenantContext } from '@/admin/contexts/TenantContext'
 import { formatTenantCurrency } from '@/admin/utils/currency'
+import { Crown } from 'lucide-react'
+import { createClient } from '@supabase/supabase-js'
 
 const COLORS = ['#10B981', '#F59E0B']
 
@@ -26,6 +28,8 @@ export default function MisVentasPage() {
     const [referralCode, setReferralCode] = useState<string | null>(null)
     const [referralLink, setReferralLink] = useState<string>('')
     const [copySuccess, setCopySuccess] = useState<string>('')
+    const [ambassadorName, setAmbassadorName] = useState<string | null>(null)
+    const [commissionRate, setCommissionRate] = useState<number | null>(null)
 
     useEffect(() => {
         const load = async () => {
@@ -55,6 +59,34 @@ export default function MisVentasPage() {
                 ])
                 setStats(s)
                 setParticipants(p)
+
+                // Check if this referral belongs to an ambassador
+                try {
+                    const supabase = createClient(
+                        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+                    )
+                    const { data: referral } = await supabase
+                        .from('referrals')
+                        .select('ambassador_id, commission_rate')
+                        .eq('referrer_user_id', uid)
+                        .single()
+
+                    if (referral?.commission_rate) {
+                        setCommissionRate(referral.commission_rate)
+                    }
+
+                    if (referral?.ambassador_id) {
+                        const { data: ambassador } = await supabase
+                            .from('ambassadors')
+                            .select('name')
+                            .eq('id', referral.ambassador_id)
+                            .single()
+                        if (ambassador) setAmbassadorName(ambassador.name)
+                    }
+                } catch (err) {
+                    // Non-critical, ignore
+                }
             } catch (e) {
                 console.error(e)
                 toast.error('Error cargando datos')
@@ -118,6 +150,15 @@ export default function MisVentasPage() {
                         </p>
                     </div>
 
+                    {ambassadorName && (
+                        <div className="flex items-center gap-2 bg-amber-400/20 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                            <Crown className="h-4 w-4 text-amber-300" />
+                            <span className="text-sm font-medium text-amber-100">
+                                Tu Embajador: <span className="font-semibold text-white">{ambassadorName}</span>
+                            </span>
+                        </div>
+                    )}
+
                     {referralLink && (
                         <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 lg:max-w-md">
                             <label className="block text-sm font-medium text-indigo-100 mb-2">
@@ -147,7 +188,7 @@ export default function MisVentasPage() {
             </div>
 
             {/* Cards de estadísticas */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <Card
                     title="Ventas Totales"
                     value={formatTenantCurrency(stats.totalSales, tenantCountry)}
@@ -172,6 +213,14 @@ export default function MisVentasPage() {
                     bgColor="bg-orange-500"
                     textColor="text-orange-600"
                 />
+                {commissionRate !== null && (
+                    <Card
+                        title="Tu Comisión"
+                        value={`${(commissionRate * 100).toFixed(1)}%`}
+                        bgColor="bg-amber-500"
+                        textColor="text-amber-600"
+                    />
+                )}
             </div>
 
             {/* Tabla de participantes */}

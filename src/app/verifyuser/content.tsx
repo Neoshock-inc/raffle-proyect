@@ -9,10 +9,20 @@ import {
     ReferralInfo,
     TenantInfo
 } from '@/admin/services/referralAuthService'
+import {
+    validateAmbassadorById,
+    registerAmbassadorUser,
+    linkUserToAmbassador,
+    AmbassadorInfo,
+    TenantInfo as AmbassadorTenantInfo
+} from '@/admin/services/ambassadorAuthService'
+
+type VerifyMode = 'referral' | 'ambassador' | null
 
 export default function VerifyUserContent() {
     const searchParams = useSearchParams()
     const referralId = searchParams.get('referralId')
+    const ambassadorId = searchParams.get('ambassadorId')
 
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
@@ -20,40 +30,57 @@ export default function VerifyUserContent() {
     const [initialLoading, setInitialLoading] = useState(true)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState(false)
+    const [mode, setMode] = useState<VerifyMode>(null)
+
+    // Referral state
     const [referralInfo, setReferralInfo] = useState<ReferralInfo | null>(null)
-    const [tenantInfo, setTenantInfo] = useState<TenantInfo | null>(null)
+    // Ambassador state
+    const [ambassadorInfo, setAmbassadorInfo] = useState<AmbassadorInfo | null>(null)
+    // Shared tenant info
+    const [tenantInfo, setTenantInfo] = useState<TenantInfo | AmbassadorTenantInfo | null>(null)
 
     useEffect(() => {
-        const loadReferralInfo = async () => {
-            if (!referralId) {
-                setError('ID de referido no proporcionado')
-                setInitialLoading(false)
+        const loadInfo = async () => {
+            // Ambassador takes priority
+            if (ambassadorId) {
+                setMode('ambassador')
+                try {
+                    const { ambassador, tenant } = await validateAmbassadorById(ambassadorId)
+                    setAmbassadorInfo(ambassador)
+                    setTenantInfo(tenant)
+                } catch (err: any) {
+                    setError(err.message || 'Error al cargar información del embajador')
+                } finally {
+                    setInitialLoading(false)
+                }
                 return
             }
 
-            try {
-                const { referral, tenant } = await validateReferralById(referralId)
-                setReferralInfo(referral)
-                setTenantInfo(tenant)
-            } catch (err: any) {
-                setError(err.message || 'Error al cargar información del referido')
-            } finally {
-                setInitialLoading(false)
+            if (referralId) {
+                setMode('referral')
+                try {
+                    const { referral, tenant } = await validateReferralById(referralId)
+                    setReferralInfo(referral)
+                    setTenantInfo(tenant)
+                } catch (err: any) {
+                    setError(err.message || 'Error al cargar información del referido')
+                } finally {
+                    setInitialLoading(false)
+                }
+                return
             }
+
+            setError('No se proporcionó ID de referido ni embajador')
+            setInitialLoading(false)
         }
 
-        loadReferralInfo()
-    }, [referralId])
+        loadInfo()
+    }, [referralId, ambassadorId])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
         setSuccess(false)
-
-        if (!referralId || !referralInfo) {
-            setError('No se encontró información del referido')
-            return
-        }
 
         if (password !== confirmPassword) {
             setError('Las contraseñas no coinciden')
@@ -67,18 +94,27 @@ export default function VerifyUserContent() {
 
         setLoading(true)
         try {
-            const user = await registerReferredUser(
-                referralInfo.email,
-                password,
-                referralInfo.tenant_id
-            )
+            if (mode === 'ambassador' && ambassadorId && ambassadorInfo) {
+                const user = await registerAmbassadorUser(
+                    ambassadorInfo.email,
+                    password,
+                    ambassadorInfo.tenant_id
+                )
+                if (!user) throw new Error('No se pudo registrar el usuario')
+                await linkUserToAmbassador(ambassadorId, user.id)
+            } else if (mode === 'referral' && referralId && referralInfo) {
+                const user = await registerReferredUser(
+                    referralInfo.email,
+                    password,
+                    referralInfo.tenant_id
+                )
+                if (!user) throw new Error('No se pudo registrar el usuario')
+                await linkUserToReferral(referralId, user.id)
+            } else {
+                throw new Error('No se encontró información válida')
+            }
 
-            if (!user) throw new Error('No se pudo registrar el usuario')
-
-            await linkUserToReferral(referralId, user.id)
             setSuccess(true)
-
-            // Redirigir al dashboard central de My Fortuna Cloud
             setTimeout(() => {
                 window.location.href = 'https://app.myfortunacloud.com/dashboard'
             }, 2000)
@@ -89,7 +125,6 @@ export default function VerifyUserContent() {
         }
     }
 
-    // Loading inicial
     if (initialLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-50 to-indigo-100">
@@ -101,10 +136,11 @@ export default function VerifyUserContent() {
         )
     }
 
-    // Determinar colores y branding
     const primaryColor = tenantInfo?.primary_color || '#3B82F6'
     const companyName = tenantInfo?.company_name || tenantInfo?.name || 'Nuestro Sistema'
-    const logoUrl = tenantInfo?.logo_url || '/default-logo.png'
+    const entityInfo = mode === 'ambassador' ? ambassadorInfo : referralInfo
+    const entityCode = mode === 'ambassador' ? ambassadorInfo?.ambassador_code : referralInfo?.referral_code
+    const roleLabel = mode === 'ambassador' ? 'embajador' : 'referido'
 
     return (
         <div
@@ -114,7 +150,6 @@ export default function VerifyUserContent() {
             }}
         >
             <div className="bg-white shadow-2xl rounded-2xl p-8 max-w-md w-full">
-                {/* Header con logo del tenant */}
                 {tenantInfo?.logo_url && (
                     <div className="text-center mb-6">
                         <img
@@ -132,29 +167,32 @@ export default function VerifyUserContent() {
                     className="text-3xl font-semibold text-center mb-4"
                     style={{ color: primaryColor }}
                 >
-                    ¡Bienvenido a {companyName}!
+                    {companyName}
                 </h1>
 
-                {referralInfo && (
+                {entityInfo && (
                     <>
                         <div
                             className="bg-gray-50 rounded-lg p-4 mb-6 border-l-4"
                             style={{ borderLeftColor: primaryColor }}
                         >
                             <p className="text-sm text-gray-700">
-                                <strong>Referido por:</strong> {referralInfo.name}
+                                <strong>Nombre:</strong> {entityInfo.name}
                             </p>
                             <p className="text-sm text-gray-700">
-                                <strong>Código:</strong> {referralInfo.referral_code}
+                                <strong>Código:</strong> {entityCode}
                             </p>
                             <p className="text-sm text-gray-700">
-                                <strong>Tu correo:</strong> {referralInfo.email}
+                                <strong>Tu correo:</strong> {entityInfo.email}
                             </p>
                         </div>
 
                         <p className="text-sm text-gray-600 text-center mb-6">
-                            Gracias por unirte como referido a nuestra comunidad.
-                            Para finalizar tu registro, por favor crea una contraseña segura.
+                            {mode === 'ambassador'
+                                ? 'Gracias por unirte como embajador. Podrás gestionar tu equipo de referidos y ganar comisiones en cascada.'
+                                : 'Gracias por unirte como referido a nuestra comunidad.'
+                            }
+                            {' '}Para finalizar tu registro, por favor crea una contraseña segura.
                         </p>
                     </>
                 )}
@@ -205,24 +243,24 @@ export default function VerifyUserContent() {
                 {success && (
                     <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
                         <p className="text-green-600 text-sm text-center">
-                            ¡Registro exitoso! 🎉 Redirigiendo al inicio de sesión...
+                            ¡Registro exitoso! Redirigiendo al inicio de sesión...
                         </p>
                     </div>
                 )}
 
-                {/* Información adicional */}
                 <div className="mt-8 pt-4 border-t border-gray-200">
                     <p className="text-xs text-gray-500 text-center">
-                        Al crear tu cuenta, podrás acceder al panel de referidos y
-                        comenzar a ganar comisiones por cada venta referida.
+                        {mode === 'ambassador'
+                            ? 'Al crear tu cuenta, podrás acceder al panel de embajador, gestionar tu equipo y ganar comisiones por ventas de tu equipo.'
+                            : 'Al crear tu cuenta, podrás acceder al panel de referidos y comenzar a ganar comisiones por cada venta referida.'
+                        }
                     </p>
                 </div>
 
-                {/* Footer con branding */}
                 <div className="mt-6 pt-4 border-t border-gray-100">
                     <div className="text-center">
                         <p className="text-xs text-gray-400 mb-2">
-                            Sistema de referidos powered by
+                            Sistema de {roleLabel}s powered by
                         </p>
                         <div className="flex items-center justify-center space-x-2">
                             <img

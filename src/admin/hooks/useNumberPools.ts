@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { numberPoolService } from '../services/numberPoolService'
-import type { CreatePoolData, CreateAssignmentData } from '../services/numberPoolService'
+import type { CreatePoolData, CreateAssignmentData, CreateAmbassadorAssignmentData } from '../services/numberPoolService'
 import type { NumberPool, NumberPoolNumber, RaffleNumberAssignment, RaffleNumberStatus } from '@/types/database'
+import type { AmbassadorNumberAssignment } from '../types/ambassador'
 import { toast } from 'sonner'
 import { useTenantContext } from '../contexts/TenantContext'
 
@@ -195,5 +196,48 @@ export function useCustomPoolNumbers(poolId: string | null) {
         refetch: fetchNumbers,
         uploadNumbers,
         clearNumbers,
+    }
+}
+
+export function useAmbassadorAssignments(raffleId: string | null) {
+    const [assignments, setAssignments] = useState<AmbassadorNumberAssignment[]>([])
+    const [loading, setLoading] = useState(false)
+
+    const fetchAssignments = useCallback(async () => {
+        if (!raffleId) return
+        setLoading(true)
+        try {
+            const data = await numberPoolService.getAmbassadorAssignments(raffleId)
+            setAssignments(data)
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Error al cargar asignaciones de embajadores')
+        } finally {
+            setLoading(false)
+        }
+    }, [raffleId])
+
+    useEffect(() => {
+        fetchAssignments()
+    }, [fetchAssignments])
+
+    const createAssignment = async (data: CreateAmbassadorAssignmentData) => {
+        const assignment = await numberPoolService.createAmbassadorAssignment(data)
+        setAssignments(prev => [...prev, assignment].sort((a, b) => a.range_start - b.range_start))
+        toast.success('Rango asignado a embajador')
+        return assignment
+    }
+
+    const deleteAssignment = async (assignmentId: string) => {
+        await numberPoolService.deleteAmbassadorAssignment(assignmentId)
+        setAssignments(prev => prev.filter(a => a.id !== assignmentId))
+        toast.success('Asignacion de embajador eliminada')
+    }
+
+    return {
+        assignments,
+        loading,
+        refetch: fetchAssignments,
+        createAssignment,
+        deleteAssignment,
     }
 }
